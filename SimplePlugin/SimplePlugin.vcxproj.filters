@@ -19,6 +19,15 @@
     <ClCompile Include="..\plugin_sdk\clipper.cpp">
       <Filter>plugin_sdk</Filter>
     </ClCompile>
+    <ClCompile Include="garen.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="tryndamere.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="kindred.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -29,6 +38,15 @@
     </ClInclude>
     <ClInclude Include="..\plugin_sdk\clipper.h">
       <Filter>plugin_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="garen.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="tryndamere.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="kindred.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
