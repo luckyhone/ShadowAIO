@@ -170,9 +170,6 @@
     <ClInclude Include="kindred.h" />
     <ClInclude Include="tryndamere.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="README.md" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

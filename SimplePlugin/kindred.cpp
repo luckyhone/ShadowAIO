@@ -443,9 +443,17 @@ namespace kindred
 #pragma region r_logic
     void r_logic()
     {
+        //debug for get kindred ult buff name
+        //for (auto&& buff : myhero->get_bufflist())
+        //{
+        //    if (buff->is_valid() && buff->is_alive())
+        //    {
+        //        console->print("[ShadowAIO] [Debug] Buff name %s", buff->get_name_cstr());
+        //    }
+        //}
         if (r->is_ready() && combo::use_r->get_bool())
         {
-            if (!myhero->has_buff(buff_hash("KindredR")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
+            if (!myhero->has_buff(buff_hash("KindredRNoDeathBuff")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
             {
                 if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(850) == 0)
                 {
