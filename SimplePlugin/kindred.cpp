@@ -227,30 +227,27 @@ namespace kindred
             //Checking if the user has selected harass() (Default C)
             if (orbwalker->harass())
             {
-                if (e->is_ready() && harass::use_e->get_bool())
+                // Get a target from a given range
+                auto target = target_selector->get_target(e->range(), damage_type::physical);
+
+                // Always check an object is not a nullptr!
+                if (target != nullptr)
                 {
-                    // Get a target from a given range
-                    auto target = target_selector->get_target(e->range(), damage_type::physical);
-
-                    // Always check an object is not a nullptr!
-                    if (target != nullptr)
+                    if (!myhero->is_under_enemy_turret())
                     {
-                        if (!myhero->is_under_enemy_turret())
+                        if (q->is_ready() && harass::use_q->get_bool())
                         {
-                            if (q->is_ready() && harass::use_q->get_bool())
-                            {
-                                q_logic();
-                            }
+                            q_logic();
+                        }
 
-                            if (w->is_ready() && harass::use_w->get_bool())
-                            {
-                                w_logic();
-                            }
+                        if (w->is_ready() && harass::use_w->get_bool())
+                        {
+                            w_logic();
+                        }
 
-                            if (e->is_ready() && harass::use_e->get_bool())
-                            {
-                                e_logic();
-                            }
+                        if (e->is_ready() && harass::use_e->get_bool())
+                        {
+                            e_logic();
                         }
                     }
                 }
