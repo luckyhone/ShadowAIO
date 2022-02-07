@@ -117,6 +117,8 @@ namespace trundle
             {
                 harass::use_q = harass->add_checkbox(myhero->get_model() + ".harassUseQ", "Use Q", true);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                harass::use_w = harass->add_checkbox(myhero->get_model() + ".harassUseW", "Use W", true);
+                harass::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harassUseE", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
@@ -220,30 +222,27 @@ namespace trundle
             //Checking if the user has selected harass() (Default C)
             if (orbwalker->harass())
             {
-                if (e->is_ready() && harass::use_e->get_bool())
+                // Get a target from a given range
+                auto target = target_selector->get_target(e->range(), damage_type::physical);
+
+                // Always check an object is not a nullptr!
+                if (target != nullptr)
                 {
-                    // Get a target from a given range
-                    auto target = target_selector->get_target(e->range(), damage_type::physical);
-
-                    // Always check an object is not a nullptr!
-                    if (target != nullptr)
+                    if (!myhero->is_under_enemy_turret())
                     {
-                        if (!myhero->is_under_enemy_turret())
+                        if (q->is_ready() && harass::use_q->get_bool())
                         {
-                            if (q->is_ready() && harass::use_q->get_bool())
-                            {
-                                q_logic();
-                            }
+                            q_logic();
+                        }
 
-                            if (w->is_ready() && harass::use_w->get_bool())
-                            {
-                                w_logic();
-                            }
+                        if (w->is_ready() && harass::use_w->get_bool())
+                        {
+                            w_logic();
+                        }
 
-                            if (e->is_ready() && harass::use_e->get_bool())
-                            {
-                                e_logic();
-                            }
+                        if (e->is_ready() && harass::use_e->get_bool())
+                        {
+                            e_logic();
                         }
                     }
                 }
