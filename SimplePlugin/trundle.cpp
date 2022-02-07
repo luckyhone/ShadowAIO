@@ -316,6 +316,22 @@ namespace trundle
                         if (q->cast())
                             return;
                     }
+
+                    if (e->is_ready() && laneclear::use_e->get_bool())
+                    {
+                        if (myhero->is_under_enemy_turret())
+                        {
+                            if (myhero->count_enemies_in_range(e->range()) == 0)
+                            {
+                                if (e->cast(lane_minions.at(0)))
+                                {
+                                    return;
+                                }
+                            }
+                        }
+                        if (e->cast(lane_minions.at(0)))
+                            return;
+                    }
                 }
 
 
