@@ -82,7 +82,7 @@ PLUGIN_API void on_sdk_unload()
     case champion_id::Trundle:
         // Unload trundle script
         //
-        trundle::unload;
+        trundle::unload();
         break;
     default:
         break;
