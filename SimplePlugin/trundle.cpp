@@ -328,7 +328,7 @@ namespace trundle
                     {
                         if (myhero->is_under_enemy_turret())
                         {
-                            if (myhero->count_enemies_in_range(q->range()) == 0)
+                            if (myhero->count_enemies_in_range(w->range()) == 0)
                             {
                                 if (w->cast(myhero))
                                 {
