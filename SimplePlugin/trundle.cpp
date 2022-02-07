@@ -1,12 +1,13 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
-#include "tryndamere.h"
+#include "trundle.h"
 
-namespace tryndamere
+namespace trundle
 {
     // Define the colors that will be used in on_draw()
     //
 #define W_DRAW_COLOR (MAKE_COLOR ( 227, 203, 20, 255 ))  //Red Green Blue Alpha
 #define E_DRAW_COLOR (MAKE_COLOR ( 235, 12, 223, 255 ))  //Red Green Blue Alpha
+#define R_DRAW_COLOR (MAKE_COLOR ( 255, 203, 20, 255 ))  //Red Green Blue Alpha
 
 // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
@@ -21,42 +22,42 @@ namespace tryndamere
     {
         TreeEntry* draw_range_w = nullptr;
         TreeEntry* draw_range_e = nullptr;
+        TreeEntry* draw_range_r = nullptr;
     }
 
     namespace combo
     {
         TreeEntry* use_q = nullptr;
-        TreeEntry* q_myhero_hp_under = nullptr;
-        TreeEntry* q_only_when_no_enemies_nearby = nullptr;
         TreeEntry* use_w = nullptr;
-        TreeEntry* w_target_above_range = nullptr;
-        TreeEntry* w_target_hp_under = nullptr;
-        TreeEntry* w_only_when_e_ready = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
-        TreeEntry* r_myhero_hp_under = nullptr;
-        TreeEntry* r_only_when_enemies_nearby = nullptr;
+        TreeEntry* r_target_hp_under = nullptr;
     }
 
     namespace harass
     {
+        TreeEntry* use_q = nullptr;
+        TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
     namespace laneclear
     {
+        TreeEntry* use_q = nullptr;
+        TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
-        TreeEntry* e_only_when_minions_more_than = nullptr;
     }
 
     namespace jungleclear
     {
+        TreeEntry* use_q = nullptr;
+        TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
     namespace fleemode
     {
-        TreeEntry* use_e;
+        TreeEntry* use_w;
     }
 
 
@@ -70,7 +71,7 @@ namespace tryndamere
     void q_logic();
     void w_logic();
     void e_logic();
-    bool r_logic();
+    void r_logic();
 
     // Enum is used to define myhero region 
     enum Position
@@ -85,33 +86,22 @@ namespace tryndamere
     {
         // Registering a spells
         //
-        q = plugin_sdk->register_spell(spellslot::q, 0);
-        w = plugin_sdk->register_spell(spellslot::w, 850);
-        e = plugin_sdk->register_spell(spellslot::e, 660);
-        r = plugin_sdk->register_spell(spellslot::r, 0);
+        q = plugin_sdk->register_spell(spellslot::q, myhero->get_attack_range());
+        w = plugin_sdk->register_spell(spellslot::w, 750);
+        e = plugin_sdk->register_spell(spellslot::e, 1000);
+        r = plugin_sdk->register_spell(spellslot::r, 650);
 
 
         // Create a menu according to the description in the "Menu Section"
         //
-        main_tab = menu->create_tab("tryndamere", "Tryndamere");
+        main_tab = menu->create_tab("trundle", "Trundle");
         main_tab->set_assigned_texture(myhero->get_square_icon_portrait());
         {
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".comboUseQ", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                auto q_config = combo->add_tab(myhero->get_model() + ".comboQConfig", "Q Config");
-                {
-                    combo::q_myhero_hp_under = q_config->add_slider(myhero->get_model() + ".comboQMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
-                    combo::q_only_when_no_enemies_nearby = q_config->add_checkbox(myhero->get_model() + ".comboQOnlyWhenNoEnemiesNearby", "Only when no enemies are nearby", true);
-                }
-                combo::use_w = combo->add_checkbox(myhero->get_model() + ".comboUseW", "Use W on escaping enemies", true);
-                auto w_config = combo->add_tab(myhero->get_model() + ".comboWConfig", "W Config");
-                {
-                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".comboWTargetAboveRange", "Target is above range", 500, 0, 800);
-                    combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".comboWTargetHpUnder", "Target HP is under (in %)", 80, 0, 100);
-                    combo::w_only_when_e_ready = w_config->add_checkbox(myhero->get_model() + ".comboWOnlyWhenEReady", "Use W only when E is ready", true);
-                }
+                combo::use_w = combo->add_checkbox(myhero->get_model() + ".comboUseW", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".comboUseE", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -119,38 +109,41 @@ namespace tryndamere
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + ".comboRConfig", "R Config");
                 {
-                    combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
-                    combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", false);
+                    combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".comboRTargetHpUnder", "Target HP is under (in %)", 50, 0, 100);
                 }
             }
 
             auto harass = main_tab->add_tab(myhero->get_model() + ".harass", "Harass Settings");
             {
+                harass::use_q = harass->add_checkbox(myhero->get_model() + ".harassUseQ", "Use Q", true);
+                harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harassUseE", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
+                laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
+                laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", true);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                auto e_config = laneclear->add_tab(myhero->get_model() + ".comboEConfig", "E Config");
-                {
-                    laneclear::e_only_when_minions_more_than = e_config->add_slider(myhero->get_model() + ".laneclearUseEOnlyWhenMinionsMoreThan", "Use only when minions more than", 3, 0, 5);
-                }
             }
 
             auto jungleclear = main_tab->add_tab(myhero->get_model() + ".jungleclear", "Jungle Clear Settings");
             {
-                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearrUseE", "Use E", true);
+                jungleclear::use_q = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseQ", "Use Q", true);
+                jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                jungleclear::use_w = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseW", "Use W", true);
+                jungleclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseE", "Use E", true);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
 
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
             {
-                fleemode::use_e = fleemode->add_checkbox(myhero->get_model() + ".fleemodeUseE", "Use E to ran away", true);
-                fleemode::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                fleemode::use_w = fleemode->add_checkbox(myhero->get_model() + ".fleemodeUseW", "Use W to ran away", true);
+                fleemode::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
             }
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".drawings", "Drawings Settings");
@@ -159,6 +152,8 @@ namespace tryndamere
                 draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".drawingE", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".drawingR", "Draw R range", true);
+                draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
             }
         }
 
@@ -193,11 +188,6 @@ namespace tryndamere
             return;
         }
 
-        if (!r_logic())
-        {
-            q_logic();
-        }
-
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
         // Too small time can interrupt the attack
@@ -206,6 +196,11 @@ namespace tryndamere
             //Checking if the user has combo_mode() (Default SPACE)
             if (orbwalker->combo_mode())
             {
+                if (q->is_ready() && combo::use_q->get_bool())
+                {
+                    q_logic();
+                }
+
                 if (w->is_ready() && combo::use_w->get_bool())
                 {
                     w_logic();
@@ -214,6 +209,11 @@ namespace tryndamere
                 if (e->is_ready() && combo::use_e->get_bool())
                 {
                     e_logic();
+                }
+
+                if (r->is_ready() && combo::use_r->get_bool())
+                {
+                    r_logic();
                 }
             }
 
@@ -230,9 +230,19 @@ namespace tryndamere
                     {
                         if (!myhero->is_under_enemy_turret())
                         {
-                            if (e->cast(target))
+                            if (q->is_ready() && harass::use_q->get_bool())
                             {
-                                return;
+                                q_logic();
+                            }
+
+                            if (w->is_ready() && harass::use_w->get_bool())
+                            {
+                                w_logic();
+                            }
+
+                            if (e->is_ready() && harass::use_e->get_bool())
+                            {
+                                e_logic();
                             }
                         }
                     }
@@ -242,9 +252,9 @@ namespace tryndamere
             // Checking if the user has selected flee_mode() (Default Z)
             if (orbwalker->flee_mode())
             {
-                if (q->is_ready() && fleemode::use_e->get_bool())
+                if (q->is_ready() && fleemode::use_w->get_bool())
                 {
-                    if (e->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
+                    if (w->cast(myhero))
                     {
                         return;
                     }
@@ -289,27 +299,22 @@ namespace tryndamere
                     my_hero_region = Position::Jungle;
                 }
 
-                if (!lane_minions.empty() && lane_minions.size() >= laneclear::e_only_when_minions_more_than->get_int())
+                if (!lane_minions.empty())
                 {
-                    if (e->is_ready() && laneclear::use_e->get_bool())
+                    if (q->is_ready() && laneclear::use_q->get_bool())
                     {
                         if (myhero->is_under_enemy_turret())
                         {
-                            if (myhero->count_enemies_in_range(e->range()) == 0)
+                            if (myhero->count_enemies_in_range(q->range()) == 0)
                             {
-                                if (e->cast(lane_minions.at(0)))
+                                if (q->cast())
                                 {
                                     return;
                                 }
                             }
                         }
-                        else
-                        {
-                            if (e->cast(lane_minions.at(0)))
-                            {
-                                return;
-                            }
-                        }
+                        if (q->cast())
+                            return;
                     }
                 }
 
@@ -317,6 +322,18 @@ namespace tryndamere
                 if (!monsters.empty())
                 {
                     // Logic responsible for monsters
+                    if (q->is_ready() && jungleclear::use_q->get_bool())
+                    {
+                        if (q->cast())
+                            return;
+                    }
+
+                    if (w->is_ready() && jungleclear::use_w->get_bool())
+                    {
+                        if (w->cast(myhero))
+                            return;
+                    }
+
                     if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
                         if (e->cast(monsters.at(0)))
@@ -330,28 +347,17 @@ namespace tryndamere
 #pragma region q_logic
     void q_logic()
     {
-        if (q->is_ready() && combo::use_q->get_bool())
+        // Get a target from a given range
+        auto target = target_selector->get_target(500, damage_type::physical);
+
+        // Always check an object is not a nullptr!
+        if (target != nullptr)
         {
-            //debug for get tryndamere ult buff name
-            //for (auto&& buff : myhero->get_bufflist())
-            //{
-            //    if (buff->is_valid() && buff->is_alive())
-            //    {
-            //        console->print("[ShadowAIO] [Debug] Buff name %s", buff->get_name_cstr());
-            //    }
-            //}
-            if (!myhero->has_buff(buff_hash("UndyingRage")))
+            // Check if the distance between myhero and enemy is smaller than q range
+            if (target->get_distance(myhero) <= q->range())
             {
-                if (myhero->get_health_percent() < combo::q_myhero_hp_under->get_int())
-                {
-                    if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(850) == 0)
-                    {
-                        if (q->cast())
-                        {
-                            return;
-                        }
-                    }
-                }
+                if (q->cast())
+                    return;
             }
         }
     }
@@ -360,25 +366,13 @@ namespace tryndamere
 #pragma region w_logic
     void w_logic()
     {
-        if (w->is_ready() && combo::use_w->get_bool())
-        {
-            // Get a target from a given range
-            auto target = target_selector->get_target(w->range(), damage_type::physical);
+        // Get a target from a given range
+        auto target = target_selector->get_target(w->range(), damage_type::physical);
 
-            // Always check an object is not a nullptr!
-            if (target != nullptr)
-            {
-                if (target->get_health_percent() < combo::w_target_hp_under->get_int())
-                {
-                    if (myhero->count_enemies_in_range(combo::w_target_above_range->get_int()) == 0)
-                    {
-                        if (w->cast())
-                        {
-                            return;
-                        }
-                    }
-                }
-            }
+        // Always check an object is not a nullptr!
+        if (target != nullptr)
+        {
+            w->cast(myhero);
         }
     }
 #pragma endregion
@@ -392,33 +386,28 @@ namespace tryndamere
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (combo::w_only_when_e_ready->get_bool() && !e->is_ready())
-            {
-                return;
-            }
             e->cast(target);
         }
     }
 #pragma endregion
 
 #pragma region r_logic
-    bool r_logic()
+    void r_logic()
     {
-        if (r->is_ready() && combo::use_r->get_bool())
+        // Get a target from a given range
+        auto target = target_selector->get_target(r->range(), damage_type::magical);
+
+        // Always check an object is not a nullptr!
+        if (target != nullptr)
         {
-            if (!myhero->has_buff(buff_hash("UndyingRage")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
+            if (!myhero->has_buff(buff_hash("TrundleR")) && target->get_health_percent() < combo::r_target_hp_under->get_int())
             {
-                if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(850) == 0)
+                if (r->cast(target))
                 {
-                    return false;
-                }
-                if (r->cast())
-                {
-                    return true;
+                    return;
                 }
             }
         }
-        return false;
     }
 #pragma endregion
 
@@ -441,5 +430,9 @@ namespace tryndamere
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
             draw_manager->add_circle(myhero->get_position(), e->range(), E_DRAW_COLOR);
+
+        // Draw E range
+        if (r->is_ready() && draw_settings::draw_range_r->get_bool())
+            draw_manager->add_circle(myhero->get_position(), r->range(), R_DRAW_COLOR);
     }
 };

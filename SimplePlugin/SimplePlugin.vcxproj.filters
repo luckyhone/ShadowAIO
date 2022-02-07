@@ -28,6 +28,9 @@
     <ClCompile Include="kindred.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="trundle.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -46,6 +49,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="kindred.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="trundle.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
