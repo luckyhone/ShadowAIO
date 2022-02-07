@@ -75,15 +75,6 @@ namespace tryndamere
     void e_logic();
     bool r_logic();
 
-    // Enum is used to define myhero region 
-    enum Position
-    {
-        Line,
-        Jungle
-    };
-
-    Position my_hero_region;
-
     void load()
     {
         // Registering a spells
@@ -283,27 +274,17 @@ namespace tryndamere
                         return !x->is_valid_target(e->range());
                     }), monsters.end());
 
-                //std::sort -> sort monsters by max helth
-                std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_max_health() > b->get_max_health();
-                    });
-
                 //std::sort -> sort lane minions by distance
                 std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
                     {
                         return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
                     });
 
-                // Set the correct region where myhero is
-                if (!lane_minions.empty())
-                {
-                    my_hero_region = Position::Line;
-                }
-                else if (!monsters.empty())
-                {
-                    my_hero_region = Position::Jungle;
-                }
+                //std::sort -> sort monsters by max helth
+                std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
+                    {
+                        return a->get_max_health() > b->get_max_health();
+                    });
 
                 if (!lane_minions.empty() && lane_minions.size() >= laneclear::e_only_when_minions_more_than->get_int())
                 {
