@@ -34,6 +34,7 @@ namespace tryndamere
         TreeEntry* w_target_hp_under = nullptr;
         TreeEntry* w_only_when_e_ready = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_dont_use_under_enemy_turret = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
@@ -116,12 +117,16 @@ namespace tryndamere
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".comboUseE", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                auto e_config = combo->add_tab(myhero->get_model() + ".comboEConfig", "E Config");
+                {
+                    combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".comboEDontUseUnderEnemyTurret", "Dont use under enemy turret", true);
+                }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".comboUseR", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + ".comboRConfig", "R Config");
                 {
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
-                    combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", false);
+                    combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
                 }
             }
 
@@ -337,6 +342,11 @@ namespace tryndamere
 #pragma region q_logic
     void q_logic()
     {
+        if (myhero->is_recalling())
+        {
+            return;
+        }
+
         if (q->is_ready() && combo::use_q->get_bool())
         {
             //debug for get tryndamere ult buff name
@@ -379,9 +389,12 @@ namespace tryndamere
                 {
                     if (myhero->count_enemies_in_range(combo::w_target_above_range->get_int()) == 0)
                     {
-                        if (w->cast())
+                        if (!combo::w_only_when_e_ready->get_bool() || e->is_ready())
                         {
-                            return;
+                            if (w->cast())
+                            {
+                                return;
+                            }
                         }
                     }
                 }
@@ -399,11 +412,13 @@ namespace tryndamere
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (combo::w_only_when_e_ready->get_bool() && !e->is_ready())
+            if (!combo::e_dont_use_under_enemy_turret->get_bool() || !myhero->is_under_enemy_turret())
             {
-                return;
+                if (e->cast(target))
+                {
+                    return;
+                }
             }
-            e->cast(target);
         }
     }
 #pragma endregion
