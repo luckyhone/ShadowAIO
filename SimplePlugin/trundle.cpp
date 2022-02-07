@@ -416,7 +416,7 @@ namespace trundle
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!myhero->has_buff(buff_hash("TrundleR")) && target->get_health_percent() < combo::r_target_hp_under->get_int())
+            if (target->get_health_percent() < combo::r_target_hp_under->get_int())
             {
                 if (r->cast(target))
                 {
