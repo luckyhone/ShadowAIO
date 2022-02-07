@@ -446,7 +446,7 @@ namespace trundle
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
             draw_manager->add_circle(myhero->get_position(), e->range(), E_DRAW_COLOR);
 
-        // Draw E range
+        // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), R_DRAW_COLOR);
     }

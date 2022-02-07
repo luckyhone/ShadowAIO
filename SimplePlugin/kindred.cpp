@@ -311,16 +311,18 @@ namespace kindred
                         {
                             if (myhero->count_enemies_in_range(q->range()) == 0)
                             {
-                                if (q->cast(lane_minions.at(0)))
+                                if (lane_minions.at(0)->get_distance(myhero) <= myhero->get_attack_range())
                                 {
+                                    q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
                                     return;
                                 }
                             }
                         }
                         else
                         {
-                            if (q->cast(lane_minions.at(0)))
+                            if (lane_minions.at(0)->get_distance(myhero) <= myhero->get_attack_range())
                             {
+                                q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
                                 return;
                             }
                         }
@@ -375,8 +377,11 @@ namespace kindred
                     // Logic responsible for monsters
                     if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
-                        if (q->cast(monsters.at(0)))
+                        if (monsters.at(0)->get_distance(myhero) <= myhero->get_attack_range())
+                        {
+                            q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
                             return;
+                        }
                     }
 
                     if (w->is_ready() && jungleclear::use_w->get_bool())
@@ -404,7 +409,11 @@ namespace kindred
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            q->cast(target);
+            // Check if the distance between myhero and enemy is smaller than attack range
+            if (target->get_distance(myhero) <= myhero->get_attack_range())
+            {
+                q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
+            }
         }
     }
 #pragma endregion
@@ -489,7 +498,7 @@ namespace kindred
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
             draw_manager->add_circle(myhero->get_position(), e->range(), E_DRAW_COLOR);
 
-        // Draw E range
+        // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), R_DRAW_COLOR);
     }
