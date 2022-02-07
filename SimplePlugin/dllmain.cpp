@@ -41,13 +41,13 @@ PLUGIN_API bool on_sdk_load(plugin_sdk_core* plugin_sdk_good)
         default:
             // We don't support this champ, print message and return false (core will not load this plugin and on_sdk_unload will be never called)
             //
-            console->print("[ShadowAIO] Champion %s is not supported in ShadowAIO!", myhero->get_model_cstr());
+            console->print("[ShadowAIO] [ERROR] Champion %s is not supported in ShadowAIO!", myhero->get_model_cstr());
             return false;
     }
 
     // Return success, our plugin will be loaded now
     //
-    console->print("[ShadowAIO] Champion %s loaded successfully!", myhero->get_model_cstr());
+    console->print("[ShadowAIO] [INFO] Champion %s loaded successfully.", myhero->get_model_cstr());
     return true;
 }
 
