@@ -309,7 +309,7 @@ namespace tryndamere
                         {
                             if (myhero->count_enemies_in_range(e->range()) == 0)
                             {
-                                if (farm::cast_verify_range(e, lane_minions.at(0)))
+                                if (farm::cast_verify_range(e, lane_minions.front()))
                                 {
                                     return;
                                 }
@@ -317,7 +317,7 @@ namespace tryndamere
                         }
                         else
                         {
-                            if (farm::cast_verify_range(e, lane_minions.at(0)))
+                            if (farm::cast_verify_range(e, lane_minions.front()))
                             {
                                 return;
                             }
@@ -331,7 +331,7 @@ namespace tryndamere
                     // Logic responsible for monsters
                     if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
-                        if (farm::cast_verify_range(e, monsters.at(0)))
+                        if (farm::cast_verify_range(e, monsters.front()))
                             return;
                     }
                 }

@@ -317,7 +317,7 @@ namespace kindred
                         {
                             if (myhero->count_enemies_in_range(q->range()) == 0)
                             {
-                                if (lane_minions.at(0)->get_distance(myhero) <= myhero->get_attack_range())
+                                if (lane_minions.front()->get_distance(myhero) <= myhero->get_attack_range())
                                 {
                                     q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
                                     return;
@@ -326,7 +326,7 @@ namespace kindred
                         }
                         else
                         {
-                            if (lane_minions.at(0)->get_distance(myhero) <= myhero->get_attack_range())
+                            if (lane_minions.front()->get_distance(myhero) <= myhero->get_attack_range())
                             {
                                 q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
                                 return;
@@ -340,7 +340,7 @@ namespace kindred
                         {
                             if (myhero->count_enemies_in_range(w->range()) == 0)
                             {
-                                if (w->cast(lane_minions.at(0)->get_position()))
+                                if (w->cast(lane_minions.front()->get_position()))
                                 {
                                     return;
                                 }
@@ -348,7 +348,7 @@ namespace kindred
                         }
                         else
                         {
-                            if (w->cast(lane_minions.at(0)->get_position()))
+                            if (w->cast(lane_minions.front()->get_position()))
                             {
                                 return;
                             }
@@ -361,7 +361,7 @@ namespace kindred
                         {
                             if (myhero->count_enemies_in_range(e->range()) == 0)
                             {
-                                if (e->cast(lane_minions.at(0)))
+                                if (e->cast(lane_minions.front()))
                                 {
                                     return;
                                 }
@@ -369,7 +369,7 @@ namespace kindred
                         }
                         else
                         {
-                            if (e->cast(lane_minions.at(0)))
+                            if (e->cast(lane_minions.front()))
                             {
                                 return;
                             }
@@ -383,7 +383,7 @@ namespace kindred
                     // Logic responsible for monsters
                     if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
-                        if (monsters.at(0)->get_distance(myhero) <= myhero->get_attack_range())
+                        if (monsters.front()->get_distance(myhero) <= myhero->get_attack_range())
                         {
                             q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
                             return;
@@ -392,13 +392,13 @@ namespace kindred
 
                     if (w->is_ready() && jungleclear::use_w->get_bool())
                     {
-                        if (w->cast(monsters.at(0)->get_position()))
+                        if (w->cast(monsters.front()->get_position()))
                             return;
                     }
 
                     if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
-                        if (e->cast(monsters.at(0)))
+                        if (e->cast(monsters.front()))
                             return;
                     }
                 }

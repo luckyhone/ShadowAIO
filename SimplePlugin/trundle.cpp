@@ -346,13 +346,13 @@ namespace trundle
                         {
                             if (myhero->count_enemies_in_range(e->range()) == 0)
                             {
-                                if (e->cast(lane_minions.at(0)))
+                                if (e->cast(lane_minions.front()))
                                 {
                                     return;
                                 }
                             }
                         }
-                        if (e->cast(lane_minions.at(0)))
+                        if (e->cast(lane_minions.front()))
                             return;
                     }
                 }
@@ -375,7 +375,7 @@ namespace trundle
 
                     if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
-                        if (e->cast(monsters.at(0)))
+                        if (e->cast(monsters.front()))
                             return;
                     }
                 }
