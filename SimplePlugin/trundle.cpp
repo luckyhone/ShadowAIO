@@ -127,6 +127,8 @@ namespace trundle
             {
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", true);
+                laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", true);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
@@ -319,6 +321,22 @@ namespace trundle
                             }
                         }
                         if (q->cast())
+                            return;
+                    }
+
+                    if (w->is_ready() && laneclear::use_w->get_bool())
+                    {
+                        if (myhero->is_under_enemy_turret())
+                        {
+                            if (myhero->count_enemies_in_range(q->range()) == 0)
+                            {
+                                if (w->cast(myhero))
+                                {
+                                    return;
+                                }
+                            }
+                        }
+                        if (w->cast(myhero))
                             return;
                     }
 
