@@ -5,3 +5,4 @@ Plugin for BGX.gg
 - Garen
 - Tryndamere
 - Kindred
+- Trundle
