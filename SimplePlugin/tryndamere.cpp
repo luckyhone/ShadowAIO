@@ -248,7 +248,7 @@ namespace tryndamere
             // Checking if the user has selected flee_mode() (Default Z)
             if (orbwalker->flee_mode())
             {
-                if (q->is_ready() && fleemode::use_e->get_bool())
+                if (e->is_ready() && fleemode::use_e->get_bool())
                 {
                     if (e->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
                     {
