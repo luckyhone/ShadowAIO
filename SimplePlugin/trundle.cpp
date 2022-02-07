@@ -273,19 +273,25 @@ namespace trundle
                 // You can use this function to delete minions that aren't in the specified range
                 lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(e->range() + 300);
+                        return !x->is_valid_target(e->range());
                     }), lane_minions.end());
 
                 // You can use this function to delete monsters that aren't in the specified range
                 monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(e->range() + 300);
+                        return !x->is_valid_target(e->range());
                     }), monsters.end());
 
                 //std::sort -> sort monsters by max helth
                 std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
                     {
                         return a->get_max_health() > b->get_max_health();
+                    });
+
+                //std::sort -> sort lane minions by distance
+                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                    {
+                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
                     });
 
                 // Set the correct region where myhero is
