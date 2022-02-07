@@ -291,7 +291,7 @@ namespace trundle
                         return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
                     });
 
-                //std::sort -> sort monsters by max helth
+                //std::sort -> sort monsters by max health
                 std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
                     {
                         return a->get_max_health() > b->get_max_health();
