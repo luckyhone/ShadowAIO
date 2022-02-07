@@ -32,6 +32,7 @@ namespace trundle
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
+        std::map<uint16_t, TreeEntry*> r_use_on;
     }
 
     namespace harass
@@ -43,6 +44,7 @@ namespace trundle
 
     namespace laneclear
     {
+        TreeEntry* spell_farm = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
@@ -110,6 +112,11 @@ namespace trundle
                 auto r_config = combo->add_tab(myhero->get_model() + ".comboRConfig", "R Config");
                 {
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".comboRTargetHpUnder", "Target HP is under (in %)", 50, 0, 100);
+                    auto r_use_on = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R on");
+                    for (auto&& enemy : entitylist->get_enemy_heroes())
+                    {
+                        combo::r_use_on[enemy->get_id()] = r_use_on->add_checkbox(myhero->get_model() + ".comboRUseOn." + enemy->get_model(), " " + enemy->get_model(), true);
+                    }
                 }
             }
 
@@ -125,6 +132,7 @@ namespace trundle
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
+                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', false);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", true);
@@ -265,6 +273,8 @@ namespace trundle
             // Checking if the user has selected lane_clear_mode() (Default V)
             if (orbwalker->lane_clear_mode())
             {
+                if (!laneclear::spell_farm->get_bool())
+                    return;
 
                 // Gets enemy minions from the entitylist
                 auto lane_minions = entitylist->get_enemy_minions();
@@ -420,12 +430,13 @@ namespace trundle
     void e_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(e->range(), damage_type::physical);
+        auto target = target_selector->get_target(e->range() + 125, damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast(target);
+            auto pred = q->get_prediction(target);
+            e->cast(pred.get_cast_position());
         }
     }
 #pragma endregion
@@ -441,9 +452,12 @@ namespace trundle
         {
             if (target->get_health_percent() < combo::r_target_hp_under->get_int())
             {
-                if (r->cast(target))
+                if (combo::r_use_on[target->get_id()]->get_bool())
                 {
-                    return;
+                    if (r->cast(target))
+                    {
+                        return;
+                    }
                 }
             }
         }
@@ -473,5 +487,10 @@ namespace trundle
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), R_DRAW_COLOR);
+
+        auto pos = myhero->get_position();
+        renderer->world_to_screen(pos, pos);
+        auto lc = laneclear::spell_farm->get_bool();
+        draw_manager->add_text_on_screen(pos + vector(0, 40), (lc ? 0xFF006400 : 0xFF0000FF), 16, "Spell Farm [%c]: %s", laneclear::spell_farm->get_int(), (lc ? "ON" : "OFF"));
     }
 };

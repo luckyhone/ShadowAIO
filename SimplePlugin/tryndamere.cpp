@@ -47,6 +47,7 @@ namespace tryndamere
 
     namespace laneclear
     {
+        TreeEntry* spell_farm = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_only_when_minions_more_than = nullptr;
     }
@@ -138,11 +139,12 @@ namespace tryndamere
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
+                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', false);
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", true);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = laneclear->add_tab(myhero->get_model() + ".comboEConfig", "E Config");
                 {
-                    laneclear::e_only_when_minions_more_than = e_config->add_slider(myhero->get_model() + ".laneclearUseEOnlyWhenMinionsMoreThan", "Use only when minions more than", 3, 0, 5);
+                   laneclear::e_only_when_minions_more_than = e_config->add_slider(myhero->get_model() + ".laneclearUseEOnlyWhenMinionsMoreThan", "Use only when minions more than", 3, 0, 5);
                 }
             }
 
@@ -260,6 +262,8 @@ namespace tryndamere
             // Checking if the user has selected lane_clear_mode() (Default V)
             if (orbwalker->lane_clear_mode())
             {
+                if (!laneclear::spell_farm->get_bool())
+                    return;
 
                 // Gets enemy minions from the entitylist
                 auto lane_minions = entitylist->get_enemy_minions();
@@ -463,5 +467,10 @@ namespace tryndamere
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
             draw_manager->add_circle(myhero->get_position(), e->range(), E_DRAW_COLOR);
+
+        auto pos = myhero->get_position();
+        renderer->world_to_screen(pos, pos);
+        auto lc = laneclear::spell_farm->get_bool();
+        draw_manager->add_text_on_screen(pos + vector(0, 40), (lc ? 0xFF006400 : 0xFF0000FF), 16, "Spell Farm [%c]: %s", laneclear::spell_farm->get_int(), (lc ? "ON" : "OFF"));
     }
 };

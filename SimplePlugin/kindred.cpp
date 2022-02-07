@@ -46,6 +46,7 @@ namespace kindred
 
     namespace laneclear
     {
+        TreeEntry* spell_farm = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
@@ -129,6 +130,7 @@ namespace kindred
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
+                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', false);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", true);
@@ -268,6 +270,8 @@ namespace kindred
             // Checking if the user has selected lane_clear_mode() (Default V)
             if (orbwalker->lane_clear_mode())
             {
+                if (!laneclear::spell_farm->get_bool())
+                    return;
 
                 // Gets enemy minions from the entitylist
                 auto lane_minions = entitylist->get_enemy_minions();
@@ -507,5 +511,10 @@ namespace kindred
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), R_DRAW_COLOR);
+
+        auto pos = myhero->get_position();
+        renderer->world_to_screen(pos, pos);
+        auto lc = laneclear::spell_farm->get_bool();
+        draw_manager->add_text_on_screen(pos + vector(0, 40), (lc ? 0xFF006400 : 0xFF0000FF), 16, "Spell Farm [%c]: %s", laneclear::spell_farm->get_int(), (lc ? "ON" : "OFF"));
     }
 };

@@ -159,7 +159,6 @@
     <ClCompile Include="..\plugin_sdk\plugin_sdk.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="farm.cpp" />
-    <ClCompile Include="garen.cpp" />
     <ClCompile Include="kindred.cpp" />
     <ClCompile Include="trundle.cpp" />
     <ClCompile Include="tryndamere.cpp" />
@@ -169,7 +168,6 @@
     <ClInclude Include="..\plugin_sdk\cpplinq.h" />
     <ClInclude Include="..\plugin_sdk\plugin_sdk.hpp" />
     <ClInclude Include="farm.h" />
-    <ClInclude Include="garen.h" />
     <ClInclude Include="kindred.h" />
     <ClInclude Include="trundle.h" />
     <ClInclude Include="tryndamere.h" />
