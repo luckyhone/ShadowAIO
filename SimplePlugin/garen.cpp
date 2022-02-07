@@ -226,7 +226,7 @@ namespace garen
     {
         if ( myhero->is_dead( ) )
         {
-            return;
+            return; 
         }
 
         if ( !myhero->has_buff( buff_hash( "GarenW" ) ) && misc::use_w->get_bool( ) && w->is_ready( ) )

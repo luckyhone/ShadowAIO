@@ -7,7 +7,7 @@ namespace trundle
     //
 #define W_DRAW_COLOR (MAKE_COLOR ( 227, 203, 20, 255 ))  //Red Green Blue Alpha
 #define E_DRAW_COLOR (MAKE_COLOR ( 235, 12, 223, 255 ))  //Red Green Blue Alpha
-#define R_DRAW_COLOR (MAKE_COLOR ( 255, 203, 20, 255 ))  //Red Green Blue Alpha
+#define R_DRAW_COLOR (MAKE_COLOR ( 224, 77, 13, 255 ))   //Red Green Blue Alpha
 
 // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
