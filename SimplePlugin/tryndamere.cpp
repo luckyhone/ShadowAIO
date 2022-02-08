@@ -231,7 +231,7 @@ namespace tryndamere
                     // Always check an object is not a nullptr!
                     if (target != nullptr)
                     {
-                        if (!target->is_under_enemy_turret())
+                        if (!target->is_under_ally_turret())
                         {
                             if (e->cast(target))
                             {
@@ -401,7 +401,7 @@ namespace tryndamere
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!combo::e_dont_use_under_enemy_turret->get_bool() || !target->is_under_enemy_turret())
+            if (!combo::e_dont_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
             {
                 if (e->cast(target))
                 {
