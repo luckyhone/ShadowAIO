@@ -401,11 +401,7 @@ namespace kindred
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            // Check if the distance between myhero and enemy is smaller than attack range
-            if (target->get_distance(myhero) <= myhero->get_attack_range())
-            {
-                q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
-            }
+            q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
         }
     }
 #pragma endregion
