@@ -231,7 +231,7 @@ namespace tryndamere
                     // Always check an object is not a nullptr!
                     if (target != nullptr)
                     {
-                        if (!myhero->is_under_enemy_turret())
+                        if (!target->is_under_enemy_turret())
                         {
                             if (e->cast(target))
                             {
