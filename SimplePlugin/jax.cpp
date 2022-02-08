@@ -1,14 +1,12 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
-#include "kindred.h"
+#include "jax.h"
 
-namespace kindred
+namespace jax
 {
     // Define the colors that will be used in on_draw()
     //
 #define Q_DRAW_COLOR (MAKE_COLOR ( 62, 129, 237, 255 ))  //Red Green Blue Alpha
-#define W_DRAW_COLOR (MAKE_COLOR ( 227, 203, 20, 255 ))  //Red Green Blue Alpha
 #define E_DRAW_COLOR (MAKE_COLOR ( 235, 12, 223, 255 ))  //Red Green Blue Alpha
-#define R_DRAW_COLOR (MAKE_COLOR ( 224, 77, 13, 255 ))   //Red Green Blue Alpha
 
 // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
@@ -22,9 +20,7 @@ namespace kindred
     namespace draw_settings
     {
         TreeEntry* draw_range_q = nullptr;
-        TreeEntry* draw_range_w = nullptr;
         TreeEntry* draw_range_e = nullptr;
-        TreeEntry* draw_range_r = nullptr;
     }
 
     namespace combo
@@ -35,7 +31,6 @@ namespace kindred
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
-        std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
     namespace harass
@@ -78,23 +73,19 @@ namespace kindred
     void e_logic();
     void r_logic();
 
-    // Utils
-    //
-    bool can_use_r_on(game_object_script target);
-
     void load()
     {
         // Registering a spells
         //
-        q = plugin_sdk->register_spell(spellslot::q, 300); //dash range = 300, arrows range = myhero attack range (affected by rapid firecannon)
-        w = plugin_sdk->register_spell(spellslot::w, 500);
-        e = plugin_sdk->register_spell(spellslot::e, 500); //todo, range based on marks (500-750 based on marks)
-        r = plugin_sdk->register_spell(spellslot::r, 535);
+        q = plugin_sdk->register_spell(spellslot::q, 700);
+        w = plugin_sdk->register_spell(spellslot::w, 0);
+        e = plugin_sdk->register_spell(spellslot::e, 300);
+        r = plugin_sdk->register_spell(spellslot::r, 0);
 
 
         // Create a menu according to the description in the "Menu Section"
         //
-        main_tab = menu->create_tab("kindred", "Kindred");
+        main_tab = menu->create_tab("jax", "Jax");
         main_tab->set_assigned_texture(myhero->get_square_icon_portrait());
         {
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
@@ -109,43 +100,29 @@ namespace kindred
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + ".comboRConfig", "R Config");
                 {
-                    combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
+                    combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 50, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
-
-                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R on");
-                    {
-                        for (auto&& ally : entitylist->get_ally_heroes())
-                        {
-                            // In this case you HAVE to set should save to false since key contains network id which is unique per game
-                            //
-                            combo::r_use_on[ally->get_network_id()] = use_r_on_tab->add_checkbox(std::to_string(ally->get_network_id()), ally->get_model(), true, false);
-
-                            // Set texture to enemy square icon
-                            //
-                            combo::r_use_on[ally->get_network_id()]->set_texture(ally->get_square_icon_portrait());
-                        }
-                    }
                 }
             }
 
             auto harass = main_tab->add_tab(myhero->get_model() + ".harass", "Harass Settings");
             {
-                harass::use_q = harass->add_checkbox(myhero->get_model() + ".harassUseQ", "Use Q", true);
+                harass::use_q = harass->add_checkbox(myhero->get_model() + ".harassUseQ", "Use Q", false);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 harass::use_w = harass->add_checkbox(myhero->get_model() + ".harassUseW", "Use W", true);
                 harass::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harassUseE", "Use E", true);
+                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harassUseE", "Use E", false);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
                 laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearToggleSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
-                laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
+                laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", false);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", true);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", true);
+                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -155,27 +132,23 @@ namespace kindred
                 jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 jungleclear::use_w = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseW", "Use W", true);
                 jungleclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseE", "Use E", true);
+                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseE", "Use E", false);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
 
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
             {
-                fleemode::use_q = fleemode->add_checkbox(myhero->get_model() + ".fleemodeUseE", "Use Q to ran away", true);
-                fleemode::use_q->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                fleemode::use_q = fleemode->add_checkbox(myhero->get_model() + ".fleemodeUseQ", "Use Q to jump on ally", true);
+                fleemode::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
             }
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".drawings", "Drawings Settings");
             {
-                draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".drawingQ", "Draw Q range", true);
+                draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".drawingW", "Draw Q range", true);
                 draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".drawingW", "Draw W range", true);
-                draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".drawingE", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".drawingR", "Draw R range", true);
-                draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
             }
         }
 
@@ -197,7 +170,7 @@ namespace kindred
 
         // Remove menu tab
         //
-        menu->delete_tab("kindred");
+        menu->delete_tab("jax");
 
         // VERY important to remove always ALL events
         //
@@ -214,7 +187,10 @@ namespace kindred
             return;
         }
 
-        r_logic();
+        if (r->is_ready() && combo::use_r->get_bool())
+        {
+            r_logic();
+        }
 
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
@@ -274,9 +250,22 @@ namespace kindred
             {
                 if (q->is_ready() && fleemode::use_q->get_bool())
                 {
-                    if (q->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
-                    {
-                        return;
+                    auto lane_minions = entitylist->get_ally_minions();
+
+                    //std::sort -> sort lane minions by distance
+                    std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                        {
+                            return a->get_position().distance(myhero->get_position()) > b->get_position().distance(myhero->get_position());
+                        });
+
+                    for (auto&& ally : entitylist->get_ally_minions()) {
+                        if (ally->get_distance(myhero->get_position()) < q->range())
+                        {
+                            if (q->cast(ally))
+                            {
+                                return;
+                            }
+                        }
                     }
                 }
             }
@@ -296,13 +285,13 @@ namespace kindred
                 // You can use this function to delete minions that aren't in the specified range
                 lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(myhero->get_attack_range());
+                        return !x->is_valid_target(q->range());
                     }), lane_minions.end());
 
                 // You can use this function to delete monsters that aren't in the specified range
                 monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(myhero->get_attack_range());
+                        return !x->is_valid_target(q->range());
                     }), monsters.end());
 
                 //std::sort -> sort lane minions by distance
@@ -323,45 +312,32 @@ namespace kindred
                     {
                         if (myhero->is_under_enemy_turret())
                         {
-                            if (myhero->count_enemies_in_range(myhero->get_attack_range()) == 0)
+                            if (myhero->count_enemies_in_range(q->range()) == 0)
                             {
-                                if (q->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
+                                if (q->cast(lane_minions.front()))
                                 {
                                     return;
                                 }
                             }
                         }
-                        else
-                        {
-                            if (lane_minions.front()->get_distance(myhero) <= myhero->get_attack_range())
-                            {
-                                if (q->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
-                                {
-                                    return;
-                                }
-                            }
-                        }
+                        if (q->cast(lane_minions.front()))
+                            return;
                     }
 
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
                         if (myhero->is_under_enemy_turret())
                         {
-                            if (myhero->count_enemies_in_range(w->range()) == 0)
+                            if (myhero->count_enemies_in_range(myhero->get_attack_range()) == 0)
                             {
-                                if (w->cast(lane_minions.front()->get_position()))
+                                if (w->cast())
                                 {
                                     return;
                                 }
                             }
                         }
-                        else
-                        {
-                            if (w->cast(lane_minions.front()->get_position()))
-                            {
-                                return;
-                            }
-                        }
+                        if (w->cast())
+                            return;
                     }
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
@@ -370,19 +346,14 @@ namespace kindred
                         {
                             if (myhero->count_enemies_in_range(e->range()) == 0)
                             {
-                                if (e->cast(lane_minions.front()))
+                                if (e->cast())
                                 {
                                     return;
                                 }
                             }
                         }
-                        else
-                        {
-                            if (e->cast(lane_minions.front()))
-                            {
-                                return;
-                            }
-                        }
+                        if (e->cast())
+                            return;
                     }
                 }
 
@@ -392,22 +363,19 @@ namespace kindred
                     // Logic responsible for monsters
                     if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
-                        if (monsters.front()->get_distance(myhero) <= myhero->get_attack_range())
-                        {
-                            q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
+                        if (q->cast(monsters.front()))
                             return;
-                        }
                     }
 
                     if (w->is_ready() && jungleclear::use_w->get_bool())
                     {
-                        if (w->cast(monsters.front()->get_position()))
+                        if (w->cast())
                             return;
                     }
 
                     if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
-                        if (e->cast(monsters.front()))
+                        if (e->cast())
                             return;
                     }
                 }
@@ -419,12 +387,17 @@ namespace kindred
     void q_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(myhero->get_attack_range(), damage_type::physical);
+        auto target = target_selector->get_target(q->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
+            // Check if the distance between myhero and enemy is smaller than q range
+            if (target->get_distance(myhero) <= q->range())
+            {
+                if (q->cast(target))
+                    return;
+            }
         }
     }
 #pragma endregion
@@ -433,12 +406,12 @@ namespace kindred
     void w_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(w->range(), damage_type::physical);
+        auto target = target_selector->get_target(myhero->get_attack_range() + 50, damage_type::magical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            w->cast(target->get_position());
+            w->cast();
         }
     }
 #pragma endregion
@@ -452,7 +425,7 @@ namespace kindred
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast(target);
+            e->cast();
         }
     }
 #pragma endregion
@@ -460,14 +433,6 @@ namespace kindred
 #pragma region r_logic
     void r_logic()
     {
-        //debug to get kindred ult buff name
-        //for (auto&& buff : myhero->get_bufflist())
-        //{
-        //    if (buff->is_valid() && buff->is_alive())
-        //    {
-        //        console->print("[ShadowAIO] [Debug] Buff name %s", buff->get_name_cstr());
-        //    }
-        //}
         if (r->is_ready() && combo::use_r->get_bool())
         {
             if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(1000) == 0)
@@ -475,34 +440,14 @@ namespace kindred
                 return;
             }
 
-            for (auto&& ally : entitylist->get_ally_heroes())
+            if (!myhero->has_buff(buff_hash("JaxR")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
             {
-                if (ally->get_distance(myhero->get_position()) <= r->range())
+                if (r->cast())
                 {
-                    if (!ally->has_buff(buff_hash("KindredRNoDeathBuff")) && ally->get_health_percent() < combo::r_myhero_hp_under->get_int())
-                    {
-                        if (can_use_r_on(ally))
-                        {
-                            if (r->cast())
-                            {
-                                return;
-                            }
-                        }
-                    }
+                    return;
                 }
             }
         }
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 #pragma endregion
 
@@ -522,21 +467,13 @@ namespace kindred
         if (q->is_ready() && draw_settings::draw_range_q->get_bool())
             draw_manager->add_circle(myhero->get_position(), q->range(), Q_DRAW_COLOR);
 
-        // Draw W range
-        if (w->is_ready() && draw_settings::draw_range_w->get_bool())
-            draw_manager->add_circle(myhero->get_position(), w->range(), W_DRAW_COLOR);
-
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
             draw_manager->add_circle(myhero->get_position(), e->range(), E_DRAW_COLOR);
 
-        // Draw R range
-        if (r->is_ready() && draw_settings::draw_range_r->get_bool())
-            draw_manager->add_circle(myhero->get_position(), r->range(), R_DRAW_COLOR);
-
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
         auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (laneclear::spell_farm->get_bool() ? "ON" : "OFF"));
+        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }
 };
