@@ -81,7 +81,7 @@ namespace kindred
     {
         // Registering a spells
         //
-        q = plugin_sdk->register_spell(spellslot::q, myhero->get_attack_range());
+        q = plugin_sdk->register_spell(spellslot::q, 300); //dash range = 300, arrows range = myhero attack range (affected by rapid firecannon)
         w = plugin_sdk->register_spell(spellslot::w, 800);
         e = plugin_sdk->register_spell(spellslot::e, 500); //todo, range based on marks (500-750 based on marks)
         r = plugin_sdk->register_spell(spellslot::r, 535);
@@ -300,7 +300,7 @@ namespace kindred
                     {
                         if (myhero->is_under_enemy_turret())
                         {
-                            if (myhero->count_enemies_in_range(q->range()) == 0)
+                            if (myhero->count_enemies_in_range(myhero->get_attack_range()) == 0)
                             {
                                 if (lane_minions.front()->get_distance(myhero) <= myhero->get_attack_range())
                                 {
@@ -395,7 +395,7 @@ namespace kindred
     void q_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(q->range(), damage_type::physical);
+        auto target = target_selector->get_target(myhero->get_attack_range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
