@@ -417,15 +417,14 @@ namespace tryndamere
     {
         if (r->is_ready() && combo::use_r->get_bool())
         {
-            if (!myhero->has_buff(buff_hash("UndyingRage")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
+            if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ZileanR")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
             {
-                if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(850) == 0)
+                if (!combo::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(850) == 0)
                 {
-                    return false;
-                }
-                if (r->cast())
-                {
-                    return true;
+                    if (r->cast())
+                    {
+                        return true;
+                    }
                 }
             }
         }
