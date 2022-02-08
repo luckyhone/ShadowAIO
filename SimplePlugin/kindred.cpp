@@ -35,7 +35,7 @@ namespace kindred
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
-        std::map<uint16_t, TreeEntry*> r_use_on;
+        std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
     namespace harass
@@ -78,6 +78,10 @@ namespace kindred
     void e_logic();
     void r_logic();
 
+    // Utils
+    //
+    bool can_use_r_on(game_object_script target);
+
     void load()
     {
         // Registering a spells
@@ -107,13 +111,18 @@ namespace kindred
                 {
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", false);
-                    auto r_use_on = r_config->add_tab(myhero->get_model() + ".comboUseRToSaveAllies", "Use R to save allies");
-                    for (auto&& ally : entitylist->get_ally_heroes())
+
+                    auto use_r_on_tab = r_config->add_tab("use_r", "Use R on");
                     {
-                        if (ally != myhero)
+                        for (auto&& ally : entitylist->get_ally_heroes())
                         {
-                            combo::r_use_on[ally->get_id()] = r_use_on->add_checkbox(myhero->get_model() + ".comboRUseOn." + ally->get_model(), " " + ally->get_model(), true);
-                            combo::r_use_on[ally->get_id()]->set_texture(ally->get_square_icon_portrait());
+                            // In this case you HAVE to set should save to false since key contains network id which is unique per game
+                            //
+                            combo::r_use_on[ally->get_network_id()] = use_r_on_tab->add_checkbox(std::to_string(ally->get_network_id()), ally->get_model(), true, false);
+
+                            // Set texture to enemy square icon
+                            //
+                            combo::r_use_on[ally->get_network_id()]->set_texture(ally->get_square_icon_portrait());
                         }
                     }
                 }
@@ -185,6 +194,10 @@ namespace kindred
         plugin_sdk->remove_spell(w);
         plugin_sdk->remove_spell(e);
         plugin_sdk->remove_spell(r);
+
+        // Remove menu tab
+        //
+        menu->delete_tab("kindred");
 
         // VERY important to remove always ALL events
         //
@@ -447,7 +460,7 @@ namespace kindred
 #pragma region r_logic
     void r_logic()
     {
-        //debug for get kindred ult buff name
+        //debug to get kindred ult buff name
         //for (auto&& buff : myhero->get_bufflist())
         //{
         //    if (buff->is_valid() && buff->is_alive())
@@ -462,21 +475,13 @@ namespace kindred
                 return;
             }
 
-            if (!myhero->has_buff(buff_hash("KindredRNoDeathBuff")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
-            {
-                if (r->cast())
-                {
-                    return;
-                }
-            }
-
             for (auto&& ally : entitylist->get_ally_heroes())
             {
-                if (ally != myhero && ally->get_distance(myhero->get_position()) <= r->range())
+                if (ally->get_distance(myhero->get_position()) <= r->range())
                 {
                     if (!ally->has_buff(buff_hash("KindredRNoDeathBuff")) && ally->get_health_percent() < combo::r_myhero_hp_under->get_int())
                     {
-                        if (combo::r_use_on[ally->get_id()]->get_bool())
+                        if (can_use_r_on(ally))
                         {
                             if (r->cast())
                             {
@@ -487,6 +492,17 @@ namespace kindred
                 }
             }
         }
+    }
+#pragma endregion
+
+#pragma region can_use_r_on
+    bool can_use_r_on(game_object_script target)
+    {
+        auto it = combo::r_use_on.find(target->get_network_id());
+        if (it == combo::r_use_on.end())
+            return false;
+
+        return it->second->get_bool();
     }
 #pragma endregion
 

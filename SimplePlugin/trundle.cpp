@@ -32,7 +32,7 @@ namespace trundle
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
-        std::map<uint16_t, TreeEntry*> r_use_on;
+        std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
     namespace harass
@@ -75,6 +75,10 @@ namespace trundle
     void e_logic();
     void r_logic();
 
+    // Utils
+    //
+    bool can_use_r_on(game_object_script target);
+
     void load()
     {
         // Registering a spells
@@ -103,11 +107,19 @@ namespace trundle
                 auto r_config = combo->add_tab(myhero->get_model() + ".comboRConfig", "R Config");
                 {
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".comboRTargetHpUnder", "Target HP is under (in %)", 50, 0, 100);
-                    auto r_use_on = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R on");
-                    for (auto&& enemy : entitylist->get_enemy_heroes())
+
+                    auto use_r_on_tab = r_config->add_tab("use_r", "Use R On");
                     {
-                        combo::r_use_on[enemy->get_id()] = r_use_on->add_checkbox(myhero->get_model() + ".comboRUseOn." + enemy->get_model(), " " + enemy->get_model(), true);
-                        combo::r_use_on[enemy->get_id()]->set_texture(enemy->get_square_icon_portrait());
+                        for (auto&& enemy : entitylist->get_enemy_heroes())
+                        {
+                            // In this case you HAVE to set should save to false since key contains network id which is unique per game
+                            //
+                            combo::r_use_on[enemy->get_network_id()] = use_r_on_tab->add_checkbox(std::to_string(enemy->get_network_id()), enemy->get_model(), true, false);
+
+                            // Set texture to enemy square icon
+                            //
+                            combo::r_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
+                        }
                     }
                 }
             }
@@ -176,6 +188,10 @@ namespace trundle
         plugin_sdk->remove_spell(w);
         plugin_sdk->remove_spell(e);
         plugin_sdk->remove_spell(r);
+
+        // Remove menu tab
+        //
+        menu->delete_tab("trundle");
 
         // VERY important to remove always ALL events
         //
@@ -434,7 +450,7 @@ namespace trundle
         {
             if (target->get_health_percent() < combo::r_target_hp_under->get_int())
             {
-                if (combo::r_use_on[target->get_id()]->get_bool())
+                if (can_use_r_on(target))
                 {
                     if (r->cast(target))
                     {
@@ -443,6 +459,17 @@ namespace trundle
                 }
             }
         }
+    }
+#pragma endregion
+
+#pragma region can_use_r_on
+    bool can_use_r_on(game_object_script target)
+    {
+        auto it = combo::r_use_on.find(target->get_network_id());
+        if (it == combo::r_use_on.end())
+            return false;
+
+        return it->second->get_bool();
     }
 #pragma endregion
 

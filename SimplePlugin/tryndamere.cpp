@@ -177,6 +177,10 @@ namespace tryndamere
         plugin_sdk->remove_spell(e);
         plugin_sdk->remove_spell(r);
 
+        // Remove menu tab
+        //
+        menu->delete_tab("tryndamere");
+
         // VERY important to remove always ALL events
         //
         event_handler<events::on_update>::remove_handler(on_update);
@@ -334,7 +338,7 @@ namespace tryndamere
 
         if (q->is_ready() && combo::use_q->get_bool())
         {
-            //debug for get tryndamere ult buff name
+            //debug to get tryndamere ult buff name
             //for (auto&& buff : myhero->get_bufflist())
             //{
             //    if (buff->is_valid() && buff->is_alive())
