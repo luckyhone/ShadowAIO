@@ -82,7 +82,7 @@ namespace kindred
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, 300); //dash range = 300, arrows range = myhero attack range (affected by rapid firecannon)
-        w = plugin_sdk->register_spell(spellslot::w, 800);
+        w = plugin_sdk->register_spell(spellslot::w, 500);
         e = plugin_sdk->register_spell(spellslot::e, 500); //todo, range based on marks (500-750 based on marks)
         r = plugin_sdk->register_spell(spellslot::r, 535);
 
@@ -273,13 +273,13 @@ namespace kindred
                 // You can use this function to delete minions that aren't in the specified range
                 lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(w->range());
+                        return !x->is_valid_target(myhero->get_attack_range());
                     }), lane_minions.end());
 
                 // You can use this function to delete monsters that aren't in the specified range
                 monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(w->range());
+                        return !x->is_valid_target(myhero->get_attack_range());
                     }), monsters.end());
 
                 //std::sort -> sort lane minions by distance
@@ -302,9 +302,8 @@ namespace kindred
                         {
                             if (myhero->count_enemies_in_range(myhero->get_attack_range()) == 0)
                             {
-                                if (lane_minions.front()->get_distance(myhero) <= myhero->get_attack_range())
+                                if (q->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
                                 {
-                                    q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
                                     return;
                                 }
                             }
@@ -313,8 +312,10 @@ namespace kindred
                         {
                             if (lane_minions.front()->get_distance(myhero) <= myhero->get_attack_range())
                             {
-                                q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
-                                return;
+                                if (q->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
+                                {
+                                    return;
+                                }
                             }
                         }
                     }
