@@ -462,9 +462,17 @@ namespace kindred
                 return;
             }
 
+            if (!myhero->has_buff(buff_hash("KindredRNoDeathBuff")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
+            {
+                if (r->cast())
+                {
+                    return;
+                }
+            }
+
             for (auto&& ally : entitylist->get_ally_heroes())
             {
-                if (ally->get_distance(myhero->get_position()) <= r->range())
+                if (ally != myhero && ally->get_distance(myhero->get_position()) <= r->range())
                 {
                     if (!ally->has_buff(buff_hash("KindredRNoDeathBuff")) && ally->get_health_percent() < combo::r_myhero_hp_under->get_int())
                     {
@@ -476,14 +484,6 @@ namespace kindred
                             }
                         }
                     }
-                }
-            }
-
-            if (!myhero->has_buff(buff_hash("KindredRNoDeathBuff")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
-            {
-                if (r->cast())
-                {
-                    return;
                 }
             }
         }
