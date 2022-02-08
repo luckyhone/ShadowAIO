@@ -108,7 +108,7 @@ namespace trundle
                 {
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".comboRTargetHpUnder", "Target HP is under (in %)", 50, 0, 100);
 
-                    auto use_r_on_tab = r_config->add_tab("use_r", "Use R On");
+                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R On");
                     {
                         for (auto&& enemy : entitylist->get_enemy_heroes())
                         {
@@ -136,7 +136,7 @@ namespace trundle
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
-                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'VK_MBUTTON', true);
+                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", true);

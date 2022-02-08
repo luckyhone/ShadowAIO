@@ -130,7 +130,7 @@ namespace tryndamere
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
-                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'VK_MBUTTON', true);
+                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", true);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = laneclear->add_tab(myhero->get_model() + ".comboEConfig", "E Config");

@@ -112,7 +112,7 @@ namespace kindred
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", false);
 
-                    auto use_r_on_tab = r_config->add_tab("use_r", "Use R on");
+                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R on");
                     {
                         for (auto&& ally : entitylist->get_ally_heroes())
                         {
@@ -140,7 +140,7 @@ namespace kindred
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
-                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'VK_MBUTTON', true);
+                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", true);
