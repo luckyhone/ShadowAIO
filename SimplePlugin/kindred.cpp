@@ -35,6 +35,7 @@ namespace kindred
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
+        std::map<uint16_t, TreeEntry*> r_use_on;
     }
 
     namespace harass
@@ -106,6 +107,15 @@ namespace kindred
                 {
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", false);
+                    auto r_use_on = r_config->add_tab(myhero->get_model() + ".comboUseRToSaveAllies", "Use R to save allies");
+                    for (auto&& ally : entitylist->get_ally_heroes())
+                    {
+                        if (ally != myhero)
+                        {
+                            combo::r_use_on[ally->get_id()] = r_use_on->add_checkbox(myhero->get_model() + ".comboRUseOn." + ally->get_model(), " " + ally->get_model(), true);
+                            combo::r_use_on[ally->get_id()]->set_texture(ally->get_square_icon_portrait());
+                        }
+                    }
                 }
             }
 
@@ -447,12 +457,30 @@ namespace kindred
         //}
         if (r->is_ready() && combo::use_r->get_bool())
         {
+            if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(1000) == 0)
+            {
+                return;
+            }
+
+            for (auto&& ally : entitylist->get_ally_heroes())
+            {
+                if (ally->get_distance(myhero->get_position()) <= r->range())
+                {
+                    if (!ally->has_buff(buff_hash("KindredRNoDeathBuff")) && ally->get_health_percent() < combo::r_myhero_hp_under->get_int())
+                    {
+                        if (combo::r_use_on[ally->get_id()]->get_bool())
+                        {
+                            if (r->cast())
+                            {
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
             if (!myhero->has_buff(buff_hash("KindredRNoDeathBuff")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
             {
-                if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(850) == 0)
-                {
-                    return;
-                }
                 if (r->cast())
                 {
                     return;

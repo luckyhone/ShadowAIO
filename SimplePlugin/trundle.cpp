@@ -107,6 +107,7 @@ namespace trundle
                     for (auto&& enemy : entitylist->get_enemy_heroes())
                     {
                         combo::r_use_on[enemy->get_id()] = r_use_on->add_checkbox(myhero->get_model() + ".comboRUseOn." + enemy->get_model(), " " + enemy->get_model(), true);
+                        combo::r_use_on[enemy->get_id()]->set_texture(enemy->get_square_icon_portrait());
                     }
                 }
             }
