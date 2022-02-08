@@ -38,7 +38,6 @@ namespace trundle
     namespace harass
     {
         TreeEntry* use_q = nullptr;
-        TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
@@ -128,8 +127,6 @@ namespace trundle
             {
                 harass::use_q = harass->add_checkbox(myhero->get_model() + ".harassUseQ", "Use Q", true);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                harass::use_w = harass->add_checkbox(myhero->get_model() + ".harassUseW", "Use W", true);
-                harass::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harassUseE", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
@@ -139,9 +136,9 @@ namespace trundle
                 laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearToggleSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", true);
+                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", false);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", true);
+                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -151,7 +148,7 @@ namespace trundle
                 jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 jungleclear::use_w = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseW", "Use W", true);
                 jungleclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseE", "Use E", true);
+                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseE", "Use E", false);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -251,11 +248,6 @@ namespace trundle
                         if (q->is_ready() && harass::use_q->get_bool())
                         {
                             q_logic();
-                        }
-
-                        if (w->is_ready() && harass::use_w->get_bool())
-                        {
-                            w_logic();
                         }
 
                         if (e->is_ready() && harass::use_e->get_bool())
@@ -500,6 +492,6 @@ namespace trundle
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
         auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 12, "FARM %s", (spellfarm ? "ON" : "OFF"));
+        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }
 };

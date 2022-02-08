@@ -456,6 +456,6 @@ namespace tryndamere
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
         auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 12, "FARM %s", (spellfarm ? "ON" : "OFF"));
+        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }
 };
