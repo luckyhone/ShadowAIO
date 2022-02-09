@@ -418,9 +418,9 @@ namespace tryndamere
         {
             if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ZileanR")))
             {
-                if (myhero->get_health_percent() < combo::r_myhero_hp_under->get_int() || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(myhero, 1.0f, true) >= myhero->get_health()))
+                if ((myhero->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(myhero, 1.0f, true) >= myhero->get_health()))
                 {
-                    if (!combo::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(850) == 0)
+                    if (!combo::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(900) != 0)
                     {
                         if (r->cast())
                         {
