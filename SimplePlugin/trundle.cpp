@@ -422,7 +422,7 @@ namespace trundle
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast(target, hit_chance::high);
+            e->cast(target, hit_chance::medium);
         }
     }
 #pragma endregion
