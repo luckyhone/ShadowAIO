@@ -5,3 +5,4 @@ Plugin for BGX.gg
 - Tryndamere
 - Kindred
 - Trundle
+- Jax
