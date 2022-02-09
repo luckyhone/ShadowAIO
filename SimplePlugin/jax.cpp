@@ -26,6 +26,7 @@ namespace jax
     namespace combo
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* q_only_when_e_ready = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
@@ -91,6 +92,10 @@ namespace jax
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".comboUseQ", "Use Q", true);
+                auto q_config = combo->add_tab(myhero->get_model() + ".comboQConfig", "Q Config");
+                {
+                    combo::q_only_when_e_ready = q_config->add_checkbox(myhero->get_model() + ".comboQOnlyWhenEReady", "Use Q only when E is ready", true);
+                }
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".comboUseW", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
@@ -255,13 +260,20 @@ namespace jax
                     //std::sort -> sort lane minions by distance
                     std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
                         {
-                            return a->get_position().distance(myhero->get_position()) > b->get_position().distance(myhero->get_position());
+                            return a->get_distance(hud->get_hud_input_logic()->get_game_cursor_position()) < b->get_distance(hud->get_hud_input_logic()->get_game_cursor_position());
                         });
 
-                    for (auto&& ally : entitylist->get_ally_minions()) {
-                        if (ally->get_distance(myhero->get_position()) < q->range())
+                    // You can use this function to delete minions that aren't in the specified range
+                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                         {
-                            if (q->cast(ally))
+                            return !x->is_valid_target(q->range());
+                        }), lane_minions.end());
+
+                    if (!lane_minions.empty())
+                    {
+                        if (myhero->get_distance(lane_minions.front()) < q->range())
+                        {
+                            if (q->cast(lane_minions.front()))
                             {
                                 return;
                             }
@@ -328,7 +340,7 @@ namespace jax
                     {
                         if (myhero->is_under_enemy_turret())
                         {
-                            if (myhero->count_enemies_in_range(myhero->get_attack_range()) == 0)
+                            if (myhero->count_enemies_in_range(myhero->get_attack_range() + 50) == 0)
                             {
                                 if (w->cast())
                                 {
@@ -392,12 +404,18 @@ namespace jax
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            // Check if the distance between myhero and enemy is smaller than q range
-            if (target->get_distance(myhero) <= q->range())
+            if (combo::q_only_when_e_ready->get_bool())
             {
-                if (q->cast(target))
-                    return;
+                if (e->is_ready())
+                {
+                    e->cast();
+                    q->cast(target);
+                }
+                return;
             }
+
+            if (q->cast(target))
+                return;
         }
     }
 #pragma endregion
