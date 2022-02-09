@@ -29,6 +29,7 @@ namespace tryndamere
         TreeEntry* use_q = nullptr;
         TreeEntry* q_myhero_hp_under = nullptr;
         TreeEntry* q_only_when_no_enemies_nearby = nullptr;
+        TreeEntry* q_use_if_fury_above = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_target_above_range = nullptr;
         TreeEntry* w_target_hp_under = nullptr;
@@ -99,6 +100,7 @@ namespace tryndamere
                 {
                     combo::q_myhero_hp_under = q_config->add_slider(myhero->get_model() + ".comboQMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::q_only_when_no_enemies_nearby = q_config->add_checkbox(myhero->get_model() + ".comboQOnlyWhenNoEnemiesNearby", "Only when no enemies are nearby", true);
+                    combo::q_use_if_fury_above = q_config->add_slider(myhero->get_model() + ".comboQUseIfFuryAbove", "Use if fury is above", 50, 0, 100);
                 }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".comboUseW", "Use W on escaping enemies", true);
                 auto w_config = combo->add_tab(myhero->get_model() + ".comboWConfig", "W Config");
@@ -349,11 +351,14 @@ namespace tryndamere
             {
                 if (myhero->get_health_percent() < combo::q_myhero_hp_under->get_int())
                 {
-                    if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(850) == 0)
+                    if (!combo::q_only_when_no_enemies_nearby->get_bool() || myhero->count_enemies_in_range(900) != 0)
                     {
-                        if (q->cast())
+                        if (myhero->get_mana() >= combo::q_use_if_fury_above->get_int())
                         {
-                            return;
+                            if (q->cast())
+                            {
+                                return;
+                            }
                         }
                     }
                 }
