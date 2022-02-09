@@ -271,11 +271,8 @@ namespace trundle
             }
 
             // Checking if the user has selected lane_clear_mode() (Default V)
-            if (orbwalker->lane_clear_mode())
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
             {
-                if (!laneclear::spell_farm->get_bool())
-                    return;
-
                 // Gets enemy minions from the entitylist
                 auto lane_minions = entitylist->get_enemy_minions();
 
@@ -420,13 +417,12 @@ namespace trundle
     void e_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(e->range() + 125, damage_type::physical);
+        auto target = target_selector->get_target(e->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            auto pred = q->get_prediction(target);
-            e->cast(pred.get_cast_position());
+            e->cast(target, hit_chance::high);
         }
     }
 #pragma endregion

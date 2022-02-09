@@ -283,11 +283,8 @@ namespace jax
             }
 
             // Checking if the user has selected lane_clear_mode() (Default V)
-            if (orbwalker->lane_clear_mode())
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
             {
-                if (!laneclear::spell_farm->get_bool())
-                    return;
-
                 // Gets enemy minions from the entitylist
                 auto lane_minions = entitylist->get_enemy_minions();
 

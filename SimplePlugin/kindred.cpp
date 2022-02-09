@@ -35,6 +35,7 @@ namespace kindred
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
+        TreeEntry* r_calculate_incoming_damage = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
@@ -111,6 +112,7 @@ namespace kindred
                 {
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
+                    combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".comboRCalculateIncomingDamage", "Calculate incoming damage", true);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R on");
                     {
@@ -214,6 +216,7 @@ namespace kindred
             return;
         }
 
+
         r_logic();
 
         // Very important if can_move ( extra_windup ) 
@@ -282,11 +285,8 @@ namespace kindred
             }
 
             // Checking if the user has selected lane_clear_mode() (Default V)
-            if (orbwalker->lane_clear_mode())
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
             {
-                if (!laneclear::spell_farm->get_bool())
-                    return;
-
                 // Gets enemy minions from the entitylist
                 auto lane_minions = entitylist->get_enemy_minions();
 
@@ -386,17 +386,13 @@ namespace kindred
                     }
                 }
 
-
                 if (!monsters.empty())
                 {
                     // Logic responsible for monsters
                     if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
-                        if (monsters.front()->get_distance(myhero) <= myhero->get_attack_range())
-                        {
-                            q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
+                        if (q->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
                             return;
-                        }
                     }
 
                     if (w->is_ready() && jungleclear::use_w->get_bool())
@@ -433,7 +429,7 @@ namespace kindred
     void w_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(w->range(), damage_type::physical);
+        auto target = target_selector->get_target(w->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
@@ -470,22 +466,23 @@ namespace kindred
         //}
         if (r->is_ready() && combo::use_r->get_bool())
         {
-            if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(1000) == 0)
-            {
-                return;
-            }
-
             for (auto&& ally : entitylist->get_ally_heroes())
             {
                 if (ally->get_distance(myhero->get_position()) <= r->range())
                 {
-                    if (!ally->has_buff(buff_hash("KindredRNoDeathBuff")) && ally->get_health_percent() < combo::r_myhero_hp_under->get_int())
+                    if (!ally->has_buff(buff_hash("KindredRNoDeathBuff")))
                     {
-                        if (can_use_r_on(ally))
+                        if (ally->get_health_percent() < combo::r_myhero_hp_under->get_int() || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, 1.0f, true) >= ally->get_health()))
                         {
-                            if (r->cast())
+                            if (can_use_r_on(ally))
                             {
-                                return;
+                                if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(850) == 0)
+                                {
+                                    if (r->cast())
+                                    {
+                                        return;
+                                    }
+                                }
                             }
                         }
                     }

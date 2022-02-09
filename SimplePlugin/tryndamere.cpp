@@ -38,6 +38,7 @@ namespace tryndamere
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
+        TreeEntry* r_calculate_incoming_damage = nullptr;
     }
 
     namespace harass
@@ -119,6 +120,7 @@ namespace tryndamere
                 {
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
+                    combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".comboRCalculateIncomingDamage", "Calculate incoming damage", true);
                 }
             }
 
@@ -255,11 +257,8 @@ namespace tryndamere
             }
 
             // Checking if the user has selected lane_clear_mode() (Default V)
-            if (orbwalker->lane_clear_mode())
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
             {
-                if (!laneclear::spell_farm->get_bool())
-                    return;
-
                 // Gets enemy minions from the entitylist
                 auto lane_minions = entitylist->get_enemy_minions();
 
@@ -417,13 +416,16 @@ namespace tryndamere
     {
         if (r->is_ready() && combo::use_r->get_bool())
         {
-            if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ZileanR")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
+            if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ZileanR")))
             {
-                if (!combo::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(850) == 0)
+                if (myhero->get_health_percent() < combo::r_myhero_hp_under->get_int() || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(myhero, 1.0f, true) >= myhero->get_health()))
                 {
-                    if (r->cast())
+                    if (!combo::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(850) == 0)
                     {
-                        return true;
+                        if (r->cast())
+                        {
+                            return true;
+                        }
                     }
                 }
             }
