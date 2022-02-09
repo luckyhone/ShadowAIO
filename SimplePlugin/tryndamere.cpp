@@ -342,7 +342,7 @@ namespace tryndamere
             //{
             //    if (buff->is_valid() && buff->is_alive())
             //    {
-            //        console->print("[ShadowAIO] [Debug] Buff name %s", buff->get_name_cstr());
+            //        console->print("[ShadowAIO] [DEBUG] Buff name %s", buff->get_name_cstr());
             //    }
             //}
             if (!myhero->has_buff(buff_hash("UndyingRage")))

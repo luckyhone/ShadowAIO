@@ -461,7 +461,7 @@ namespace kindred
         //{
         //    if (buff->is_valid() && buff->is_alive())
         //    {
-        //        console->print("[ShadowAIO] [Debug] Buff name %s", buff->get_name_cstr());
+        //        console->print("[ShadowAIO] [DEBUG] Buff name %s", buff->get_name_cstr());
         //    }
         //}
         if (r->is_ready() && combo::use_r->get_bool())
