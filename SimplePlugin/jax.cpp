@@ -94,7 +94,7 @@ namespace jax
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".comboUseQ", "Use Q", true);
                 auto q_config = combo->add_tab(myhero->get_model() + ".comboQConfig", "Q Config");
                 {
-                    combo::q_only_when_e_ready = q_config->add_checkbox(myhero->get_model() + ".comboQOnlyWhenEReady", "Use Q only when E is ready", true);
+                    combo::q_only_when_e_ready = q_config->add_checkbox(myhero->get_model() + ".comboQOnlyWhenEReady", "Use Q only when E is ready", false);
                 }
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".comboUseW", "Use W", true);

@@ -143,9 +143,9 @@ namespace kindred
                 laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearToggleSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", true);
+                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", false);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", true);
+                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
