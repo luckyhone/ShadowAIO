@@ -40,6 +40,8 @@ namespace tryndamere
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
         TreeEntry* r_calculate_incoming_damage = nullptr;
+        TreeEntry* r_disable_evade = nullptr;
+        bool previous_evade_state = false;
     }
 
     namespace harass
@@ -123,6 +125,7 @@ namespace tryndamere
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".comboRCalculateIncomingDamage", "Calculate incoming damage", true);
+                    combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".comboRDisableEvade", "Disable evade on R", false);
                 }
             }
 
@@ -419,6 +422,23 @@ namespace tryndamere
 #pragma region r_logic
     bool r_logic()
     {
+        if (combo::r_disable_evade->get_bool())
+        {
+            if (myhero->has_buff(buff_hash("UndyingRage")))
+            {
+                if (!evade->is_evade_disabled() && !combo::previous_evade_state)
+                {
+                    evade->disable_evade();
+                    combo::previous_evade_state = true;
+                }
+            }
+            else if (combo::previous_evade_state)
+            {
+                evade->enable_evade();
+                combo::previous_evade_state = false;
+            }
+        }
+
         if (r->is_ready() && combo::use_r->get_bool())
         {
             if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ZileanR")))
