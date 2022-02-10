@@ -27,6 +27,7 @@ namespace jax
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* q_only_when_e_ready = nullptr;
+        TreeEntry* q_dont_use_under_enemy_turret = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
@@ -97,6 +98,7 @@ namespace jax
                 auto q_config = combo->add_tab(myhero->get_model() + ".comboQConfig", "Q Config");
                 {
                     combo::q_only_when_e_ready = q_config->add_checkbox(myhero->get_model() + ".comboQOnlyWhenEReady", "Use Q only when E is ready", false);
+                    combo::q_dont_use_under_enemy_turret = q_config->add_checkbox(myhero->get_model() + ".comboQDontUseUnderEnemyTurret", "Dont use under enemy turret", true);
                 }
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".comboUseW", "Use W", true);
@@ -282,7 +284,7 @@ namespace jax
                             return a->get_distance(hud->get_hud_input_logic()->get_game_cursor_position()) < b->get_distance(hud->get_hud_input_logic()->get_game_cursor_position());
                         });
 
-                    // You can use this function to delete monsters that aren't in the specified range
+                    // You can use this function to delete allies that aren't in the specified range
                     allies.erase(std::remove_if(allies.begin(), allies.end(), [](game_object_script x)
                         {
                             return x->get_distance(myhero->get_position()) > q->range() || x == myhero;
@@ -417,18 +419,21 @@ namespace jax
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (combo::q_only_when_e_ready->get_bool())
+            if (!combo::q_dont_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
             {
-                if (e->is_ready())
+                if (combo::q_only_when_e_ready->get_bool())
                 {
-                    e->cast();
-                    q->cast(target);
+                    if (e->is_ready())
+                    {
+                        e->cast();
+                        q->cast(target);
+                    }
+                    return;
                 }
-                return;
-            }
 
-            if (q->cast(target))
-                return;
+                if (q->cast(target))
+                    return;
+            }
         }
     }
 #pragma endregion
