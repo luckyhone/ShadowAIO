@@ -321,9 +321,9 @@ namespace kindred
                 {
                     if (q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        if (myhero->is_under_enemy_turret())
+                        if (lane_minions.front()->is_under_ally_turret())
                         {
-                            if (myhero->count_enemies_in_range(myhero->get_attack_range()) == 0)
+                            if (myhero->count_enemies_in_range(900) == 0)
                             {
                                 if (q->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
                                 {
@@ -333,21 +333,18 @@ namespace kindred
                         }
                         else
                         {
-                            if (lane_minions.front()->get_distance(myhero) <= myhero->get_attack_range())
+                            if (q->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
                             {
-                                if (q->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
-                                {
-                                    return;
-                                }
+                                return;
                             }
                         }
                     }
 
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (myhero->is_under_enemy_turret())
+                        if (lane_minions.front()->is_under_ally_turret())
                         {
-                            if (myhero->count_enemies_in_range(w->range()) == 0)
+                            if (myhero->count_enemies_in_range(900) == 0)
                             {
                                 if (w->cast(lane_minions.front()->get_position()))
                                 {
@@ -366,9 +363,9 @@ namespace kindred
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        if (myhero->is_under_enemy_turret())
+                        if (lane_minions.front()->is_under_ally_turret())
                         {
-                            if (myhero->count_enemies_in_range(e->range()) == 0)
+                            if (myhero->count_enemies_in_range(900) == 0)
                             {
                                 if (e->cast(lane_minions.front()))
                                 {

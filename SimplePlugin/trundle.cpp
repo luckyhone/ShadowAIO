@@ -307,9 +307,9 @@ namespace trundle
                 {
                     if (q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        if (myhero->is_under_enemy_turret())
+                        if (lane_minions.front()->is_under_ally_turret())
                         {
-                            if (myhero->count_enemies_in_range(q->range()) == 0)
+                            if (myhero->count_enemies_in_range(900) == 0)
                             {
                                 if (q->cast())
                                 {
@@ -323,9 +323,9 @@ namespace trundle
 
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (myhero->is_under_enemy_turret())
+                        if (lane_minions.front()->is_under_ally_turret())
                         {
-                            if (myhero->count_enemies_in_range(w->range()) == 0)
+                            if (myhero->count_enemies_in_range(900) == 0)
                             {
                                 if (w->cast(myhero))
                                 {
@@ -339,9 +339,9 @@ namespace trundle
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        if (myhero->is_under_enemy_turret())
+                        if (lane_minions.front()->is_under_ally_turret())
                         {
-                            if (myhero->count_enemies_in_range(e->range()) == 0)
+                            if (myhero->count_enemies_in_range(900) == 0)
                             {
                                 if (e->cast(lane_minions.front()))
                                 {

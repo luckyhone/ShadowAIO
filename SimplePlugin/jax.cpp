@@ -59,6 +59,8 @@ namespace jax
     namespace fleemode
     {
         TreeEntry* use_q;
+        TreeEntry* q_jump_on_ally_champions;
+        TreeEntry* q_jump_on_ally_minions;
     }
 
 
@@ -146,6 +148,11 @@ namespace jax
             {
                 fleemode::use_q = fleemode->add_checkbox(myhero->get_model() + ".fleemodeUseQ", "Use Q to jump on ally", true);
                 fleemode::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                auto q_config = fleemode->add_tab(myhero->get_model() + ".fleemodeQConfig", "Q Config");
+                {
+                    fleemode::q_jump_on_ally_champions = q_config->add_checkbox(myhero->get_model() + ".fleemodeQJumpOnAllyChampions", "Jump on ally champions", true);
+                    fleemode::q_jump_on_ally_minions = q_config->add_checkbox(myhero->get_model() + ".fleemodeQJumpOnAllyMinions", "Jump on ally minions", true);
+                }
             }
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".drawings", "Drawings Settings");
@@ -255,28 +262,37 @@ namespace jax
             {
                 if (q->is_ready() && fleemode::use_q->get_bool())
                 {
-                    auto lane_minions = entitylist->get_ally_minions();
+                    std::vector<game_object_script> allies;
+
+                    if (fleemode::q_jump_on_ally_champions->get_bool())
+                    {
+                        auto champions = entitylist->get_ally_heroes();
+                        allies.insert(allies.end(), champions.begin(), champions.end());
+                    }
+
+                    if (fleemode::q_jump_on_ally_minions->get_bool())
+                    {
+                        auto minions = entitylist->get_ally_minions();
+                        allies.insert(allies.end(), minions.begin(), minions.end());
+                    }
 
                     //std::sort -> sort lane minions by distance
-                    std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                    std::sort(allies.begin(), allies.end(), [](game_object_script a, game_object_script b)
                         {
                             return a->get_distance(hud->get_hud_input_logic()->get_game_cursor_position()) < b->get_distance(hud->get_hud_input_logic()->get_game_cursor_position());
                         });
 
-                    // You can use this function to delete minions that aren't in the specified range
-                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                    // You can use this function to delete monsters that aren't in the specified range
+                    allies.erase(std::remove_if(allies.begin(), allies.end(), [](game_object_script x)
                         {
-                            return !x->is_valid_target(q->range());
-                        }), lane_minions.end());
+                            return x->get_distance(myhero->get_position()) > q->range() || x == myhero;
+                        }), allies.end());
 
-                    if (!lane_minions.empty())
+                    if (!allies.empty())
                     {
-                        if (myhero->get_distance(lane_minions.front()) < q->range())
+                        if (q->cast(allies.front()))
                         {
-                            if (q->cast(lane_minions.front()))
-                            {
-                                return;
-                            }
+                            return;
                         }
                     }
                 }
@@ -319,9 +335,9 @@ namespace jax
                 {
                     if (q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        if (myhero->is_under_enemy_turret())
+                        if (lane_minions.front()->is_under_ally_turret())
                         {
-                            if (myhero->count_enemies_in_range(q->range()) == 0)
+                            if (myhero->count_enemies_in_range(900) == 0)
                             {
                                 if (q->cast(lane_minions.front()))
                                 {
@@ -335,9 +351,9 @@ namespace jax
 
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (myhero->is_under_enemy_turret())
+                        if (lane_minions.front()->is_under_ally_turret())
                         {
-                            if (myhero->count_enemies_in_range(myhero->get_attack_range() + 50) == 0)
+                            if (myhero->count_enemies_in_range(900) == 0)
                             {
                                 if (w->cast())
                                 {
@@ -351,9 +367,9 @@ namespace jax
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        if (myhero->is_under_enemy_turret())
+                        if (lane_minions.front()->is_under_ally_turret())
                         {
-                            if (myhero->count_enemies_in_range(e->range()) == 0)
+                            if (myhero->count_enemies_in_range(900) == 0)
                             {
                                 if (e->cast())
                                 {
