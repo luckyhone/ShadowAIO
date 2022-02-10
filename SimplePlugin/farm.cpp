@@ -11,9 +11,7 @@ namespace farm
 		{
 			return spell->cast(unit);
 		} 
-		else
-		{
-			return false;
-		}
+		
+		return false;
 	}
 }

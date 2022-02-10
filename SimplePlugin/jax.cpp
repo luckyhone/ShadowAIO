@@ -287,7 +287,7 @@ namespace jax
                     // You can use this function to delete allies that aren't in the specified range
                     allies.erase(std::remove_if(allies.begin(), allies.end(), [](game_object_script x)
                         {
-                            return x->get_distance(myhero->get_position()) > q->range() || x == myhero;
+                            return x == myhero || x->get_distance(myhero->get_position()) > q->range();
                         }), allies.end());
 
                     if (!allies.empty())
