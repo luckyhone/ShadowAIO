@@ -160,6 +160,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="farm.cpp" />
     <ClCompile Include="jax.cpp" />
+    <ClCompile Include="kayle.cpp" />
     <ClCompile Include="kindred.cpp" />
     <ClCompile Include="trundle.cpp" />
     <ClCompile Include="tryndamere.cpp" />
@@ -170,6 +171,7 @@
     <ClInclude Include="..\plugin_sdk\plugin_sdk.hpp" />
     <ClInclude Include="farm.h" />
     <ClInclude Include="jax.h" />
+    <ClInclude Include="kayle.h" />
     <ClInclude Include="kindred.h" />
     <ClInclude Include="trundle.h" />
     <ClInclude Include="tryndamere.h" />
