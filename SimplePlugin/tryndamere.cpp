@@ -34,12 +34,14 @@ namespace tryndamere
         TreeEntry* w_target_above_range = nullptr;
         TreeEntry* w_target_hp_under = nullptr;
         TreeEntry* w_only_when_e_ready = nullptr;
+        TreeEntry* w_dont_use_target_under_turret;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_dont_use_under_enemy_turret = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
         TreeEntry* r_calculate_incoming_damage = nullptr;
+        TreeEntry* r_coming_damage_time = nullptr;
         TreeEntry* r_disable_evade = nullptr;
         bool previous_evade_state = false;
     }
@@ -110,6 +112,7 @@ namespace tryndamere
                     combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".comboWTargetAboveRange", "Target is above range", 500, 0, 800);
                     combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".comboWTargetHpUnder", "Target HP is under (in %)", 80, 0, 100);
                     combo::w_only_when_e_ready = w_config->add_checkbox(myhero->get_model() + ".comboWOnlyWhenEReady", "Use W only when E is ready", true);
+                    combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combowDontUseTargetUnderTurret", "Dont use if target is under turret", true);
                 }
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".comboUseE", "Use E", true);
@@ -125,6 +128,7 @@ namespace tryndamere
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".comboRCalculateIncomingDamage", "Calculate incoming damage", true);
+                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".comboRComingDamageTime", "Coming damage is over my HP (in %)", 1000, 0, 1000);
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".comboRDisableEvade", "Disable evade on R", false);
                 }
             }
@@ -385,9 +389,12 @@ namespace tryndamere
                 {
                     if (!combo::w_only_when_e_ready->get_bool() || e->is_ready())
                     {
-                        if (w->cast())
+                        if (!combo::w_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
                         {
-                            return;
+                            if (w->cast())
+                            {
+                                return;
+                            }
                         }
                     }
                 }
@@ -440,7 +447,7 @@ namespace tryndamere
         {
             if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ZileanR")))
             {
-                if ((myhero->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(myhero, 1.0f, true) >= myhero->get_health()))
+                if ((myhero->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(myhero, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= myhero->get_health()))
                 {
                     if (!combo::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(900) != 0)
                     {

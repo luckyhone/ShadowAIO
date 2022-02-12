@@ -33,11 +33,13 @@ namespace kayle
         TreeEntry* use_w = nullptr;
         TreeEntry* w_target_above_range = nullptr;
         TreeEntry* w_target_hp_under = nullptr;
+        TreeEntry* w_dont_use_target_under_turret;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
         TreeEntry* r_calculate_incoming_damage = nullptr;
+        TreeEntry* r_coming_damage_time = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
@@ -109,6 +111,7 @@ namespace kayle
                 {
                     combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".comboWTargetAboveRange", "Target is above range", 500, 0, 800);
                     combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".comboWTargetHpUnder", "Target HP is under (in %)", 50, 0, 100);
+                    combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combowDontUseTargetUnderTurret", "Dont use if target is under turret", true);
                 }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".comboUseE", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -119,6 +122,7 @@ namespace kayle
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".comboRCalculateIncomingDamage", "Calculate incoming damage", true);
+                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".comboRComingDamageTime", "Coming damage is over my HP (in %)", 1000, 0, 1000);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R on");
                     {
@@ -402,9 +406,12 @@ namespace kayle
             {
                 if (target->get_distance(myhero) > combo::w_target_above_range->get_int())
                 {
-                    if (w->cast(myhero))
+                    if (!combo::w_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
                     {
-                        return;
+                        if (w->cast(myhero))
+                        {
+                            return;
+                        }
                     }
                 }
             }
@@ -435,7 +442,7 @@ namespace kayle
             {
                 if (!ally->has_buff(buff_hash("KayleR")))
                 {
-                    if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, 1.0f, true) >= ally->get_health()))
+                    if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
                     {
                         if (can_use_r_on(ally))
                         {
