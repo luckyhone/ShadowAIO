@@ -128,7 +128,7 @@ namespace tryndamere
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".comboRCalculateIncomingDamage", "Calculate incoming damage", true);
-                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".comboRComingDamageTime", "Coming damage is over my HP (in %)", 1000, 0, 1000);
+                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".comboRComingDamageTime", "Set coming damage time (in ms)", 1000, 0, 1000);
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".comboRDisableEvade", "Disable evade on R", false);
                 }
             }
