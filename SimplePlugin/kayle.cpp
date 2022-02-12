@@ -400,9 +400,9 @@ namespace kayle
         {
             if (target->get_health_percent() < combo::w_target_hp_under->get_int())
             {
-                if (myhero->count_enemies_in_range(combo::w_target_above_range->get_int()) == 0)
+                if (target->get_distance(myhero) > combo::w_target_above_range->get_int())
                 {
-                    if (w->cast())
+                    if (w->cast(myhero))
                     {
                         return;
                     }
