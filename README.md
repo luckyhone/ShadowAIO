@@ -6,3 +6,4 @@ Plugin for BGX.gg
 - Kindred
 - Trundle
 - Jax
+- Kayle
