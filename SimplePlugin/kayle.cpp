@@ -216,11 +216,10 @@ namespace kayle
             return;
         }
 
-        update_range();
-
         if (r->is_ready() && combo::use_r->get_bool())
         {
             r_logic();
+            update_range();
         }
 
         // Very important if can_move ( extra_windup ) 
