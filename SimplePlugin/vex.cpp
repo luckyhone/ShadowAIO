@@ -121,7 +121,7 @@ namespace vex
                 {
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".comboRSemiManualCast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".comboRTargetHpUnder", "Target HP is under (in %)", 30, 0, 100);
-                    combo::r_target_above_range = r_config->add_slider(myhero->get_model() + ".comboRTargetAboveRange", "Target is above range", 550, 0, 800);
+                    combo::r_target_above_range = r_config->add_slider(myhero->get_model() + ".comboRTargetAboveRange", "Target is above range", 300, 0, 800);
                     combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".comboRDontUseTargetUnderTurret", "Dont use if target is under turret", true);
                     combo::r_use_only_passive_ready = r_config->add_checkbox(myhero->get_model() + ".comboRUseOnlyPassiveReady", "Use only if passive is ready", false);
 
