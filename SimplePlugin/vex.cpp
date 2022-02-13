@@ -36,7 +36,6 @@ namespace vex
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast;
         TreeEntry* r_target_hp_under = nullptr;
-        TreeEntry* r_use_if_killable = nullptr;
         TreeEntry* r_target_above_range = nullptr;
         TreeEntry* r_dont_use_target_under_turret = nullptr;
         TreeEntry* r_use_only_passive_ready = nullptr;
@@ -122,10 +121,9 @@ namespace vex
                 {
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".comboRSemiManualCast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".comboRTargetHpUnder", "Target HP is under (in %)", 30, 0, 100);
-                    combo::r_use_if_killable = r_config->add_checkbox(myhero->get_model() + ".comboRUseIfKillable", "Use if killable", true);
                     combo::r_target_above_range = r_config->add_slider(myhero->get_model() + ".comboRTargetAboveRange", "Target is above range", 550, 0, 800);
                     combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".comboRDontUseTargetUnderTurret", "Dont use if target is under turret", true);
-                    combo::r_use_only_passive_ready = r_config->add_checkbox(myhero->get_model() + ".comboRUseOnlyPassiveReady", "Use only if passive is ready", true);
+                    combo::r_use_only_passive_ready = r_config->add_checkbox(myhero->get_model() + ".comboRUseOnlyPassiveReady", "Use only if passive is ready", false);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R On");
                     {
@@ -428,7 +426,7 @@ namespace vex
             }
             else
             {
-                if ( target->get_health_percent() < combo::r_target_hp_under->get_int() || (combo::r_use_if_killable->get_bool() && r->get_damage(target) > target->get_health()) )
+                if ((target->get_health_percent() < combo::r_target_hp_under->get_int()))
                 {
                     if (can_use_r_on(target))
                     {
@@ -436,9 +434,12 @@ namespace vex
                         {
                             if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
                             {
-                                if (r->cast(target, hit_chance::very_high))
+                                if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
                                 {
-                                    return;
+                                    if (r->cast(target, hit_chance::very_high))
+                                    {
+                                        return;
+                                    }
                                 }
                             }
                         }
