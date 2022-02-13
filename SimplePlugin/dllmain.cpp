@@ -3,7 +3,7 @@
 // Declare plugin name & supported champions
 //
 PLUGIN_NAME("ShadowAIO");
-SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::Trundle, champion_id::Jax, champion_id::Kayle);
+SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::Trundle, champion_id::Jax, champion_id::Kayle, champion_id::Vex);
 
 // Include champion file
 //
@@ -12,6 +12,7 @@ SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::
 #include "trundle.h"
 #include "jax.h"
 #include "kayle.h"
+#include "vex.h"
 
 // Entry point of plugin
 //
@@ -49,6 +50,11 @@ PLUGIN_API bool on_sdk_load(plugin_sdk_core* plugin_sdk_good)
             // Load kayle script
             //
             kayle::load();
+            break;
+        case champion_id::Vex:
+            // Load vex script
+            //
+            vex::load();
             break;
         default:
             // We don't support this champ, print message and return false (core will not load this plugin and on_sdk_unload will be never called)
@@ -93,6 +99,11 @@ PLUGIN_API void on_sdk_unload()
             // Unload kayle script
             //
             kayle::unload();
+            break;
+        case champion_id::Vex:
+            // Unload kayle script
+            //
+            vex::unload();
             break;
         default:
             break;

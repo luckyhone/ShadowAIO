@@ -164,6 +164,7 @@
     <ClCompile Include="kindred.cpp" />
     <ClCompile Include="trundle.cpp" />
     <ClCompile Include="tryndamere.cpp" />
+    <ClCompile Include="vex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\clipper.h" />
@@ -175,6 +176,7 @@
     <ClInclude Include="kindred.h" />
     <ClInclude Include="trundle.h" />
     <ClInclude Include="tryndamere.h" />
+    <ClInclude Include="vex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

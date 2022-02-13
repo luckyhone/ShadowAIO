@@ -1,7 +1,8 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
-#include "kayle.h"
+#include "vex.h"
+#include "farm.h"
 
-namespace kayle
+namespace vex
 {
     // Define the colors that will be used in on_draw()
     //
@@ -31,46 +32,46 @@ namespace kayle
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
-        TreeEntry* w_target_above_range = nullptr;
-        TreeEntry* w_target_hp_under = nullptr;
-        TreeEntry* w_dont_use_target_under_turret;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
-        TreeEntry* r_myhero_hp_under = nullptr;
-        TreeEntry* r_only_when_enemies_nearby = nullptr;
-        TreeEntry* r_calculate_incoming_damage = nullptr;
-        TreeEntry* r_coming_damage_time = nullptr;
+        TreeEntry* r_semi_manual_cast;
+        TreeEntry* r_target_hp_under = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
     namespace harass
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
     namespace laneclear
     {
         TreeEntry* spell_farm = nullptr;
+        TreeEntry* farm_only_when_minions_more_than = nullptr;
         TreeEntry* use_q = nullptr;
+        TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
     namespace jungleclear
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
-    namespace fleemode
+    namespace antigapclose
     {
-        TreeEntry* use_w;
+        TreeEntry* use_w = nullptr;
     }
 
 
     // Event handler functions
     void on_update();
     void on_draw();
+    void on_gapcloser(game_object_script sender, vector const& dash_start, vector const& dash_end, float dash_speed, bool is_ally_grab);
 
     // Declaring functions responsible for spell-logic
     //
@@ -78,6 +79,7 @@ namespace kayle
     void w_logic();
     void e_logic();
     void r_logic();
+    void r_semi_manual_logic();
     void update_range();
 
     // Utils
@@ -88,16 +90,18 @@ namespace kayle
     {
         // Registering a spells
         //
-        q = plugin_sdk->register_spell(spellslot::q, 900);
-        q->set_skillshot(0.25f, 150.0f, 1600.0f, { collisionable_objects::minions, collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
-        w = plugin_sdk->register_spell(spellslot::w, 900);
-        e = plugin_sdk->register_spell(spellslot::e, 525);
-        r = plugin_sdk->register_spell(spellslot::r, 900);
+        q = plugin_sdk->register_spell(spellslot::q, 1200);
+        q->set_skillshot(0.15f, 160.f, 600.0f, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line); //width 360-160, speed 600-3200
+        w = plugin_sdk->register_spell(spellslot::w, 475); //550 against dashing enemies
+        e = plugin_sdk->register_spell(spellslot::e, 1000);
+        e->set_skillshot(0.25f, 200.0f, 1300.0f, { }, skillshot_type::skillshot_circle);
+        r = plugin_sdk->register_spell(spellslot::r, 2000); //2000, 2500, 3000
+        r->set_skillshot(0.25f, 260.0f, 1600.0f, {}, skillshot_type::skillshot_line);
 
 
         // Create a menu according to the description in the "Menu Section"
         //
-        main_tab = menu->create_tab("kayle", "Kayle");
+        main_tab = menu->create_tab("vex", "Vex");
         main_tab->set_assigned_texture(myhero->get_square_icon_portrait());
         {
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
@@ -106,34 +110,26 @@ namespace kayle
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".comboUseW", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                auto w_config = combo->add_tab(myhero->get_model() + ".comboWConfig", "W Config");
-                {
-                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".comboWTargetAboveRange", "Target is above range", 500, 0, 800);
-                    combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".comboWTargetHpUnder", "Target HP is under (in %)", 50, 0, 100);
-                    combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combowDontUseTargetUnderTurret", "Dont use if target is under turret", true);
-                }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".comboUseE", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".comboUseR", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + ".comboRConfig", "R Config");
                 {
-                    combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
-                    combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
-                    combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".comboRCalculateIncomingDamage", "Calculate incoming damage", true);
-                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".comboRComingDamageTime", "Set coming damage time (in ms)", 1000, 0, 1000);
+                    combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".rSemiManualCast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
+                    combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".comboRTargetHpUnder", "Target HP is under (in %)", 30, 0, 100);
 
-                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R on");
+                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R On");
                     {
-                        for (auto&& ally : entitylist->get_ally_heroes())
+                        for (auto&& enemy : entitylist->get_enemy_heroes())
                         {
                             // In this case you HAVE to set should save to false since key contains network id which is unique per game
                             //
-                            combo::r_use_on[ally->get_network_id()] = use_r_on_tab->add_checkbox(std::to_string(ally->get_network_id()), ally->get_model(), true, false);
+                            combo::r_use_on[enemy->get_network_id()] = use_r_on_tab->add_checkbox(std::to_string(enemy->get_network_id()), enemy->get_model(), true, false);
 
                             // Set texture to enemy square icon
                             //
-                            combo::r_use_on[ally->get_network_id()]->set_texture(ally->get_square_icon_portrait());
+                            combo::r_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
                         }
                     }
                 }
@@ -143,6 +139,8 @@ namespace kayle
             {
                 harass::use_q = harass->add_checkbox(myhero->get_model() + ".harassUseQ", "Use Q", true);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                harass::use_w = harass->add_checkbox(myhero->get_model() + ".harassUseW", "Use W", true);
+                harass::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harassUseE", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
@@ -150,9 +148,12 @@ namespace kayle
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
                 laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearToggleSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
-                laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", false);
+                laneclear::farm_only_when_minions_more_than = laneclear->add_slider(myhero->get_model() + ".laneclearFarmOnlyWhenMinionsMoreThan", "Farm only when minions more than", 2, 0, 5);
+                laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", true);
+                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", false);
+                laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -160,15 +161,16 @@ namespace kayle
             {
                 jungleclear::use_q = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseQ", "Use Q", true);
                 jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseE", "Use E", true);
+                jungleclear::use_w = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseW", "Use W", false);
+                jungleclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseE", "Use E", false);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
-
-            auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
+            auto antigapclose = main_tab->add_tab(myhero->get_model() + ".antigapclose", "Anti Gapclose");
             {
-                fleemode::use_w = fleemode->add_checkbox(myhero->get_model() + ".fleemodeUseW", "Use W to ran away", true);
-                fleemode::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                antigapclose::use_w = antigapclose->add_checkbox(myhero->get_model() + ".antigapcloseUseW", "Use W", true);
+                antigapclose::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
             }
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".drawings", "Drawings Settings");
@@ -183,6 +185,10 @@ namespace kayle
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
             }
         }
+
+        // Add anti gapcloser handler
+        //
+        antigapcloser::add_event_handler(on_gapcloser);
 
         // To add a new event you need to define a function and call add_calback
         //
@@ -201,7 +207,11 @@ namespace kayle
 
         // Remove menu tab
         //
-        menu->delete_tab("kayle");
+        menu->delete_tab("vex");
+
+        // Remove anti gapcloser handler
+        //
+        antigapcloser::remove_event_handler(on_gapcloser);
 
         // VERY important to remove always ALL events
         //
@@ -219,8 +229,8 @@ namespace kayle
 
         if (r->is_ready() && combo::use_r->get_bool())
         {
-            r_logic();
             update_range();
+            r_semi_manual_logic();
         }
 
         // Very important if can_move ( extra_windup ) 
@@ -244,6 +254,11 @@ namespace kayle
                 if (e->is_ready() && combo::use_e->get_bool())
                 {
                     e_logic();
+                }
+
+                if (r->is_ready() && combo::use_r->get_bool())
+                {
+                    r_logic();
                 }
             }
 
@@ -271,18 +286,6 @@ namespace kayle
                 }
             }
 
-            // Checking if the user has selected flee_mode() (Default Z)
-            if (orbwalker->flee_mode())
-            {
-                if (w->is_ready() && fleemode::use_w->get_bool())
-                {
-                    if (w->cast(myhero))
-                    {
-                        return;
-                    }
-                }
-            }
-
             // Checking if the user has selected lane_clear_mode() (Default V)
             if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
             {
@@ -295,13 +298,13 @@ namespace kayle
                 // You can use this function to delete minions that aren't in the specified range
                 lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(e->range());
+                        return !x->is_valid_target(q->range());
                     }), lane_minions.end());
 
                 // You can use this function to delete monsters that aren't in the specified range
                 monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(e->range());
+                        return !x->is_valid_target(q->range());
                     }), monsters.end());
 
                 //std::sort -> sort lane minions by distance
@@ -316,55 +319,40 @@ namespace kayle
                         return a->get_max_health() > b->get_max_health();
                     });
 
-                if (!lane_minions.empty())
+                if (!lane_minions.empty() && lane_minions.size() >= laneclear::farm_only_when_minions_more_than->get_int())
                 {
                     if (q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        if (lane_minions.front()->is_under_ally_turret())
-                        {
-                            if (myhero->count_enemies_in_range(900) == 0)
-                            {
-                                if (q->cast(lane_minions.front()))
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                        if (q->cast(lane_minions.front()))
-                            return;
+                        q->cast(lane_minions.front(), hit_chance::high);
+                    }
+
+                    if (w->is_ready() && laneclear::use_w->get_bool())
+                    {
+                        farm::cast_verify_range(w, lane_minions.front());
                     }
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        if (lane_minions.front()->is_under_ally_turret())
-                        {
-                            if (myhero->count_enemies_in_range(900) == 0)
-                            {
-                                if (e->cast())
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                        if (e->cast())
-                            return;
+                        farm::cast_verify_range(e, lane_minions.front(), hit_chance::high);
                     }
                 }
 
 
                 if (!monsters.empty())
                 {
-                    // Logic responsible for monsters
-                    if (q->is_ready() && jungleclear::use_q->get_bool())
+                    if (q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        if (q->cast(monsters.front()))
-                            return;
+                        q->cast(monsters.front(), hit_chance::high);
                     }
 
-                    if (e->is_ready() && jungleclear::use_e->get_bool())
+                    if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (e->cast())
-                            return;
+                        farm::cast_verify_range(w, monsters.front());
+                    }
+
+                    if (e->is_ready() && laneclear::use_e->get_bool())
+                    {
+                        farm::cast_verify_range(e, monsters.front(), hit_chance::high);
                     }
                 }
             }
@@ -380,12 +368,8 @@ namespace kayle
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            // Check if the distance between myhero and enemy is smaller than q range
-            if (target->get_distance(myhero) <= q->range())
-            {
-                if (q->cast(target, hit_chance::high))
-                    return;
-            }
+            if (q->cast(target, hit_chance::high))
+                return;
         }
     }
 #pragma endregion
@@ -399,19 +383,7 @@ namespace kayle
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (target->get_health_percent() < combo::w_target_hp_under->get_int())
-            {
-                if (target->get_distance(myhero) > combo::w_target_above_range->get_int())
-                {
-                    if (!combo::w_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
-                    {
-                        if (w->cast(myhero))
-                        {
-                            return;
-                        }
-                    }
-                }
-            }
+            w->cast();
         }
     }
 #pragma endregion
@@ -425,7 +397,7 @@ namespace kayle
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast();
+            e->cast(target, hit_chance::high);
         }
     }
 #pragma endregion
@@ -433,23 +405,55 @@ namespace kayle
 #pragma region r_logic
     void r_logic()
     {
-        for (auto&& ally : entitylist->get_ally_heroes())
+        // Get a target from a given range
+        auto target = target_selector->get_target(r->range(), damage_type::magical);
+
+        // Always check an object is not a nullptr!
+        if (target != nullptr)
         {
-            if (ally->get_distance(myhero->get_position()) <= r->range())
+            if (target->has_buff(buff_hash("VexRTarget")))
             {
-                if (!ally->has_buff(buff_hash("KayleR")))
+                r->cast();
+            }
+            else
+            {
+                if ((target->get_health_percent() < combo::r_target_hp_under->get_int()))
                 {
-                    if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
+                    if (can_use_r_on(target))
                     {
-                        if (can_use_r_on(ally))
+                        if (r->cast(target, hit_chance::very_high))
                         {
-                            if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(900) != 0)
-                            {
-                                if (r->cast(ally))
-                                {
-                                    return;
-                                }
-                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+#pragma endregion
+
+#pragma region r_logic
+    void r_semi_manual_logic()
+    {
+        if (combo::r_semi_manual_cast->get_bool())
+        {
+            // Get a target from a given range
+            auto target = target_selector->get_target(r->range(), damage_type::magical);
+
+            // Always check an object is not a nullptr!
+            if (target != nullptr)
+            {
+                if (target->has_buff(buff_hash("VexRTarget")))
+                {
+                    r->cast();
+                }
+                else
+                {
+                    if (can_use_r_on(target))
+                    {
+                        if (r->cast(target, hit_chance::very_high))
+                        {
+                            return;
                         }
                     }
                 }
@@ -472,15 +476,24 @@ namespace kayle
 #pragma region update_range
     void update_range()
     {
-        if (e->is_ready())
+        auto level = r->level();
+        if (level != 1)
         {
-            if (myhero->get_spell(spellslot::r)->level() != 0)
-            {
-                e->set_range(myhero->get_attack_range());
-            }
+            r->set_range(level == 1 ? 2000 : level == 2 ? 2500 : 3000);
         }
     }
 #pragma endregion
+
+    void on_gapcloser(game_object_script sender, vector const& dash_start, vector const& dash_end, float dash_speed, bool is_ally_grab)
+    {
+        if (antigapclose::use_w->get_bool() && w->is_ready())
+        {
+            if (sender->is_valid_target(w->range() + sender->get_bounding_radius()))
+            {
+                w->cast();
+            }
+        }
+    }
 
     void on_draw()
     {
@@ -508,7 +521,9 @@ namespace kayle
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
+        auto semi = combo::r_semi_manual_cast->get_bool();
         auto spellfarm = laneclear::spell_farm->get_bool();
+        draw_manager->add_text_on_screen(pos + vector(0, 24), (semi ? 0xFF00FF00 : 0xFF0000FF), 14, "SEMI R %s", (semi ? "ON" : "OFF"));
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }
 };

@@ -37,6 +37,9 @@
     <ClCompile Include="kayle.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="vex.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -64,6 +67,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="kayle.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="vex.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

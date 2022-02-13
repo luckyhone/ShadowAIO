@@ -72,7 +72,6 @@ namespace tryndamere
     // Event handler functions
     void on_update();
     void on_draw();
-    void on_before_attack(game_object_script sender, bool* process);
 
     // Declaring functions responsible for spell-logic
     //
@@ -176,7 +175,6 @@ namespace tryndamere
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
-        event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
     }
 
     void unload()
@@ -196,7 +194,6 @@ namespace tryndamere
         //
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
-        event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
     }
 
     // Main update script function
@@ -462,10 +459,6 @@ namespace tryndamere
         return false;
     }
 #pragma endregion
-
-    void on_before_attack(game_object_script sender, bool* process)
-    {
-    }
 
     void on_draw()
     {
