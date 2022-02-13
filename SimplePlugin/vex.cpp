@@ -70,6 +70,13 @@ namespace vex
         TreeEntry* use_w = nullptr;
     }
 
+    namespace hitchance
+    {
+        TreeEntry* q_hitchance = nullptr;
+        TreeEntry* e_hitchance = nullptr;
+        TreeEntry* r_hitchance = nullptr;
+    }
+
 
     // Event handler functions
     void on_update();
@@ -88,6 +95,7 @@ namespace vex
     // Utils
     //
     bool can_use_r_on(game_object_script target);
+    hit_chance get_hitchance(TreeEntry* entry);
 
     void load()
     {
@@ -109,23 +117,23 @@ namespace vex
         {
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
-                combo::use_q = combo->add_checkbox(myhero->get_model() + ".comboUseQ", "Use Q", true);
+                combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                combo::use_w = combo->add_checkbox(myhero->get_model() + ".comboUseW", "Use W", true);
+                combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                combo::use_e = combo->add_checkbox(myhero->get_model() + ".comboUseE", "Use E", true);
+                combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                combo::use_r = combo->add_checkbox(myhero->get_model() + ".comboUseR", "Use R", true);
+                combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
-                auto r_config = combo->add_tab(myhero->get_model() + ".comboRConfig", "R Config");
+                auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
-                    combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".comboRSemiManualCast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
-                    combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".comboRTargetHpUnder", "Target HP is under (in %)", 30, 0, 100);
-                    combo::r_target_above_range = r_config->add_slider(myhero->get_model() + ".comboRTargetAboveRange", "Target is above range", 300, 0, 800);
-                    combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".comboRDontUseTargetUnderTurret", "Dont use if target is under turret", true);
-                    combo::r_use_only_passive_ready = r_config->add_checkbox(myhero->get_model() + ".comboRUseOnlyPassiveReady", "Use only if passive is ready", false);
+                    combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
+                    combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 30, 0, 100);
+                    combo::r_target_above_range = r_config->add_slider(myhero->get_model() + ".combo.r.target_is_above_range", "Target is above range", 300, 0, 800);
+                    combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_if_target_is_under_turret", "Dont use if target is under turret", true);
+                    combo::r_use_only_passive_ready = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_only_passive_ready", "Use only if passive is ready", false);
 
-                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R On");
+                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
                         for (auto&& enemy : entitylist->get_enemy_heroes())
                         {
@@ -143,11 +151,11 @@ namespace vex
 
             auto harass = main_tab->add_tab(myhero->get_model() + ".harass", "Harass Settings");
             {
-                harass::use_q = harass->add_checkbox(myhero->get_model() + ".harassUseQ", "Use Q", true);
+                harass::use_q = harass->add_checkbox(myhero->get_model() + ".harass.q", "Use Q", true);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                harass::use_w = harass->add_checkbox(myhero->get_model() + ".harassUseW", "Use W", true);
+                harass::use_w = harass->add_checkbox(myhero->get_model() + ".harass.w", "Use W", true);
                 harass::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harassUseE", "Use E", true);
+                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -155,28 +163,35 @@ namespace vex
             {
                 laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearToggleSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
                 laneclear::farm_only_when_minions_more_than = laneclear->add_slider(myhero->get_model() + ".laneclearFarmOnlyWhenMinionsMoreThan", "Farm only when minions more than", 2, 0, 5);
-                laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", true);
+                laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseW", "Use W", false);
+                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", false);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", false);
+                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto jungleclear = main_tab->add_tab(myhero->get_model() + ".jungleclear", "Jungle Clear Settings");
             {
-                jungleclear::use_q = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseQ", "Use Q", true);
+                jungleclear::use_q = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.q", "Use Q", true);
                 jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                jungleclear::use_w = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseW", "Use W", false);
+                jungleclear::use_w = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.w", "Use W", false);
                 jungleclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseE", "Use E", false);
+                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", false);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto antigapclose = main_tab->add_tab(myhero->get_model() + ".antigapclose", "Anti Gapclose");
             {
-                antigapclose::use_w = antigapclose->add_checkbox(myhero->get_model() + ".antigapcloseUseW", "Use W", true);
+                antigapclose::use_w = antigapclose->add_checkbox(myhero->get_model() + ".antigapclose.w", "Use W", true);
                 antigapclose::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+            }
+
+            auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
+            {
+                hitchance::q_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.q", "Hitchance Q", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
+                hitchance::e_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.e", "Hitchance E", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
+                hitchance::r_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.r", "Hitchance R", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 3);
             }
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".drawings", "Drawings Settings");
@@ -329,7 +344,7 @@ namespace vex
                 {
                     if (q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        q->cast(lane_minions.front(), hit_chance::high);
+                        q->cast(lane_minions.front(), get_hitchance(hitchance::q_hitchance));
                     }
 
                     if (w->is_ready() && laneclear::use_w->get_bool())
@@ -339,7 +354,7 @@ namespace vex
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        farm::cast_verify_range(e, lane_minions.front(), hit_chance::high);
+                        farm::cast_verify_range(e, lane_minions.front(), get_hitchance(hitchance::e_hitchance));
                     }
                 }
 
@@ -348,7 +363,7 @@ namespace vex
                 {
                     if (q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        q->cast(monsters.front(), hit_chance::high);
+                        q->cast(monsters.front(), get_hitchance(hitchance::q_hitchance));
                     }
 
                     if (w->is_ready() && laneclear::use_w->get_bool())
@@ -358,7 +373,7 @@ namespace vex
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        farm::cast_verify_range(e, monsters.front(), hit_chance::high);
+                        farm::cast_verify_range(e, monsters.front(), get_hitchance(hitchance::e_hitchance));
                     }
                 }
             }
@@ -374,7 +389,7 @@ namespace vex
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (q->cast(target, hit_chance::high))
+            if (q->cast(target, get_hitchance(hitchance::q_hitchance)))
                 return;
         }
     }
@@ -403,7 +418,7 @@ namespace vex
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast(target, hit_chance::high);
+            e->cast(target, get_hitchance(hitchance::e_hitchance));
         }
     }
 #pragma endregion
@@ -436,7 +451,7 @@ namespace vex
                             {
                                 if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
                                 {
-                                    if (r->cast(target, hit_chance::very_high))
+                                    if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
                                     {
                                         return;
                                     }
@@ -478,7 +493,7 @@ namespace vex
                             {
                                 if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
                                 {
-                                    if (r->cast(target, hit_chance::very_high))
+                                    if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
                                     {
                                         return;
                                     }
@@ -502,6 +517,29 @@ namespace vex
         return it->second->get_bool();
     }
 #pragma endregion
+
+#pragma region get_hitchance
+    hit_chance get_hitchance(TreeEntry* entry)
+    {
+        switch (entry->get_int())
+        {
+            case 0:
+                return hit_chance::low;
+                break;
+            case 1:
+                return hit_chance::medium;
+                break;
+            case 2:
+                return hit_chance::high;
+                break;
+            case 3:
+                return hit_chance::very_high;
+                break;
+        }
+        return hit_chance::medium;
+    }
+#pragma endregion
+
 
 #pragma region update_range
     void update_range()
