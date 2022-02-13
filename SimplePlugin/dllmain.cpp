@@ -101,7 +101,7 @@ PLUGIN_API void on_sdk_unload()
             kayle::unload();
             break;
         case champion_id::Vex:
-            // Unload kayle script
+            // Unload vex script
             //
             vex::unload();
             break;

@@ -111,7 +111,7 @@ namespace tryndamere
                     combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".comboWTargetAboveRange", "Target is above range", 500, 0, 800);
                     combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".comboWTargetHpUnder", "Target HP is under (in %)", 80, 0, 100);
                     combo::w_only_when_e_ready = w_config->add_checkbox(myhero->get_model() + ".comboWOnlyWhenEReady", "Use W only when E is ready", true);
-                    combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combowDontUseTargetUnderTurret", "Dont use if target is under turret", true);
+                    combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".comboWDontUseTargetUnderTurret", "Dont use if target is under turret", true);
                 }
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".comboUseE", "Use E", true);

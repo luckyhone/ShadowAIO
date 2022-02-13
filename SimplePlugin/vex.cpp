@@ -36,6 +36,10 @@ namespace vex
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast;
         TreeEntry* r_target_hp_under = nullptr;
+        TreeEntry* r_use_if_killable = nullptr;
+        TreeEntry* r_target_above_range = nullptr;
+        TreeEntry* r_dont_use_target_under_turret = nullptr;
+        TreeEntry* r_use_only_passive_ready = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
@@ -96,7 +100,7 @@ namespace vex
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 200.0f, 1300.0f, { }, skillshot_type::skillshot_circle);
         r = plugin_sdk->register_spell(spellslot::r, 2000); //2000, 2500, 3000
-        r->set_skillshot(0.25f, 260.0f, 1600.0f, {}, skillshot_type::skillshot_line);
+        r->set_skillshot(0.25f, 260.0f, 1600.0f, { collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
 
 
         // Create a menu according to the description in the "Menu Section"
@@ -116,8 +120,12 @@ namespace vex
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + ".comboRConfig", "R Config");
                 {
-                    combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".rSemiManualCast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
+                    combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".comboRSemiManualCast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".comboRTargetHpUnder", "Target HP is under (in %)", 30, 0, 100);
+                    combo::r_use_if_killable = r_config->add_checkbox(myhero->get_model() + ".comboRUseIfKillable", "Use if killable", true);
+                    combo::r_target_above_range = r_config->add_slider(myhero->get_model() + ".comboRTargetAboveRange", "Target is above range", 550, 0, 800);
+                    combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".comboRDontUseTargetUnderTurret", "Dont use if target is under turret", true);
+                    combo::r_use_only_passive_ready = r_config->add_checkbox(myhero->get_model() + ".comboRUseOnlyPassiveReady", "Use only if passive is ready", true);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R On");
                     {
@@ -238,7 +246,7 @@ namespace vex
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
-            //Checking if the user has combo_mode() (Default SPACE)
+            //Checking if the user has combo_mode() (Default SPACE
             if (orbwalker->combo_mode())
             {
                 if (q->is_ready() && combo::use_q->get_bool())
@@ -413,17 +421,26 @@ namespace vex
         {
             if (target->has_buff(buff_hash("VexRTarget")))
             {
-                r->cast();
+                if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
+                {
+                    r->cast();
+                }
             }
             else
             {
-                if ((target->get_health_percent() < combo::r_target_hp_under->get_int()))
+                if ( target->get_health_percent() < combo::r_target_hp_under->get_int() || (combo::r_use_if_killable->get_bool() && r->get_damage(target) > target->get_health()) )
                 {
                     if (can_use_r_on(target))
                     {
-                        if (r->cast(target, hit_chance::very_high))
+                        if (target->get_distance(myhero) > combo::r_target_above_range->get_int())
                         {
-                            return;
+                            if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
+                            {
+                                if (r->cast(target, hit_chance::very_high))
+                                {
+                                    return;
+                                }
+                            }
                         }
                     }
                 }
@@ -445,15 +462,27 @@ namespace vex
             {
                 if (target->has_buff(buff_hash("VexRTarget")))
                 {
-                    r->cast();
+                    if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
+                    {
+                        r->cast();
+                    }
                 }
                 else
                 {
                     if (can_use_r_on(target))
                     {
-                        if (r->cast(target, hit_chance::very_high))
+                        if (target->get_distance(myhero) > combo::r_target_above_range->get_int())
                         {
-                            return;
+                            if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
+                            {
+                                if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
+                                {
+                                    if (r->cast(target, hit_chance::very_high))
+                                    {
+                                        return;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
