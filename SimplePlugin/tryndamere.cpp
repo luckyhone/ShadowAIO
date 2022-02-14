@@ -97,76 +97,76 @@ namespace tryndamere
         {
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
-                combo::use_q = combo->add_checkbox(myhero->get_model() + ".comboUseQ", "Use Q", true);
+                combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                auto q_config = combo->add_tab(myhero->get_model() + ".comboQConfig", "Q Config");
+                auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
-                    combo::q_myhero_hp_under = q_config->add_slider(myhero->get_model() + ".comboQMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
-                    combo::q_only_when_no_enemies_nearby = q_config->add_checkbox(myhero->get_model() + ".comboQOnlyWhenNoEnemiesNearby", "Only when no enemies are nearby", true);
-                    combo::q_use_if_fury_above = q_config->add_slider(myhero->get_model() + ".comboQUseIfFuryAbove", "Use if fury is above", 50, 0, 100);
+                    combo::q_myhero_hp_under = q_config->add_slider(myhero->get_model() + ".combo.q.myhero_hp_under", "Myhero HP is under (in %)", 20, 0, 100);
+                    combo::q_only_when_no_enemies_nearby = q_config->add_checkbox(myhero->get_model() + ".combo.q.only_when_no_enemies_nearby", "Only when no enemies are nearby", true);
+                    combo::q_use_if_fury_above = q_config->add_slider(myhero->get_model() + ".combo.q.use_if_fury_above", "Use if fury is above", 50, 0, 100);
                 }
-                combo::use_w = combo->add_checkbox(myhero->get_model() + ".comboUseW", "Use W on escaping enemies", true);
-                auto w_config = combo->add_tab(myhero->get_model() + ".comboWConfig", "W Config");
+                combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W on escaping enemies", true);
+                auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
-                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".comboWTargetAboveRange", "Target is above range", 500, 0, 800);
-                    combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".comboWTargetHpUnder", "Target HP is under (in %)", 80, 0, 100);
-                    combo::w_only_when_e_ready = w_config->add_checkbox(myhero->get_model() + ".comboWOnlyWhenEReady", "Use W only when E is ready", true);
-                    combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".comboWDontUseTargetUnderTurret", "Dont use if target is under turret", true);
+                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Target is above range", 500, 0, 800);
+                    combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".combo.w.target_hp_under", "Target HP is under (in %)", 80, 0, 100);
+                    combo::w_only_when_e_ready = w_config->add_checkbox(myhero->get_model() + ".combo.w.only_when_e_ready", "Use W only when E is ready", true);
+                    combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_target_under_turret", "Dont use if target is under turret", true);
                 }
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                combo::use_e = combo->add_checkbox(myhero->get_model() + ".comboUseE", "Use E", true);
+                combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                auto e_config = combo->add_tab(myhero->get_model() + ".comboEConfig", "E Config");
+                auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
-                    combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".comboEDontUseUnderEnemyTurret", "Dont use under enemy turret", true);
+                    combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".combo.e.dont_use_under_enemy_turret", "Dont use under enemy turret", true);
                 }
-                combo::use_r = combo->add_checkbox(myhero->get_model() + ".comboUseR", "Use R", true);
+                combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
-                auto r_config = combo->add_tab(myhero->get_model() + ".comboRConfig", "R Config");
+                auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
-                    combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
-                    combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
-                    combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".comboRCalculateIncomingDamage", "Calculate incoming damage", true);
-                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".comboRComingDamageTime", "Set coming damage time (in ms)", 1000, 0, 1000);
-                    combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".comboRDisableEvade", "Disable evade on R", false);
+                    combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.myhero_hp_under", "Myhero HP is under (in %)", 20, 0, 100);
+                    combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
+                    combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
+                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 1000, 0, 1000);
+                    combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable evade on R", false);
                 }
             }
 
             auto harass = main_tab->add_tab(myhero->get_model() + ".harass", "Harass Settings");
             {
-                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harassUseE", "Use E", true);
+                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
-                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearToggleSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
-                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", true);
+                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclear.enabled", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
+                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", true);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                auto e_config = laneclear->add_tab(myhero->get_model() + ".comboEConfig", "E Config");
+                auto e_config = laneclear->add_tab(myhero->get_model() + ".laneclear.e.config", "E Config");
                 {
-                   laneclear::e_only_when_minions_more_than = e_config->add_slider(myhero->get_model() + ".laneclearUseEOnlyWhenMinionsMoreThan", "Use only when minions more than", 3, 0, 5);
+                   laneclear::e_only_when_minions_more_than = e_config->add_slider(myhero->get_model() + ".laneclear.e.use_only_when_minions_more_than", "Use only when minions more than", 3, 0, 5);
                 }
             }
 
             auto jungleclear = main_tab->add_tab(myhero->get_model() + ".jungleclear", "Jungle Clear Settings");
             {
-                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearrUseE", "Use E", true);
+                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", true);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
 
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
             {
-                fleemode::use_e = fleemode->add_checkbox(myhero->get_model() + ".fleemodeUseE", "Use E to ran away", true);
+                fleemode::use_e = fleemode->add_checkbox(myhero->get_model() + ".flee.e", "Use E to ran away", true);
                 fleemode::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
-            auto draw_settings = main_tab->add_tab(myhero->get_model() + ".drawings", "Drawings Settings");
+            auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
-                draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".drawingW", "Draw W range", true);
+                draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
                 draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".drawingE", "Draw E range", true);
+                draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
         }

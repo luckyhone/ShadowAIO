@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "kayle.h"
+#include "farm.h"
 
 namespace kayle
 {
@@ -62,9 +63,21 @@ namespace kayle
         TreeEntry* use_e = nullptr;
     }
 
+    namespace lasthit
+    {
+        TreeEntry* lasthit = nullptr;
+        TreeEntry* use_q = nullptr;
+        TreeEntry* use_e = nullptr;
+    }
+
     namespace fleemode
     {
         TreeEntry* use_w;
+    }
+
+    namespace hitchance
+    {
+        TreeEntry* q_hitchance = nullptr;
     }
 
 
@@ -83,6 +96,7 @@ namespace kayle
     // Utils
     //
     bool can_use_r_on(game_object_script target);
+    hit_chance get_hitchance(TreeEntry* entry);
 
     void load()
     {
@@ -102,28 +116,28 @@ namespace kayle
         {
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
-                combo::use_q = combo->add_checkbox(myhero->get_model() + ".comboUseQ", "Use Q", true);
+                combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                combo::use_w = combo->add_checkbox(myhero->get_model() + ".comboUseW", "Use W", true);
+                combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                auto w_config = combo->add_tab(myhero->get_model() + ".comboWConfig", "W Config");
+                auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
-                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".comboWTargetAboveRange", "Target is above range", 500, 0, 800);
-                    combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".comboWTargetHpUnder", "Target HP is under (in %)", 50, 0, 100);
-                    combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combowDontUseTargetUnderTurret", "Dont use if target is under turret", true);
+                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Target is above range", 500, 0, 800);
+                    combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".combo.w.target_hp_under", "Target HP is under (in %)", 50, 0, 100);
+                    combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_target_under_turret", "Dont use if target is under turret", true);
                 }
-                combo::use_e = combo->add_checkbox(myhero->get_model() + ".comboUseE", "Use E", true);
+                combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                combo::use_r = combo->add_checkbox(myhero->get_model() + ".comboUseR", "Use R", true);
+                combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
-                auto r_config = combo->add_tab(myhero->get_model() + ".comboRConfig", "R Config");
+                auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
-                    combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".comboRMyheroHpUnder", "Myhero HP is under (in %)", 20, 0, 100);
-                    combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".comboROnlyWhenEnemiesNearby", "Only when enemies are nearby", true);
-                    combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".comboRCalculateIncomingDamage", "Calculate incoming damage", true);
-                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".comboRComingDamageTime", "Set coming damage time (in ms)", 1000, 0, 1000);
+                    combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.myhero_hp_under", "Myhero HP is under (in %)", 20, 0, 100);
+                    combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
+                    combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
+                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 1000, 0, 1000);
 
-                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".comboRUseOn", "Use R on");
+                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R on");
                     {
                         for (auto&& ally : entitylist->get_ally_heroes())
                         {
@@ -141,45 +155,58 @@ namespace kayle
 
             auto harass = main_tab->add_tab(myhero->get_model() + ".harass", "Harass Settings");
             {
-                harass::use_q = harass->add_checkbox(myhero->get_model() + ".harassUseQ", "Use Q", true);
+                harass::use_q = harass->add_checkbox(myhero->get_model() + ".harass.q", "Use Q", true);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harassUseE", "Use E", true);
+                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
-                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearToggleSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
-                laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseQ", "Use Q", false);
+                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclear.enabled", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
+                laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q", "Use Q", false);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclearUseE", "Use E", true);
+                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", true);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto jungleclear = main_tab->add_tab(myhero->get_model() + ".jungleclear", "Jungle Clear Settings");
             {
-                jungleclear::use_q = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseQ", "Use Q", true);
+                jungleclear::use_q = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.q", "Use Q", true);
                 jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclearUseE", "Use E", true);
+                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", true);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
+            auto lasthit = main_tab->add_tab(myhero->get_model() + ".lasthit", "Last Hit Settings");
+            {
+                lasthit::lasthit = laneclear->add_hotkey(myhero->get_model() + ".lasthit.enabled", "Toggle Last Hit", TreeHotkeyMode::Toggle, 'J', true);
+                lasthit::use_q = lasthit->add_checkbox(myhero->get_model() + ".lasthit.q", "Use Q", false);
+                lasthit::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                lasthit::use_e = lasthit->add_checkbox(myhero->get_model() + ".lasthit.e", "Use E", true);
+                lasthit::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+            }
 
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
             {
-                fleemode::use_w = fleemode->add_checkbox(myhero->get_model() + ".fleemodeUseW", "Use W to ran away", true);
+                fleemode::use_w = fleemode->add_checkbox(myhero->get_model() + ".flee.w", "Use W to ran away", true);
                 fleemode::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
             }
 
-            auto draw_settings = main_tab->add_tab(myhero->get_model() + ".drawings", "Drawings Settings");
+            auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
             {
-                draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".drawingQ", "Draw Q range", true);
+                hitchance::q_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.q", "Hitchance Q", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
+            }
+
+            auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
+            {
+                draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", true);
                 draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".drawingW", "Draw W range", true);
+                draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
                 draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".drawingE", "Draw E range", true);
+                draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".drawingR", "Draw R range", true);
+                draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".draw.r", "Draw R range", true);
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
             }
         }
@@ -247,11 +274,63 @@ namespace kayle
                 }
             }
 
+            if (orbwalker->last_hit_mode() || orbwalker->mixed_mode())
+            {
+                if (lasthit::lasthit->get_bool())
+                {
+                    // Gets enemy minions from the entitylist
+                    auto lane_minions = entitylist->get_enemy_minions();
+
+                    // You can use this function to delete minions that aren't in the specified range
+                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                        {
+                            return !x->is_valid_target(q->range());
+                        }), lane_minions.end());
+
+                    //std::sort -> sort lane minions by distance
+                    std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                        {
+                            return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                        });
+
+                    if (!lane_minions.empty())
+                    {
+                        if (q->is_ready() && lasthit::use_q->get_bool())
+                        {
+                            for (auto&& minion : lane_minions)
+                            {
+                                if (q->get_damage(minion) > minion->get_health())
+                                {
+                                    if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
+                                    {
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (e->is_ready() && lasthit::use_e->get_bool())
+                        {
+                            for (auto&& minion : lane_minions)
+                            {
+                                if (e->get_damage(minion) + myhero->get_auto_attack_damage(minion) > minion->get_health())
+                                {
+                                    if (farm::cast_verify_range(e, minion))
+                                    {
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             //Checking if the user has selected harass() (Default C)
             if (orbwalker->harass())
             {
                 // Get a target from a given range
-                auto target = target_selector->get_target(e->range(), damage_type::physical);
+                auto target = target_selector->get_target(e->range(), damage_type::magical);
 
                 // Always check an object is not a nullptr!
                 if (target != nullptr)
@@ -383,7 +462,7 @@ namespace kayle
             // Check if the distance between myhero and enemy is smaller than q range
             if (target->get_distance(myhero) <= q->range())
             {
-                if (q->cast(target, hit_chance::high))
+                if (q->cast(target, get_hitchance(hitchance::q_hitchance)))
                     return;
             }
         }
@@ -469,6 +548,28 @@ namespace kayle
     }
 #pragma endregion
 
+#pragma region get_hitchance
+    hit_chance get_hitchance(TreeEntry* entry)
+    {
+        switch (entry->get_int())
+        {
+        case 0:
+            return hit_chance::low;
+            break;
+        case 1:
+            return hit_chance::medium;
+            break;
+        case 2:
+            return hit_chance::high;
+            break;
+        case 3:
+            return hit_chance::very_high;
+            break;
+        }
+        return hit_chance::medium;
+    }
+#pragma endregion
+
 #pragma region update_range
     void update_range()
     {
@@ -498,9 +599,12 @@ namespace kayle
         if (w->is_ready() && draw_settings::draw_range_w->get_bool())
             draw_manager->add_circle(myhero->get_position(), w->range(), W_DRAW_COLOR);
 
-        // Draw E range
-        if (e->is_ready() && draw_settings::draw_range_e->get_bool())
-            draw_manager->add_circle(myhero->get_position(), e->range(), E_DRAW_COLOR);
+        if (myhero->get_level() < 6)
+        {
+            // Draw E range
+            if (e->is_ready() && draw_settings::draw_range_e->get_bool())
+                draw_manager->add_circle(myhero->get_position(), e->range(), E_DRAW_COLOR);
+        }
 
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
@@ -508,6 +612,8 @@ namespace kayle
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
+        auto lasthit = lasthit::lasthit->get_bool();
+        draw_manager->add_text_on_screen(pos + vector(0, 24), (lasthit ? 0xFF00FF00 : 0xFF0000FF), 14, "LASTHIT % s", (lasthit ? "ON" : "OFF"));
         auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }

@@ -161,7 +161,7 @@ namespace vex
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
-                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclearToggleSpellFarm", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
+                laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclear.enabled", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
                 laneclear::farm_only_when_minions_more_than = laneclear->add_slider(myhero->get_model() + ".laneclearFarmOnlyWhenMinionsMoreThan", "Farm only when minions more than", 2, 0, 5);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
@@ -194,7 +194,7 @@ namespace vex
                 hitchance::r_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.r", "Hitchance R", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 3);
             }
 
-            auto draw_settings = main_tab->add_tab(myhero->get_model() + ".drawings", "Drawings Settings");
+            auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
                 draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", true);
                 draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
@@ -287,7 +287,7 @@ namespace vex
             if (orbwalker->harass())
             {
                 // Get a target from a given range
-                auto target = target_selector->get_target(e->range(), damage_type::physical);
+                auto target = target_selector->get_target(e->range(), damage_type::magical);
 
                 // Always check an object is not a nullptr!
                 if (target != nullptr)
@@ -590,8 +590,8 @@ namespace vex
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
         auto semi = combo::r_semi_manual_cast->get_bool();
-        auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 24), (semi ? 0xFF00FF00 : 0xFF0000FF), 14, "SEMI R %s", (semi ? "ON" : "OFF"));
+        auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }
 };
