@@ -7,3 +7,4 @@ Plugin for BGX.gg
 - Trundle
 - Jax
 - Kayle
+- Vex
