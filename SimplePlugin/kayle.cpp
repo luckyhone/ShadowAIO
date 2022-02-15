@@ -66,6 +66,7 @@ namespace kayle
     namespace lasthit
     {
         TreeEntry* lasthit = nullptr;
+        TreeEntry* dont_lasthit_below_aa_range = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* use_e = nullptr;
     }
@@ -180,7 +181,8 @@ namespace kayle
 
             auto lasthit = main_tab->add_tab(myhero->get_model() + ".lasthit", "Last Hit Settings");
             {
-                lasthit::lasthit = laneclear->add_hotkey(myhero->get_model() + ".lasthit.enabled", "Toggle Last Hit", TreeHotkeyMode::Toggle, 'J', true);
+                lasthit::lasthit = lasthit->add_hotkey(myhero->get_model() + ".lasthit.enabled", "Toggle Last Hit", TreeHotkeyMode::Toggle, 'J', true);
+                lasthit::dont_lasthit_below_aa_range = lasthit->add_checkbox(myhero->get_model() + ".lasthit.dont_lasthit_below_aa_range", "Dont lasthit below autoattack range", false);
                 lasthit::use_q = lasthit->add_checkbox(myhero->get_model() + ".lasthit.q", "Use Q", false);
                 lasthit::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 lasthit::use_e = lasthit->add_checkbox(myhero->get_model() + ".lasthit.e", "Use E", true);
@@ -301,9 +303,12 @@ namespace kayle
                             {
                                 if (q->get_damage(minion) > minion->get_health())
                                 {
-                                    if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
+                                    if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
                                     {
-                                        return;
+                                        if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
+                                        {
+                                            return;
+                                        }
                                     }
                                 }
                             }
@@ -315,9 +320,12 @@ namespace kayle
                             {
                                 if (e->get_damage(minion) + myhero->get_auto_attack_damage(minion) > minion->get_health())
                                 {
-                                    if (farm::cast_verify_range(e, minion))
+                                    if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
                                     {
-                                        return;
+                                        if (farm::cast_verify_range(e, minion))
+                                        {
+                                            return;
+                                        }
                                     }
                                 }
                             }
