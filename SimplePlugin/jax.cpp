@@ -47,6 +47,7 @@ namespace jax
         TreeEntry* spell_farm = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* use_w_on_turret = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
@@ -68,6 +69,7 @@ namespace jax
     // Event handler functions
     void on_update();
     void on_draw();
+    void on_before_attack(game_object_script target, bool* process);
 
     // Declaring functions responsible for spell-logic
     //
@@ -130,6 +132,8 @@ namespace jax
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", true);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                laneclear::use_w_on_turret = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w.on_turret", "Use W On Turret", true);
+                laneclear::use_w_on_turret->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
@@ -169,6 +173,7 @@ namespace jax
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
+        event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
     }
 
     void unload()
@@ -188,6 +193,7 @@ namespace jax
         //
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
+        event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
     }
 
     // Main update script function
@@ -483,6 +489,30 @@ namespace jax
         }
     }
 #pragma endregion
+
+    void on_before_attack(game_object_script target, bool* process)
+    {
+        if (w->is_ready())
+        {
+            // Using w before autoattack on enemies
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Using w before autoattack on turrets
+            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_w_on_turret->get_bool() && target->is_ai_turret())
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+        }
+    }
 
     void on_draw()
     {

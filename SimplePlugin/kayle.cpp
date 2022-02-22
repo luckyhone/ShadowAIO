@@ -618,7 +618,7 @@ namespace kayle
     {
         if (e->is_ready())
         {
-            // Using q before autoattack on enemies
+            // Using e before autoattack on enemies
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
             {
                 if (e->cast())
@@ -627,7 +627,7 @@ namespace kayle
                 }
             }
 
-            // Using q before autoattack on turrets
+            // Using e before autoattack on turrets
             if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_e_on_turret->get_bool() && target->is_ai_turret())
             {
                 if (e->cast())
