@@ -6,10 +6,10 @@ namespace vex
 {
     // Define the colors that will be used in on_draw()
     //
-#define Q_DRAW_COLOR (MAKE_COLOR ( 62, 129, 237, 255 ))  //Red Green Blue Alpha
-#define W_DRAW_COLOR (MAKE_COLOR ( 227, 203, 20, 255 ))  //Red Green Blue Alpha
-#define E_DRAW_COLOR (MAKE_COLOR ( 235, 12, 223, 255 ))  //Red Green Blue Alpha
-#define R_DRAW_COLOR (MAKE_COLOR ( 224, 77, 13, 255 ))   //Red Green Blue Alpha
+#define Q_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
+#define W_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
+#define E_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
+#define R_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))   //Red Green Blue Alpha
 
 // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
@@ -81,7 +81,7 @@ namespace vex
     // Event handler functions
     void on_update();
     void on_draw();
-    void on_gapcloser(game_object_script sender, vector const& dash_start, vector const& dash_end, float dash_speed, bool is_ally_grab);
+    void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 
     // Declaring functions responsible for spell-logic
     //
@@ -552,7 +552,7 @@ namespace vex
     }
 #pragma endregion
 
-    void on_gapcloser(game_object_script sender, vector const& dash_start, vector const& dash_end, float dash_speed, bool is_ally_grab)
+    void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
     {
         if (antigapclose::use_w->get_bool() && w->is_ready())
         {

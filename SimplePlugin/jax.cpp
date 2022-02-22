@@ -5,8 +5,8 @@ namespace jax
 {
     // Define the colors that will be used in on_draw()
     //
-#define Q_DRAW_COLOR (MAKE_COLOR ( 62, 129, 237, 255 ))  //Red Green Blue Alpha
-#define E_DRAW_COLOR (MAKE_COLOR ( 235, 12, 223, 255 ))  //Red Green Blue Alpha
+#define Q_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
+#define E_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))   //Red Green Blue Alpha
 
 // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;

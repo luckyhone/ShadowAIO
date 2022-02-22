@@ -6,10 +6,10 @@ namespace kayle
 {
     // Define the colors that will be used in on_draw()
     //
-#define Q_DRAW_COLOR (MAKE_COLOR ( 62, 129, 237, 255 ))  //Red Green Blue Alpha
-#define W_DRAW_COLOR (MAKE_COLOR ( 227, 203, 20, 255 ))  //Red Green Blue Alpha
-#define E_DRAW_COLOR (MAKE_COLOR ( 235, 12, 223, 255 ))  //Red Green Blue Alpha
-#define R_DRAW_COLOR (MAKE_COLOR ( 224, 77, 13, 255 ))   //Red Green Blue Alpha
+#define Q_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
+#define W_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
+#define E_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
+#define R_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))   //Red Green Blue Alpha
 
 // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
@@ -55,6 +55,7 @@ namespace kayle
         TreeEntry* spell_farm = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* use_e_on_turret = nullptr;
     }
 
     namespace jungleclear
@@ -73,6 +74,7 @@ namespace kayle
 
     namespace fleemode
     {
+        TreeEntry* use_q;
         TreeEntry* use_w;
     }
 
@@ -85,6 +87,7 @@ namespace kayle
     // Event handler functions
     void on_update();
     void on_draw();
+    void on_before_attack(game_object_script target, bool* process);
 
     // Declaring functions responsible for spell-logic
     //
@@ -169,6 +172,8 @@ namespace kayle
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", true);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                laneclear::use_e_on_turret = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e.on_turret", "Use E On Turret", true);
+                laneclear::use_e_on_turret->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto jungleclear = main_tab->add_tab(myhero->get_model() + ".jungleclear", "Jungle Clear Settings");
@@ -191,6 +196,8 @@ namespace kayle
 
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
             {
+                fleemode::use_q = fleemode->add_checkbox(myhero->get_model() + ".flee.q", "Use Q to slow enemies", true);
+                fleemode::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 fleemode::use_w = fleemode->add_checkbox(myhero->get_model() + ".flee.w", "Use W to ran away", true);
                 fleemode::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
             }
@@ -217,6 +224,7 @@ namespace kayle
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
+        event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
     }
 
     void unload()
@@ -236,6 +244,7 @@ namespace kayle
         //
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
+        event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
     }
 
     // Main update script function
@@ -361,6 +370,20 @@ namespace kayle
             // Checking if the user has selected flee_mode() (Default Z)
             if (orbwalker->flee_mode())
             {
+                // Get a target from a given range
+                auto target = target_selector->get_target(q->range(), damage_type::magical);
+
+                // Always check an object is not a nullptr!
+                if (target != nullptr)
+                {
+                    if (q->is_ready() && fleemode::use_q->get_bool())
+                    {
+                        if (q->cast(target, get_hitchance(hitchance::q_hitchance))) {
+                            return;
+                        }
+                    }
+                }
+
                 if (w->is_ready() && fleemode::use_w->get_bool())
                 {
                     if (w->cast(myhero))
@@ -590,6 +613,30 @@ namespace kayle
         }
     }
 #pragma endregion
+
+    void on_before_attack(game_object_script target, bool* process)
+    {
+        if (e->is_ready())
+        {
+            // Using q before autoattack on enemies
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
+            {
+                if (e->cast())
+                {
+                    return;
+                }
+            }
+
+            // Using q before autoattack on turrets
+            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_e_on_turret->get_bool() && target->is_ai_turret())
+            {
+                if (e->cast())
+                {
+                    return;
+                }
+            }
+        }
+    }
 
     void on_draw()
     {
