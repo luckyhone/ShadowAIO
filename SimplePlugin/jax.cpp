@@ -450,7 +450,12 @@ namespace jax
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            w->cast();
+            // Checking if the target will die from W damage
+            if (w->get_damage(target) >= target->get_health())
+            {
+                if (w->cast())
+                    return;
+            }
         }
     }
 #pragma endregion

@@ -45,6 +45,7 @@ namespace trundle
     {
         TreeEntry* spell_farm = nullptr;
         TreeEntry* use_q = nullptr;
+        TreeEntry* use_q_on_turret = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
     }
@@ -65,6 +66,7 @@ namespace trundle
     // Event handler functions
     void on_update();
     void on_draw();
+    void on_before_attack(game_object_script target, bool* process);
 
     // Declaring functions responsible for spell-logic
     //
@@ -135,6 +137,8 @@ namespace trundle
                 laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclear.enabled", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                laneclear::use_q_on_turret = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q.on_turret", "Use Q On Turret", true);
+                laneclear::use_q_on_turret->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", false);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", false);
@@ -173,6 +177,7 @@ namespace trundle
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
+        event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
     }
 
     void unload()
@@ -192,6 +197,7 @@ namespace trundle
         //
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
+        event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
     }
 
     // Main update script function
@@ -381,13 +387,13 @@ namespace trundle
     void q_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(500, damage_type::physical);
+        auto target = target_selector->get_target(myhero->get_attack_range() + 50, damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            // Check if the distance between myhero and enemy is smaller than q range
-            if (target->get_distance(myhero) <= q->range())
+            // Checking if the target will die from q damage
+            if (q->get_damage(target) >= target->get_health())
             {
                 if (q->cast())
                     return;
@@ -457,6 +463,30 @@ namespace trundle
         return it->second->get_bool();
     }
 #pragma endregion
+
+    void on_before_attack(game_object_script target, bool* process)
+    {
+        if (q->is_ready())
+        {
+            // Using q before autoattack on enemies
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+            {
+                if (q->cast())
+                {
+                    return;
+                }
+            }
+
+            // Using q before autoattack on turrets
+            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_q_on_turret->get_bool() && target->is_ai_turret())
+            {
+                if (q->cast())
+                {
+                    return;
+                }
+            }
+        }
+    }
 
     void on_draw()
     {
