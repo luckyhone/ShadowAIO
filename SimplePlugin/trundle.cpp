@@ -62,10 +62,21 @@ namespace trundle
         TreeEntry* use_w;
     }
 
+    namespace antigapclose
+    {
+        TreeEntry* use_e = nullptr;
+    }
+
+    namespace hitchance
+    {
+        TreeEntry* e_hitchance = nullptr;
+    }
+
 
     // Event handler functions
     void on_update();
     void on_draw();
+    void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
     void on_before_attack(game_object_script target, bool* process);
 
     // Declaring functions responsible for spell-logic
@@ -78,6 +89,7 @@ namespace trundle
     // Utils
     //
     bool can_use_r_on(game_object_script target);
+    hit_chance get_hitchance(TreeEntry* entry);
 
     void load()
     {
@@ -162,6 +174,17 @@ namespace trundle
                 fleemode::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
             }
 
+            auto antigapclose = main_tab->add_tab(myhero->get_model() + ".antigapclose", "Anti Gapclose");
+            {
+                antigapclose::use_e = antigapclose->add_checkbox(myhero->get_model() + ".antigapclose.e", "Use E", true);
+                antigapclose::use_e->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+            }
+
+            auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
+            {
+                hitchance::e_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.e", "Hitchance E", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
+            }
+
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
                 draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
@@ -172,6 +195,10 @@ namespace trundle
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
             }
         }
+
+        // Add anti gapcloser handler
+        //
+        antigapcloser::add_event_handler(on_gapcloser);
 
         // To add a new event you need to define a function and call add_calback
         //
@@ -192,6 +219,10 @@ namespace trundle
         // Remove menu tab
         //
         menu->delete_tab("trundle");
+
+        // Remove anti gapcloser handler
+        //
+        antigapcloser::remove_event_handler(on_gapcloser);
 
         // VERY important to remove always ALL events
         //
@@ -425,7 +456,7 @@ namespace trundle
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast(target, hit_chance::high);
+            e->cast(target, get_hitchance(hitchance::e_hitchance));
         }
     }
 #pragma endregion
@@ -464,6 +495,28 @@ namespace trundle
     }
 #pragma endregion
 
+#pragma region get_hitchance
+    hit_chance get_hitchance(TreeEntry* entry)
+    {
+        switch (entry->get_int())
+        {
+        case 0:
+            return hit_chance::low;
+            break;
+        case 1:
+            return hit_chance::medium;
+            break;
+        case 2:
+            return hit_chance::high;
+            break;
+        case 3:
+            return hit_chance::very_high;
+            break;
+        }
+        return hit_chance::medium;
+    }
+#pragma endregion
+
     void on_before_attack(game_object_script target, bool* process)
     {
         if (q->is_ready())
@@ -484,6 +537,17 @@ namespace trundle
                 {
                     return;
                 }
+            }
+        }
+    }
+
+    void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
+    {
+        if (antigapclose::use_e->get_bool() && e->is_ready())
+        {
+            if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
+            {
+                e->cast(sender, get_hitchance(hitchance::e_hitchance));
             }
         }
     }
