@@ -8,3 +8,4 @@ Plugin for BGX.gg
 - Jax
 - Kayle
 - Vex
+- MasterYi
