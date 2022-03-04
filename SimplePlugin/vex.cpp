@@ -23,6 +23,7 @@ namespace vex
         TreeEntry* draw_range_e = nullptr;
         TreeEntry* e_color = nullptr;
         TreeEntry* draw_range_r = nullptr;
+        TreeEntry* draw_range_r_minimap = nullptr;
         TreeEntry* r_color = nullptr;
     }
 
@@ -205,6 +206,7 @@ namespace vex
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::e_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.color", "E Color", color);
                 draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".draw.r", "Draw R range", true);
+                draw_settings::draw_range_r_minimap = draw_settings->add_checkbox(myhero->get_model() + ".draw.r.minimap", "Draw R range on minimap", true);
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
             }
@@ -589,6 +591,10 @@ namespace vex
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
+
+        // Draw R range on minimap
+        if (r->is_ready() && draw_settings::draw_range_r_minimap->get_bool())
+            draw_manager->draw_circle_on_minimap(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
