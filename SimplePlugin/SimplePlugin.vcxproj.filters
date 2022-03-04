@@ -40,6 +40,9 @@
     <ClCompile Include="vex.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="masteryi.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -70,6 +73,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="vex.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="masteryi.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

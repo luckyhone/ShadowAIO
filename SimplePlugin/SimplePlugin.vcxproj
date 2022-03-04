@@ -162,6 +162,7 @@
     <ClCompile Include="jax.cpp" />
     <ClCompile Include="kayle.cpp" />
     <ClCompile Include="kindred.cpp" />
+    <ClCompile Include="masteryi.cpp" />
     <ClCompile Include="trundle.cpp" />
     <ClCompile Include="tryndamere.cpp" />
     <ClCompile Include="vex.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="jax.h" />
     <ClInclude Include="kayle.h" />
     <ClInclude Include="kindred.h" />
+    <ClInclude Include="masteryi.h" />
     <ClInclude Include="trundle.h" />
     <ClInclude Include="tryndamere.h" />
     <ClInclude Include="vex.h" />

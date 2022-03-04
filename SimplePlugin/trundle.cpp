@@ -3,11 +3,6 @@
 
 namespace trundle
 {
-    // Define the colors that will be used in on_draw()
-    //
-#define W_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
-#define E_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
-#define R_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))   //Red Green Blue Alpha
 
 // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
@@ -21,8 +16,11 @@ namespace trundle
     namespace draw_settings
     {
         TreeEntry* draw_range_w = nullptr;
+        TreeEntry* w_color = nullptr;
         TreeEntry* draw_range_e = nullptr;
+        TreeEntry* e_color = nullptr;
         TreeEntry* draw_range_r = nullptr;
+        TreeEntry* r_color = nullptr;
     }
 
     namespace combo
@@ -177,7 +175,7 @@ namespace trundle
             auto antigapclose = main_tab->add_tab(myhero->get_model() + ".antigapclose", "Anti Gapclose");
             {
                 antigapclose::use_e = antigapclose->add_checkbox(myhero->get_model() + ".antigapclose.e", "Use E", true);
-                antigapclose::use_e->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                antigapclose::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
@@ -189,10 +187,14 @@ namespace trundle
             {
                 draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
                 draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
+                draw_settings::w_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.w.color", "W Color", color);
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                draw_settings::e_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.color", "E Color", color);
                 draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".draw.r", "Draw R range", true);
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+                draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
             }
         }
 
@@ -295,7 +297,7 @@ namespace trundle
             // Checking if the user has selected flee_mode() (Default Z)
             if (orbwalker->flee_mode())
             {
-                if (q->is_ready() && fleemode::use_w->get_bool())
+                if (w->is_ready() && fleemode::use_w->get_bool())
                 {
                     if (w->cast(myhero))
                     {
@@ -562,15 +564,15 @@ namespace trundle
 
         // Draw W range
         if (w->is_ready() && draw_settings::draw_range_w->get_bool())
-            draw_manager->add_circle(myhero->get_position(), w->range(), W_DRAW_COLOR);
+            draw_manager->add_circle(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
 
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
-            draw_manager->add_circle(myhero->get_position(), e->range(), E_DRAW_COLOR);
+            draw_manager->add_circle(myhero->get_position(), e->range(), draw_settings::e_color->get_color());
 
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
-            draw_manager->add_circle(myhero->get_position(), r->range(), R_DRAW_COLOR);
+            draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);

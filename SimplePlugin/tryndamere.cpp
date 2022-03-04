@@ -4,10 +4,6 @@
 
 namespace tryndamere
 {
-    // Define the colors that will be used in on_draw()
-    //
-#define W_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
-#define E_DRAW_COLOR (MAKE_COLOR ( 0, 255, 255, 255 ))  //Red Green Blue Alpha
 
 // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
@@ -21,7 +17,9 @@ namespace tryndamere
     namespace draw_settings
     {
         TreeEntry* draw_range_w = nullptr;
+        TreeEntry* w_color = nullptr;
         TreeEntry* draw_range_e = nullptr;
+        TreeEntry* e_color = nullptr;
     }
 
     namespace combo
@@ -34,9 +32,11 @@ namespace tryndamere
         TreeEntry* w_target_above_range = nullptr;
         TreeEntry* w_target_hp_under = nullptr;
         TreeEntry* w_only_when_e_ready = nullptr;
-        TreeEntry* w_dont_use_target_under_turret;
+        TreeEntry* w_dont_use_target_under_turret = nullptr;
+        TreeEntry* w_check_if_target_is_not_facing = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_dont_use_under_enemy_turret = nullptr;
+        TreeEntry* e_use_prediction = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
@@ -68,6 +68,10 @@ namespace tryndamere
         TreeEntry* use_e;
     }
 
+    namespace hitchance
+    {
+        TreeEntry* e_hitchance = nullptr;
+    }
 
     // Event handler functions
     void on_update();
@@ -79,6 +83,11 @@ namespace tryndamere
     void w_logic();
     void e_logic();
     bool r_logic();
+
+
+    // Utils
+    //
+    hit_chance get_hitchance(TreeEntry* entry);
 
     void load()
     {
@@ -108,10 +117,11 @@ namespace tryndamere
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W on escaping enemies", true);
                 auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
-                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Target is above range", 500, 0, 800);
+                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Target is above range", 300, 0, 800);
                     combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".combo.w.target_hp_under", "Target HP is under (in %)", 80, 0, 100);
                     combo::w_only_when_e_ready = w_config->add_checkbox(myhero->get_model() + ".combo.w.only_when_e_ready", "Use W only when E is ready", true);
                     combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_target_under_turret", "Dont use if target is under turret", true);
+                    combo::w_check_if_target_is_not_facing = w_config->add_checkbox(myhero->get_model() + ".combo.w.check_if_target_is_not_facing", "Check if target is not facing myhero", true);
                 }
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
@@ -119,6 +129,7 @@ namespace tryndamere
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
                     combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".combo.e.dont_use_under_enemy_turret", "Dont use under enemy turret", true);
+                    combo::e_use_prediction = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_prediction", "Use prediction", false);
                 }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
@@ -156,18 +167,26 @@ namespace tryndamere
             }
 
 
-            auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
+            auto fleemode = main_tab->add_tab(myhero->get_model() + ".flee", "Flee Mode");
             {
                 fleemode::use_e = fleemode->add_checkbox(myhero->get_model() + ".flee.e", "Use E to ran away", true);
                 fleemode::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+            }
+
+            auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
+            {
+                hitchance::e_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.e", "Hitchance E", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 1);
             }
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
                 draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
                 draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
+                draw_settings::w_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.w.color", "W Color", color);
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                draw_settings::e_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.color", "E Color", color);
             }
         }
 
@@ -241,9 +260,19 @@ namespace tryndamere
                     {
                         if (!target->is_under_ally_turret())
                         {
-                            if (e->cast(target))
+                            if (combo::e_use_prediction->get_bool())
                             {
-                                return;
+                                if (e->cast(target, get_hitchance(hitchance::e_hitchance)))
+                                {
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                if (e->cast(target))
+                                {
+                                    return;
+                                }
                             }
                         }
                     }
@@ -388,9 +417,12 @@ namespace tryndamere
                     {
                         if (!combo::w_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
                         {
-                            if (w->cast())
+                            if (!combo::w_check_if_target_is_not_facing->get_bool() || !target->is_facing(myhero))
                             {
-                                return;
+                                if (w->cast())
+                                {
+                                    return;
+                                }
                             }
                         }
                     }
@@ -460,6 +492,28 @@ namespace tryndamere
     }
 #pragma endregion
 
+#pragma region get_hitchance
+    hit_chance get_hitchance(TreeEntry* entry)
+    {
+        switch (entry->get_int())
+        {
+        case 0:
+            return hit_chance::low;
+            break;
+        case 1:
+            return hit_chance::medium;
+            break;
+        case 2:
+            return hit_chance::high;
+            break;
+        case 3:
+            return hit_chance::very_high;
+            break;
+        }
+        return hit_chance::medium;
+    }
+#pragma endregion
+
     void on_draw()
     {
 
@@ -470,11 +524,11 @@ namespace tryndamere
 
         // Draw W range
         if (w->is_ready() && draw_settings::draw_range_w->get_bool())
-            draw_manager->add_circle(myhero->get_position(), w->range(), W_DRAW_COLOR);
+            draw_manager->add_circle(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
 
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
-            draw_manager->add_circle(myhero->get_position(), e->range(), E_DRAW_COLOR);
+            draw_manager->add_circle(myhero->get_position(), e->range(), draw_settings::e_color->get_color());
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
