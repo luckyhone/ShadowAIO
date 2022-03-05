@@ -65,6 +65,7 @@ namespace masteryi
     namespace antigapclose
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* q_dont_use_target_under_turret = nullptr;
     }
 
 
@@ -167,6 +168,10 @@ namespace masteryi
             {
                 antigapclose::use_q = antigapclose->add_checkbox(myhero->get_model() + ".antigapclose.q", "Use Q", true);
                 antigapclose::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                auto q_config = antigapclose->add_tab(myhero->get_model() + ".antigapclose.q.config", "Q Config");
+                {
+                    antigapclose::q_dont_use_target_under_turret = q_config->add_checkbox(myhero->get_model() + ".antigapclose.q.dont_use_under_enemy_turret", "Dont use under enemy turret", true);
+                }
             }   
 
 
@@ -463,7 +468,10 @@ namespace masteryi
         {
             if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
             {
-                q->cast(sender);
+                if (!antigapclose::q_dont_use_target_under_turret->get_bool() || !sender->is_under_ally_turret())
+                {
+                    q->cast(sender);
+                }
             }
         }
     }
