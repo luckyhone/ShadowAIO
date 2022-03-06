@@ -43,6 +43,9 @@
     <ClCompile Include="masteryi.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="chogath.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -76,6 +79,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="masteryi.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="chogath.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

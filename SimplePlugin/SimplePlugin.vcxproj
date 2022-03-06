@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClCompile Include="..\plugin_sdk\clipper.cpp" />
     <ClCompile Include="..\plugin_sdk\plugin_sdk.cpp" />
+    <ClCompile Include="chogath.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="farm.cpp" />
     <ClCompile Include="jax.cpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="..\plugin_sdk\clipper.h" />
     <ClInclude Include="..\plugin_sdk\cpplinq.h" />
     <ClInclude Include="..\plugin_sdk\plugin_sdk.hpp" />
+    <ClInclude Include="chogath.h" />
     <ClInclude Include="farm.h" />
     <ClInclude Include="jax.h" />
     <ClInclude Include="kayle.h" />
