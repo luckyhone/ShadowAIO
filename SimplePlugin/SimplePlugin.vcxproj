@@ -166,6 +166,7 @@
     <ClCompile Include="masteryi.cpp" />
     <ClCompile Include="trundle.cpp" />
     <ClCompile Include="tryndamere.cpp" />
+    <ClCompile Include="twitch.cpp" />
     <ClCompile Include="vex.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -180,6 +181,7 @@
     <ClInclude Include="masteryi.h" />
     <ClInclude Include="trundle.h" />
     <ClInclude Include="tryndamere.h" />
+    <ClInclude Include="twitch.h" />
     <ClInclude Include="vex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
