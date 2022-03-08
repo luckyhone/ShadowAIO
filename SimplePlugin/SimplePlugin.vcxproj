@@ -161,6 +161,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="farm.cpp" />
     <ClCompile Include="jax.cpp" />
+    <ClCompile Include="kalista.cpp" />
     <ClCompile Include="kayle.cpp" />
     <ClCompile Include="kindred.cpp" />
     <ClCompile Include="masteryi.cpp" />
@@ -176,6 +177,7 @@
     <ClInclude Include="chogath.h" />
     <ClInclude Include="farm.h" />
     <ClInclude Include="jax.h" />
+    <ClInclude Include="kalista.h" />
     <ClInclude Include="kayle.h" />
     <ClInclude Include="kindred.h" />
     <ClInclude Include="masteryi.h" />
