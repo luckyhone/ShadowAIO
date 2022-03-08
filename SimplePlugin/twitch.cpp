@@ -400,7 +400,7 @@ namespace twitch
                 {
                     e->cast();
                 }
-                else if (combo::e_use_on_full_stacks_before_death->get_bool() && myhero->get_health_percent() >= 10)
+                else if (combo::e_use_on_full_stacks_before_death->get_bool() && myhero->get_health_percent() <= 10)
                 {
                     if (get_twitch_e_stacks(target) >= 6)
                     {
