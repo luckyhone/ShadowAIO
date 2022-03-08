@@ -11,3 +11,4 @@ Plugin for BGX.gg
 - MasterYi
 - Cho'Gath
 - Twitch
+- Kalista
