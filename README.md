@@ -9,3 +9,5 @@ Plugin for BGX.gg
 - Kayle
 - Vex
 - MasterYi
+- Cho'Gath
+- Twitch
