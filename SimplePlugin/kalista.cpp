@@ -240,30 +240,27 @@ namespace kalista
                     r_logic();
                 }
 
-                if (misc::kite_on_minions_when_chasing_enemy->get_bool())
+                if (misc::kite_on_minions_when_chasing_enemy->get_bool() && myhero->count_enemies_in_range(myhero->get_attack_range()) == 0 && myhero->count_enemies_in_range(e->range()) != 0)
                 {
-                    if (myhero->count_enemies_in_range(myhero->get_attack_range()) == 0 && myhero->count_enemies_in_range(e->range()) != 0)
-                    {
-                        // Gets enemy minions from the entitylist
-                        auto lane_minions = entitylist->get_enemy_minions();
+                    // Gets enemy minions from the entitylist
+                    auto lane_minions = entitylist->get_enemy_minions();
 
-                        // You can use this function to delete minions that aren't in the specified range
-                        lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                            {
-                                return !x->is_valid_target(myhero->get_attack_range());
-                            }), lane_minions.end());
-
-
-                        //std::sort -> sort lane minions by distance
-                        std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-                            {
-                                return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-                            });
-
-                        if (!lane_minions.empty())
+                    // You can use this function to delete minions that aren't in the specified range
+                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                         {
-                            orbwalker->set_orbwalking_target(lane_minions.front());
-                        }
+                            return !x->is_valid_target(myhero->get_attack_range());
+                        }), lane_minions.end());
+
+
+                    //std::sort -> sort lane minions by distance
+                    std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                        {
+                            return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                        });
+
+                    if (!lane_minions.empty())
+                    {
+                        orbwalker->set_orbwalking_target(lane_minions.front());
                     }
                 }
             }
@@ -469,7 +466,7 @@ namespace kalista
                 {
                     if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(900) != 0)
                     {
-                        if (r->cast(ally))
+                        if (r->cast())
                         {
                             return;
                         }
