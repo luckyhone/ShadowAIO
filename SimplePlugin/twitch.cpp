@@ -300,21 +300,32 @@ namespace twitch
 
                 if (!lane_minions.empty())
                 {
-                    int killable_minions = 0;
-                    
-                    for (auto& minion : lane_minions)
+                    if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (e->get_damage(minion) > minion->get_health())
+                        if (w->cast(lane_minions.front()))
                         {
-                            killable_minions++;
+                            return;
                         }
                     }
 
-                    if (killable_minions >= laneclear::e_use_if_killable_minions->get_int())
+                    if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        if (e->cast())
+                        int killable_minions = 0;
+
+                        for (auto& minion : lane_minions)
                         {
-                            return;
+                            if (e->get_damage(minion) > minion->get_health())
+                            {
+                                killable_minions++;
+                            }
+                        }
+
+                        if (killable_minions >= laneclear::e_use_if_killable_minions->get_int())
+                        {
+                            if (e->cast())
+                            {
+                                return;
+                            }
                         }
                     }
                 }
@@ -322,11 +333,22 @@ namespace twitch
 
                 if (!monsters.empty())
                 {
-                    if (e->get_damage(monsters.front()) > monsters.front()->get_health())
+                    if (w->is_ready() && jungleclear::use_w->get_bool())
                     {
-                        if (e->cast())
+                        if (w->cast(monsters.front()))
                         {
                             return;
+                        }
+                    }
+
+                    if (e->is_ready() && laneclear::use_e->get_bool())
+                    {
+                        if (e->get_damage(monsters.front()) > monsters.front()->get_health())
+                        {
+                            if (e->cast())
+                            {
+                                return;
+                            }
                         }
                     }
                 }
