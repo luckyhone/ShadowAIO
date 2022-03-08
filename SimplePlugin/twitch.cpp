@@ -31,6 +31,7 @@ namespace twitch
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_use_on_full_stacks_before_death = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_use_if_enemies_more_than = nullptr;
     }
@@ -108,6 +109,10 @@ namespace twitch
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E on Killable", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                auto e_config = combo->add_tab(myhero->get_model() + "combo.e.config", "E Config");
+                {
+                    combo::e_use_on_full_stacks_before_death = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_on_full_stacks_before_death", "Use on full stacks before death", true);
+                }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + "combo.r.config", "R Config");
@@ -354,7 +359,7 @@ namespace twitch
                 }
             }
         }
-    }
+    }   
 
 #pragma region w_logic
     void w_logic()
@@ -395,6 +400,13 @@ namespace twitch
                 {
                     e->cast();
                 }
+                else if (combo::e_use_on_full_stacks_before_death->get_bool() && myhero->get_health_percent() >= 10)
+                {
+                    if (get_twitch_e_stacks(target) >= 6)
+                    {
+                        e->cast();
+                    }
+                }
             }
         }
     }
@@ -417,18 +429,18 @@ namespace twitch
     {
         switch (entry->get_int())
         {
-        case 0:
-            return hit_chance::low;
-            break;
-        case 1:
-            return hit_chance::medium;
-            break;
-        case 2:
-            return hit_chance::high;
-            break;
-        case 3:
-            return hit_chance::very_high;
-            break;
+            case 0:
+                return hit_chance::low;
+                break;
+            case 1:
+                return hit_chance::medium;
+                break;
+            case 2:
+                return hit_chance::high;
+                break;
+            case 3:
+                return hit_chance::very_high;
+                break;
         }
         return hit_chance::medium;
     }
