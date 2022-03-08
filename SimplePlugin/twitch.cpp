@@ -312,7 +312,10 @@ namespace twitch
 
                     if (killable_minions >= laneclear::e_use_if_killable_minions->get_int())
                     {
-                        e->cast();
+                        if (e->cast())
+                        {
+                            return;
+                        }
                     }
                 }
 
@@ -321,7 +324,10 @@ namespace twitch
                 {
                     if (e->get_damage(monsters.front()) > monsters.front()->get_health())
                     {
-                        e->cast();
+                        if (e->cast())
+                        {
+                            return;
+                        }
                     }
                 }
             }
