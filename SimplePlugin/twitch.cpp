@@ -351,16 +351,19 @@ namespace twitch
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!orbwalker->harass())
+            if (orbwalker->harass())
             {
-                if (e->get_damage(target) > target->get_health())
+                if (harass::use_e->get_bool())
                 {
-                    e->cast();
+                    if (get_twitch_e_stacks(target) >= 6 || !harass::e_only_on_full_stacks->get_bool())
+                    {
+                        e->cast();
+                    }
                 }
             }
             else
             {
-                if (get_twitch_e_stacks(target) >= 6 || !harass::e_only_on_full_stacks->get_bool())
+                if (e->get_damage(target) > target->get_health())
                 {
                     e->cast();
                 }
@@ -489,7 +492,7 @@ namespace twitch
     {
         if (target->is_valid()) {
             auto buff = target->get_buff(buff_hash("TwitchDeadlyVenom"));
-            if (buff->is_valid() && buff->is_alive())
+            if (buff != nullptr && buff->is_valid() && buff->is_alive())
             {
                 return buff->get_count();
             }
