@@ -240,7 +240,9 @@ namespace kalista
                     r_logic();
                 }
 
-                if (misc::kite_on_minions_when_chasing_enemy->get_bool() && myhero->count_enemies_in_range(myhero->get_attack_range()) == 0 && myhero->count_enemies_in_range(e->range()) != 0)
+                //console->print("AA range: %d | In E range: %d | In 1200 range: %d | Target: %s", myhero->count_enemies_in_range(myhero->get_attack_range()), myhero->count_enemies_in_range(e->range()), myhero->count_enemies_in_range(1200), orbwalker->get_target() == nullptr ? "null" : orbwalker->get_target()->get_name_cstr());
+
+                if (misc::kite_on_minions_when_chasing_enemy->get_bool() && (!orbwalker->get_target()->is_valid() || !orbwalker->get_target()->is_ai_hero()) && myhero->count_enemies_in_range(e->range()) != 0)
                 {
                     // Gets enemy minions from the entitylist
                     auto lane_minions = entitylist->get_enemy_minions();
@@ -460,15 +462,18 @@ namespace kalista
     {
         for (auto&& ally : entitylist->get_ally_heroes())
         {
-            if (ally->get_distance(myhero->get_position()) <= r->range())
+            if (ally->has_buff(buff_hash("kalistacoopstrikeally")))
             {
-                if ((ally->get_health_percent() < combo::r_ally_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
+                if (ally->get_distance(myhero->get_position()) <= r->range())
                 {
-                    if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(900) != 0)
+                    if ((ally->get_health_percent() < combo::r_ally_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
                     {
-                        if (r->cast())
+                        if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(900) != 0)
                         {
-                            return;
+                            if (r->cast())
+                            {
+                                return;
+                            }
                         }
                     }
                 }
