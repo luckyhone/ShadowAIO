@@ -242,7 +242,7 @@ namespace kalista
 
                 //console->print("AA range: %d | In E range: %d | In 1200 range: %d | Target: %s", myhero->count_enemies_in_range(myhero->get_attack_range()), myhero->count_enemies_in_range(e->range()), myhero->count_enemies_in_range(1200), orbwalker->get_target() == nullptr ? "null" : orbwalker->get_target()->get_name_cstr());
 
-                if (misc::kite_on_minions_when_chasing_enemy->get_bool() && (!orbwalker->get_target()->is_valid() || !orbwalker->get_target()->is_ai_hero()) && myhero->count_enemies_in_range(e->range()) != 0)
+                if (misc::kite_on_minions_when_chasing_enemy->get_bool() && (!orbwalker->get_target()->is_valid()) && myhero->count_enemies_in_range(e->range()) != 0)
                 {
                     // Gets enemy minions from the entitylist
                     auto lane_minions = entitylist->get_enemy_minions();
