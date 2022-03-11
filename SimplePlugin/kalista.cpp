@@ -20,8 +20,8 @@ namespace kalista
     {
         TreeEntry* draw_range_q = nullptr;
         TreeEntry* q_color = nullptr;
-        TreeEntry* draw_range_W = nullptr;
-        TreeEntry* W_color = nullptr;
+        TreeEntry* draw_range_w = nullptr;
+        TreeEntry* w_color = nullptr;
         TreeEntry* draw_range_e = nullptr;
         TreeEntry* e_color = nullptr;
         TreeEntry* draw_range_r = nullptr;
@@ -191,6 +191,9 @@ namespace kalista
                 draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", true);
                 draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 draw_settings::q_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.color", "Q Color", color);
+                draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
+                draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                draw_settings::w_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.w.color", "W Color", color);
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::e_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.color", "E Color", color);
@@ -598,6 +601,10 @@ namespace kalista
         // Draw Q range
         if (q->is_ready() && draw_settings::draw_range_q->get_bool())
             draw_manager->add_circle(myhero->get_position(), q->range(), draw_settings::q_color->get_color());
+
+        // Draw W range
+        if (w->is_ready() && draw_settings::draw_range_w->get_bool())
+            draw_manager->add_circle(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
 
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
