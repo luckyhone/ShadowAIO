@@ -283,9 +283,12 @@ namespace kalista
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
-            if (w->is_ready() && combo::use_w->get_bool())
+            if (!orbwalker->flee_mode())
             {
-                w_logic();
+                if (w->is_ready() && combo::use_w->get_bool())
+                {
+                    w_logic();
+                }
             }
 
             //Checking if the user has combo_mode() (Default SPACE)
@@ -621,7 +624,8 @@ namespace kalista
 
         if (draw_settings::draw_damage_e->get_bool())
         {
-            for (auto& enemy : entitylist->get_enemy_heroes()) {
+            for (auto& enemy : entitylist->get_enemy_heroes())
+            {
                 if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && e->is_ready())
                 {
                     draw_dmg_rl(enemy, e->get_damage(enemy), 0x8000ff00);
@@ -640,7 +644,8 @@ namespace kalista
 
     int get_kalista_e_stacks(game_object_script target)
     {
-        if (target->is_valid()) {
+        if (target->is_valid())
+        {
             auto buff = target->get_buff(buff_hash("kalistaexpungemarker"));
             if (buff != nullptr && buff->is_valid() && buff->is_alive())
             {
