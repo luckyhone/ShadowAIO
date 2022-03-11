@@ -218,6 +218,7 @@ namespace kalista
         // Always remove all declared spells
         //
         plugin_sdk->remove_spell(q);
+        plugin_sdk->remove_spell(w);
         plugin_sdk->remove_spell(e);
         plugin_sdk->remove_spell(r);
 
