@@ -21,6 +21,7 @@ namespace kalista
         TreeEntry* draw_range_q = nullptr;
         TreeEntry* q_color = nullptr;
         TreeEntry* draw_range_w = nullptr;
+        TreeEntry* draw_range_w_minimap = nullptr;
         TreeEntry* w_color = nullptr;
         TreeEntry* draw_range_e = nullptr;
         TreeEntry* e_color = nullptr;
@@ -193,6 +194,7 @@ namespace kalista
                 draw_settings::q_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.color", "Q Color", color);
                 draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
                 draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                draw_settings::draw_range_w_minimap = draw_settings->add_checkbox(myhero->get_model() + ".draw.w.minimap", "Draw W range on minimap", true);
                 draw_settings::w_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.w.color", "W Color", color);
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -283,7 +285,7 @@ namespace kalista
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
-            if (!orbwalker->flee_mode())
+            if (!orbwalker->flee_mode() && !myhero->is_recalling())
             {
                 if (w->is_ready() && combo::use_w->get_bool())
                 {
@@ -608,6 +610,10 @@ namespace kalista
         // Draw W range
         if (w->is_ready() && draw_settings::draw_range_w->get_bool())
             draw_manager->add_circle(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
+
+        // Draw W range on minimap
+        if (w->is_ready() && draw_settings::draw_range_w_minimap->get_bool())
+            draw_manager->draw_circle_on_minimap(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
 
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
