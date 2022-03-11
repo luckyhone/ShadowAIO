@@ -6,8 +6,12 @@ namespace kalista
 
     // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
+    script_spell* w = nullptr;
     script_spell* e = nullptr;
     script_spell* r = nullptr;
+
+    vector dragon_location = vector(9800.0f, 4400.0f);
+    vector baron_location = vector(4950.0f, 10400.0f);
 
     // Declaration of menu objects
     TreeTab* main_tab = nullptr;
@@ -16,6 +20,8 @@ namespace kalista
     {
         TreeEntry* draw_range_q = nullptr;
         TreeEntry* q_color = nullptr;
+        TreeEntry* draw_range_W = nullptr;
+        TreeEntry* W_color = nullptr;
         TreeEntry* draw_range_e = nullptr;
         TreeEntry* e_color = nullptr;
         TreeEntry* draw_range_r = nullptr;
@@ -26,6 +32,10 @@ namespace kalista
     namespace combo
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* use_w = nullptr;
+        TreeEntry* w_auto_on_dragon_location = nullptr;
+        TreeEntry* w_auto_on_baron_location = nullptr;
+        TreeEntry* w_dont_use_if_enemies_nearby = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_use_before_death = nullptr;
         TreeEntry* e_use_on_x_stacks_before_death = nullptr;
@@ -71,10 +81,12 @@ namespace kalista
     // Event handler functions
     void on_update();
     void on_draw();
+    void on_after_attack_orbwalker(game_object_script target);
 
     // Declaring functions responsible for spell-logic
     //
     void q_logic();
+    void w_logic();
     void e_logic();
     void r_logic();
 
@@ -91,6 +103,7 @@ namespace kalista
         //
         q = plugin_sdk->register_spell(spellslot::q, 1200);
         q->set_skillshot(0.25f, 80.0f, 2400.0f, { collisionable_objects::yasuo_wall, collisionable_objects::heroes, collisionable_objects::minions }, skillshot_type::skillshot_line);
+        w = plugin_sdk->register_spell(spellslot::w, 5000);
         e = plugin_sdk->register_spell(spellslot::e, 1100);
         r = plugin_sdk->register_spell(spellslot::r, 1200);
 
@@ -104,6 +117,14 @@ namespace kalista
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
+                combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                auto w_config = combo->add_tab(myhero->get_model() + "combo.w.config", "W Config");
+                {
+                    combo::w_auto_on_dragon_location = w_config->add_checkbox(myhero->get_model() + ".combo.w.auto_on_dragon_location", "Auto W on Dragon Location", true);
+                    combo::w_auto_on_baron_location  = w_config->add_checkbox(myhero->get_model() + ".combo.w.auto_on_baron_location", "Auto W on Baron Location", true);
+                    combo::w_dont_use_if_enemies_nearby = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_if_enemies_nearby", "Dont use if enemies nearby", true);
+                }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E on Killable", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + "combo.e.config", "E Config");
@@ -184,6 +205,7 @@ namespace kalista
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
+        event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
     }
 
     void unload()
@@ -196,12 +218,13 @@ namespace kalista
 
         // Remove menu tab
         //
-        menu->delete_tab("kalista");
+        menu->delete_tab(main_tab);
 
         // VERY important to remove always ALL events
         //
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
+        event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack_orbwalker);
     }
 
     // Main update script function
@@ -222,11 +245,13 @@ namespace kalista
             e_logic();
         }
 
+        //console->print("X: %f, Y: %f", myhero->get_position().x, myhero->get_position().y);
+
         if (orbwalker->combo_mode())
         {
             //console->print("AA range: %d | In E range: %d | In 1200 range: %d | Target: %s", myhero->count_enemies_in_range(myhero->get_attack_range()), myhero->count_enemies_in_range(e->range()), myhero->count_enemies_in_range(1200), orbwalker->get_target() == nullptr ? "null" : orbwalker->get_target()->get_name_cstr());
 
-            if (misc::kite_on_minions_when_chasing_enemy->get_bool() && orbwalker->get_target() == nullptr && myhero->count_enemies_in_range(e->range()) != 0)
+            if (misc::kite_on_minions_when_chasing_enemy->get_bool() && orbwalker->get_target() == nullptr && myhero->count_enemies_in_range(myhero->get_attack_range()) == 0 && myhero->count_enemies_in_range(e->range()) != 0 && myhero->can_attack())
             {
                 // Gets enemy minions from the entitylist
                 auto lane_minions = entitylist->get_enemy_minions();
@@ -243,7 +268,7 @@ namespace kalista
                         return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
                     });
 
-                if (!lane_minions.empty() && myhero->can_attack())
+                if (!lane_minions.empty())
                 {
                     orbwalker->set_orbwalking_target(lane_minions.front());
                 }
@@ -255,6 +280,11 @@ namespace kalista
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
+            if (w->is_ready() && combo::use_w->get_bool())
+            {
+                w_logic();
+            }
+
             //Checking if the user has combo_mode() (Default SPACE)
             if (orbwalker->combo_mode())
             {
@@ -393,6 +423,26 @@ namespace kalista
 #pragma region w_logic
     void w_logic()
     {
+        if (!combo::w_dont_use_if_enemies_nearby->get_bool() || myhero->count_enemies_in_range(e->range()) == 0)
+        {
+            if (combo::w_auto_on_dragon_location->get_bool())
+            {
+                auto dragon_distance = myhero->get_distance(dragon_location);
+                if (w->range() > dragon_distance && dragon_distance > 1400)
+                {
+                    w->cast(dragon_location);
+                }
+            }
+
+            if (combo::w_auto_on_baron_location->get_bool())
+            {
+                auto baron_distance = myhero->get_distance(baron_location);
+                if (w->range() > baron_distance && baron_distance > 1400)
+                {
+                    w->cast(baron_location);
+                }
+            }
+        }
     }
 #pragma endregion
 
@@ -570,6 +620,14 @@ namespace kalista
                     draw_dmg_rl(enemy, e->get_damage(enemy), 0x8000ff00);
                 }
             }
+        }
+    }
+
+    void on_after_attack_orbwalker(game_object_script target)
+    {
+        if (orbwalker->combo_mode() && misc::kite_on_minions_when_chasing_enemy->get_bool() && target->is_valid() && target->is_ai_minion())
+        {
+            orbwalker->set_orbwalking_target(nullptr);
         }
     }
 
