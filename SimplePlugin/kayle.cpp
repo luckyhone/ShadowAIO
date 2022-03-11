@@ -32,7 +32,8 @@ namespace kayle
 		TreeEntry* use_w = nullptr;
 		TreeEntry* w_target_above_range = nullptr;
 		TreeEntry* w_target_hp_under = nullptr;
-		TreeEntry* w_dont_use_target_under_turret;
+		TreeEntry* w_dont_use_target_under_turret = nullptr;
+		TreeEntry* w_check_if_target_is_not_facing = nullptr;
 		TreeEntry* use_e = nullptr;
 		TreeEntry* use_r = nullptr;
 		TreeEntry* r_myhero_hp_under = nullptr;
@@ -72,8 +73,8 @@ namespace kayle
 
 	namespace fleemode
 	{
-		TreeEntry* use_q;
-		TreeEntry* use_w;
+		TreeEntry* use_q = nullptr;
+		TreeEntry* use_w = nullptr;
 	}
 
 	namespace hitchance
@@ -127,6 +128,7 @@ namespace kayle
 					combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Target is above range", 500, 0, 800);
 					combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".combo.w.target_hp_under", "Target HP is under (in %)", 50, 0, 100);
 					combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_target_under_turret", "Dont use if target is under turret", true);
+					combo::w_check_if_target_is_not_facing = w_config->add_checkbox(myhero->get_model() + ".combo.w.check_if_target_is_not_facing", "Check if target is not facing myhero", true);
 				}
 				combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
 				combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -518,9 +520,12 @@ namespace kayle
 				{
 					if (!combo::w_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
 					{
-						if (w->cast(myhero))
+						if (!combo::w_check_if_target_is_not_facing->get_bool() || !target->is_facing(myhero))
 						{
-							return;
+							if (w->cast(myhero))
+							{
+								return;
+							}
 						}
 					}
 				}
