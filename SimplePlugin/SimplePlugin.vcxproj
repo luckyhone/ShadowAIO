@@ -164,6 +164,7 @@
     <ClCompile Include="kalista.cpp" />
     <ClCompile Include="kayle.cpp" />
     <ClCompile Include="kindred.cpp" />
+    <ClCompile Include="malzahar.cpp" />
     <ClCompile Include="masteryi.cpp" />
     <ClCompile Include="trundle.cpp" />
     <ClCompile Include="tryndamere.cpp" />
@@ -180,6 +181,7 @@
     <ClInclude Include="kalista.h" />
     <ClInclude Include="kayle.h" />
     <ClInclude Include="kindred.h" />
+    <ClInclude Include="malzahar.h" />
     <ClInclude Include="masteryi.h" />
     <ClInclude Include="trundle.h" />
     <ClInclude Include="tryndamere.h" />
