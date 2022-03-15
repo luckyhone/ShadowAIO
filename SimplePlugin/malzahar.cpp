@@ -102,7 +102,7 @@ namespace malzahar
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, 900);
-        q->set_skillshot(0.25f, 400.f, 200.0f, { }, skillshot_type::skillshot_circle);
+        q->set_skillshot(0.50f, 400.f, 200.0f, { }, skillshot_type::skillshot_circle);
         w = plugin_sdk->register_spell(spellslot::w, 800);
         e = plugin_sdk->register_spell(spellslot::e, 650);
         r = plugin_sdk->register_spell(spellslot::r, 700);
@@ -430,8 +430,10 @@ namespace malzahar
         if (target != nullptr)
         {
             auto pred = prediction->get_prediction(target, q->get_speed());
-            if (q->cast(pred.get_cast_position()))
-                return;
+            if (pred.hitchance >= get_hitchance(hitchance::q_hitchance))
+            {
+                q->cast(pred.get_cast_position());
+            }
         }
     }
 #pragma endregion
@@ -518,7 +520,7 @@ namespace malzahar
                 if ((target->get_health_percent() < combo::r_target_hp_under->get_int()))
                 {
                     if (combo::r_auto_under_my_turret->get_bool() && target->is_under_enemy_turret())
-                    {z
+                    {
                         r->cast(target);
                     }
                 }
