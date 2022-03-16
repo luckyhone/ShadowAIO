@@ -264,9 +264,12 @@ namespace kayle
 			return;
 		}
 
-		if (r->is_ready() && combo::use_r->get_bool())
+		if (r->is_ready())
 		{
-			r_logic();
+			if (combo::use_r->get_bool())
+			{
+				r_logic();
+			}
 			update_range();
 		}
 
