@@ -117,6 +117,10 @@ namespace kayle
 		main_tab = menu->create_tab("kayle", "Kayle");
 		main_tab->set_assigned_texture(myhero->get_square_icon_portrait());
 		{
+			// Info
+			//
+			main_tab->add_separator(myhero->get_model() + ".aio", "ShadowAIO : " + myhero->get_model());
+
 			auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
 			{
 				combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
@@ -243,7 +247,7 @@ namespace kayle
 
 		// Remove menu tab
 		//
-		menu->delete_tab("kayle");
+		menu->delete_tab(main_tab);
 
 		// VERY important to remove always ALL events
 		//
@@ -543,7 +547,7 @@ namespace kayle
 		// Always check an object is not a nullptr!
 		if (target != nullptr)
 		{
-			if (e->range() == 525 || e->get_damage(target) >= target->get_health())
+			if (myhero->get_level() < 6 || e->get_damage(target) >= target->get_health())
 			{
 				e->cast();
 			}
@@ -557,13 +561,13 @@ namespace kayle
 	{
 		for (auto&& ally : entitylist->get_ally_heroes())
 		{
-			if (ally->get_distance(myhero->get_position()) <= r->range())
+			if (can_use_r_on(ally))
 			{
-				if (!ally->has_buff(buff_hash("KayleR")))
+				if (ally->get_distance(myhero->get_position()) <= r->range())
 				{
-					if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
+					if (!ally->has_buff(buff_hash("KayleR")))
 					{
-						if (can_use_r_on(ally))
+						if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
 						{
 							if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(900) != 0)
 							{
@@ -596,19 +600,19 @@ namespace kayle
 	{
 		switch (entry->get_int())
 		{
-		case 0:
-			return hit_chance::low;
-			break;
-		case 1:
-			return hit_chance::medium;
-			break;
-		case 2:
-			return hit_chance::high;
-			break;
-		case 3:
-			return hit_chance::very_high;
-			break;
-		}
+			case 0:
+				return hit_chance::low;
+				break;
+			case 1:
+				return hit_chance::medium;
+				break;
+			case 2:
+				return hit_chance::high;
+				break;
+			case 3:
+				return hit_chance::very_high;
+				break;
+			}
 		return hit_chance::medium;
 	}
 #pragma endregion
