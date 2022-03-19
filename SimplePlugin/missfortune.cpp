@@ -30,8 +30,10 @@ namespace missfortune
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
-        TreeEntry* r_use_if_killable_by_x_shots = nullptr;
+        TreeEntry* r_use_if_killable_by_x_waves = nullptr;
         TreeEntry* r_auto_if_enemies_more_than = nullptr;
+        TreeEntry* r_auto_on_cc = nullptr;
+        TreeEntry* r_cancel_if_nobody_inside = nullptr;
         TreeEntry* r_disable_evade = nullptr;
         TreeEntry* r_disable_orbwalker_moving = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
@@ -43,6 +45,7 @@ namespace missfortune
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_only_if_mana_more_than = nullptr;
     }
 
     namespace laneclear
@@ -50,6 +53,7 @@ namespace missfortune
         TreeEntry* spell_farm = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* use_w_on_turret = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
@@ -63,6 +67,7 @@ namespace missfortune
     namespace fleemode
     {
         TreeEntry* use_w;
+        TreeEntry* use_e;
     }
 
     namespace hitchance
@@ -97,7 +102,7 @@ namespace missfortune
         w = plugin_sdk->register_spell(spellslot::w, 0);
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 200.f, FLT_MAX, { }, skillshot_type::skillshot_circle);
-        r = plugin_sdk->register_spell(spellslot::r, 1100);
+        r = plugin_sdk->register_spell(spellslot::r, 1450);
         r->set_skillshot(0.0f, 1450.0f, 2000.0f, { }, skillshot_type::skillshot_cone);
 
         // Create a menu according to the description in the "Menu Section"
@@ -120,9 +125,11 @@ namespace missfortune
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R on killable", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + "combo.r.config", "R Config");
-                {
-                    combo::r_use_if_killable_by_x_shots = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Use if killable by x shots", 6, 1, 14);
+                {   
+                    combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Use if killable by x waves", 6, 1, 14);
                     combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Auto R if hit enemies more than", 2, 0, 5);
+                    combo::r_auto_on_cc = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_cc", "Auto R on CC", false);;
+                    combo::r_cancel_if_nobody_inside = r_config->add_checkbox(myhero->get_model() + ".combo.r.cancel_if_nobody_inside", "Cancel R if nobody inside", true);
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
                     combo::r_disable_orbwalker_moving = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_orbwalker_moving", "Disable Orbwalker Moving on R", true);
 
@@ -148,6 +155,10 @@ namespace missfortune
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                auto e_config = harass->add_tab(myhero->get_model() + "harass.r.config", "E Config");
+                {
+                    harass::e_only_if_mana_more_than = e_config->add_slider(myhero->get_model() + ".harass.e.only_if_mana_more_than", "Use only if mana more than (in %)", 50, 0, 100);
+                }
             }
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
@@ -155,9 +166,11 @@ namespace missfortune
                 laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclear.enabled", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", true);
+                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", false);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", true);
+                laneclear::use_w_on_turret = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w.on_turret", "Use W On Turret", true);
+                laneclear::use_w_on_turret->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -167,7 +180,7 @@ namespace missfortune
                 jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 jungleclear::use_w = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.w", "Use W", true);
                 jungleclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", true);
+                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", false);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -176,6 +189,8 @@ namespace missfortune
             {
                 fleemode::use_w = fleemode->add_checkbox(myhero->get_model() + ".flee.w", "Use W", true);
                 fleemode::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                fleemode::use_e = fleemode->add_checkbox(myhero->get_model() + ".flee.e", "Use E to slow enemies", true);
+                fleemode::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
@@ -311,7 +326,10 @@ namespace missfortune
 
                     if (e->is_ready() && harass::use_e->get_bool())
                     {
-                        e_logic();
+                        if (myhero->get_mana_percent() > harass::e_only_if_mana_more_than->get_int())
+                        {
+                            e_logic();
+                        }
                     }
                 }
             }
@@ -324,6 +342,20 @@ namespace missfortune
                     if (w->cast())
                     {
                         return;
+                    }
+                }
+                if (e->is_ready() && fleemode::use_e->get_bool())
+                {
+                    // Get a target from a given range
+                    auto target = target_selector->get_target(e->range(), damage_type::magical);
+
+                    // Always check an object is not a nullptr!
+                    if (target != nullptr)
+                    {
+                        if (e->cast(target, get_hitchance(hitchance::e_hitchance)))
+                        {
+                            return;
+                        }
                     }
                 }
             }
@@ -442,7 +474,7 @@ namespace missfortune
         {
             if (can_use_r_on(target))
             {
-                if (r->get_damage(target) * combo::r_use_if_killable_by_x_shots->get_int() > target->get_health())
+                if (r->get_damage(target) * combo::r_use_if_killable_by_x_waves->get_int() > target->get_health())
                 {
                     if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
                     {
@@ -486,12 +518,6 @@ namespace missfortune
         
         if (hit_by_r.size() >= combo::r_auto_if_enemies_more_than->get_int())
         {
-            //std::sort -> sort monsters by health
-            std::sort(hit_by_r.begin(), hit_by_r.end(), [](game_object_script a, game_object_script b)
-                {
-                    return a->get_health() > b->get_health();
-                });
-
             if (r->cast(hit_by_r.front(), get_hitchance(hitchance::r_hitchance)))
             {
                 if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
@@ -506,6 +532,35 @@ namespace missfortune
                     combo::previous_orbwalker_state = true;
                 }
                 return true;
+            }
+        }
+
+        if (combo::r_auto_on_cc->get_bool())
+        {
+            // Get a target from a given range
+            auto target = target_selector->get_target(r->range(), damage_type::physical);
+
+            // Always check an object is not a nullptr!
+            if (target != nullptr)
+            {
+                if (can_use_r_on(target))
+                {
+                    if (r->cast(target, hit_chance::immobile))
+                    {
+                        if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
+                        {
+                            evade->disable_evade();
+                            combo::previous_evade_state = true;
+                        }
+                        if (combo::r_disable_orbwalker_moving->get_bool())
+                        {
+                            orbwalker->set_movement(false);
+                            orbwalker->set_attack(false);
+                            combo::previous_orbwalker_state = true;
+                        }
+                        return true;
+                    }
+                }
             }
         }
 
@@ -607,7 +662,7 @@ namespace missfortune
             for (auto& enemy : entitylist->get_enemy_heroes()) {
                 if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && r->is_ready())
                 {
-                    draw_dmg_rl(enemy, r->get_damage(enemy) * combo::r_use_if_killable_by_x_shots->get_int(), 0x8000ff00);
+                    draw_dmg_rl(enemy, r->get_damage(enemy) * combo::r_use_if_killable_by_x_waves->get_int(), 0x8000ff00);
                 }
             }
         }
@@ -637,6 +692,15 @@ namespace missfortune
 
         // Use w before autoattack on monsters
         if (target->is_monster() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_w->get_bool())) {
+            if (w->cast())
+            {
+                return;
+            }
+        }
+
+        // Use w before autoattack on turrets
+        if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_w_on_turret->get_bool() && target->is_ai_turret())
+        {
             if (w->cast())
             {
                 return;
