@@ -64,6 +64,12 @@ namespace missfortune
         TreeEntry* use_e = nullptr;
     }
 
+    namespace lasthit
+    {
+        TreeEntry* lasthit = nullptr;
+        TreeEntry* use_q = nullptr;
+    }
+
     namespace fleemode
     {
         TreeEntry* use_w;
@@ -103,7 +109,7 @@ namespace missfortune
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 200.f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         r = plugin_sdk->register_spell(spellslot::r, 1450);
-        r->set_skillshot(0.0f, 1450.0f, 2000.0f, { }, skillshot_type::skillshot_cone);
+        r->set_skillshot(0.0f, 1450.0f, 2000.0f, { }, skillshot_type::skillshot_line);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -125,11 +131,11 @@ namespace missfortune
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R on killable", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + "combo.r.config", "R Config");
-                {   
-                    combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Use if killable by x waves", 6, 1, 14);
-                    combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Auto R if hit enemies more than", 2, 0, 5);
+                {
+                    combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use if killable by x waves", 6, 1, 14);
+                    combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Auto R if hit enemies more than", 2, 1, 5);
                     combo::r_auto_on_cc = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_cc", "Auto R on CC", false);;
-                    combo::r_cancel_if_nobody_inside = r_config->add_checkbox(myhero->get_model() + ".combo.r.cancel_if_nobody_inside", "Cancel R if nobody inside", true);
+                    combo::r_cancel_if_nobody_inside = r_config->add_checkbox(myhero->get_model() + ".combo.r.cancel_if_nobody_inside", "Cancel R if nobody inside", false);
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
                     combo::r_disable_orbwalker_moving = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_orbwalker_moving", "Disable Orbwalker Moving on R", true);
 
@@ -184,6 +190,12 @@ namespace missfortune
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
+            auto lasthit = main_tab->add_tab(myhero->get_model() + ".lasthit", "Last Hit Settings");
+            {
+                lasthit::lasthit = lasthit->add_hotkey(myhero->get_model() + ".lasthit.enabled", "Toggle Last Hit", TreeHotkeyMode::Toggle, 'J', true);
+                lasthit::use_q = lasthit->add_checkbox(myhero->get_model() + ".lasthit.q", "Use Q", true);
+                lasthit::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+            }
 
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".flee", "Flee Mode");
             {
@@ -266,17 +278,20 @@ namespace missfortune
             return;
         }
 
-        if (combo::previous_evade_state)
+        if (myhero->get_active_spell() == nullptr)
         {
-            evade->enable_evade();
-            combo::previous_evade_state = false;
-        }
+            if (combo::previous_evade_state)
+            {
+                evade->enable_evade();
+                combo::previous_evade_state = false;
+            }
 
-        if (combo::previous_orbwalker_state)
-        {
-            orbwalker->set_movement(true);
-            orbwalker->set_attack(true);
-            combo::previous_orbwalker_state = false;
+            if (combo::previous_orbwalker_state)
+            {
+                orbwalker->set_movement(true);
+                orbwalker->set_attack(true);
+                combo::previous_orbwalker_state = false;
+            }
         }
 
         // Very important if can_move ( extra_windup ) 
@@ -311,6 +326,44 @@ namespace missfortune
                 if (e->is_ready() && combo::use_e->get_bool())
                 {
                     e_logic();
+                }
+            }
+
+            if (orbwalker->last_hit_mode() || orbwalker->mixed_mode())
+            {
+                if (lasthit::lasthit->get_bool())
+                {
+                    // Gets enemy minions from the entitylist
+                    auto lane_minions = entitylist->get_enemy_minions();
+
+                    // You can use this function to delete minions that aren't in the specified range
+                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                        {
+                            return !x->is_valid_target(q->range());
+                        }), lane_minions.end());
+
+                    //std::sort -> sort lane minions by distance
+                    std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                        {
+                            return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                        });
+
+                    if (!lane_minions.empty())
+                    {
+                        if (q->is_ready() && lasthit::use_q->get_bool())
+                        {
+                            for (auto&& minion : lane_minions)
+                            {
+                                if (q->get_damage(minion) > minion->get_health())
+                                {
+                                    if (q->cast(minion))
+                                    {
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -467,7 +520,7 @@ namespace missfortune
     bool r_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(r->range(), damage_type::physical);
+        auto target = target_selector->get_target(r->range() - 50, damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
@@ -476,7 +529,8 @@ namespace missfortune
             {
                 if (r->get_damage(target) * combo::r_use_if_killable_by_x_waves->get_int() > target->get_health())
                 {
-                    if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
+                    auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
+                    if (pred.hitchance >= get_hitchance(hitchance::e_hitchance))
                     {
                         if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                         {
@@ -489,6 +543,7 @@ namespace missfortune
                             orbwalker->set_attack(false);
                             combo::previous_orbwalker_state = true;
                         }
+                        r->cast(pred.get_unit_position());
                         return true;
                     }
                 }
@@ -518,7 +573,8 @@ namespace missfortune
         
         if (hit_by_r.size() >= combo::r_auto_if_enemies_more_than->get_int())
         {
-            if (r->cast(hit_by_r.front(), get_hitchance(hitchance::r_hitchance)))
+            auto pred = prediction->get_prediction(hit_by_r.front(), r->get_delay(), r->get_radius(), r->get_speed());
+            if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
             {
                 if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                 {
@@ -531,6 +587,7 @@ namespace missfortune
                     orbwalker->set_attack(false);
                     combo::previous_orbwalker_state = true;
                 }
+                r->cast(pred.get_unit_position());
                 return true;
             }
         }
@@ -538,14 +595,15 @@ namespace missfortune
         if (combo::r_auto_on_cc->get_bool())
         {
             // Get a target from a given range
-            auto target = target_selector->get_target(r->range(), damage_type::physical);
+            auto target = target_selector->get_target(r->range() - 50, damage_type::physical);
 
             // Always check an object is not a nullptr!
             if (target != nullptr)
             {
                 if (can_use_r_on(target))
                 {
-                    if (r->cast(target, hit_chance::immobile))
+                    auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
+                    if (pred.hitchance >= hit_chance::immobile)
                     {
                         if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                         {
@@ -558,6 +616,7 @@ namespace missfortune
                             orbwalker->set_attack(false);
                             combo::previous_orbwalker_state = true;
                         }
+                        r->cast(pred.get_unit_position());
                         return true;
                     }
                 }
@@ -654,6 +713,8 @@ namespace missfortune
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
+        auto lasthit = lasthit::lasthit->get_bool();
+        draw_manager->add_text_on_screen(pos + vector(0, 24), (lasthit ? 0xFF00FF00 : 0xFF0000FF), 14, "LASTHIT % s", (lasthit ? "ON" : "OFF"));
         auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
 
