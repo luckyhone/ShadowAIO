@@ -30,6 +30,7 @@ namespace missfortune
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
+        TreeEntry* r_max_range = nullptr;
         TreeEntry* r_use_if_killable_by_x_waves = nullptr;
         TreeEntry* r_auto_if_enemies_more_than = nullptr;
         TreeEntry* r_auto_on_cc = nullptr;
@@ -132,6 +133,7 @@ namespace missfortune
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + "combo.r.config", "R Config");
                 {
+                    combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", 1200, 300, r->range());
                     combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use if killable by x waves", 6, 1, 14);
                     combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Auto R if hit enemies more than", 2, 1, 5);
                     combo::r_auto_on_cc = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_cc", "Auto R on CC", false);;
@@ -520,10 +522,10 @@ namespace missfortune
     bool r_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(r->range() - 50, damage_type::physical);
+        auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && target->is_attack_allowed_on_target())
         {
             if (can_use_r_on(target))
             {
@@ -561,7 +563,7 @@ namespace missfortune
 
         for (auto& enemy : entitylist->get_enemy_heroes())
         {
-            if (enemy->is_valid() && enemy->is_valid_target(r->range()))
+            if (enemy->is_valid() && enemy->is_valid_target(combo::r_max_range->get_int()))
             {
                 auto pred = prediction->get_prediction(enemy, r->get_delay(), r->get_radius(), r->get_speed());
                 if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
@@ -595,7 +597,7 @@ namespace missfortune
         if (combo::r_auto_on_cc->get_bool())
         {
             // Get a target from a given range
-            auto target = target_selector->get_target(r->range() - 50, damage_type::physical);
+            auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
             // Always check an object is not a nullptr!
             if (target != nullptr)
@@ -709,7 +711,7 @@ namespace missfortune
 
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
-            draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
+            draw_manager->add_circle(myhero->get_position(), combo::r_max_range->get_int(), draw_settings::r_color->get_color());
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
