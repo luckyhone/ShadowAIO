@@ -496,7 +496,6 @@ namespace malzahar
                                     orbwalker->set_attack(false);
                                     combo::previous_orbwalker_state = true;
                                 }
-                                return;
                             }
                         }
                     }

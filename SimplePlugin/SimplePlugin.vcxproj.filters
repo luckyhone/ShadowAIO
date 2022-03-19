@@ -55,6 +55,9 @@
     <ClCompile Include="malzahar.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="missfortune.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -100,6 +103,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="malzahar.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="missfortune.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

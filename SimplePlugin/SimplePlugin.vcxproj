@@ -166,6 +166,7 @@
     <ClCompile Include="kindred.cpp" />
     <ClCompile Include="malzahar.cpp" />
     <ClCompile Include="masteryi.cpp" />
+    <ClCompile Include="missfortune.cpp" />
     <ClCompile Include="trundle.cpp" />
     <ClCompile Include="tryndamere.cpp" />
     <ClCompile Include="twitch.cpp" />
@@ -183,6 +184,7 @@
     <ClInclude Include="kindred.h" />
     <ClInclude Include="malzahar.h" />
     <ClInclude Include="masteryi.h" />
+    <ClInclude Include="missfortune.h" />
     <ClInclude Include="trundle.h" />
     <ClInclude Include="tryndamere.h" />
     <ClInclude Include="twitch.h" />

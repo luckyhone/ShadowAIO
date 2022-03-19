@@ -5,7 +5,7 @@
 namespace kayle
 {
 
-// To declare a spell, it is necessary to create an object and registering it in load function
+	// To declare a spell, it is necessary to create an object and registering it in load function
 	script_spell* q = nullptr;
 	script_spell* w = nullptr;
 	script_spell* e = nullptr;
@@ -213,9 +213,9 @@ namespace kayle
 
 			auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
 			{
+				float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
 				draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", true);
 				draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-				float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
 				draw_settings::q_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.color", "Q Color", color);
 				draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
 				draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
@@ -603,19 +603,19 @@ namespace kayle
 	{
 		switch (entry->get_int())
 		{
-			case 0:
-				return hit_chance::low;
-				break;
-			case 1:
-				return hit_chance::medium;
-				break;
-			case 2:
-				return hit_chance::high;
-				break;
-			case 3:
-				return hit_chance::very_high;
-				break;
-			}
+		case 0:
+			return hit_chance::low;
+			break;
+		case 1:
+			return hit_chance::medium;
+			break;
+		case 2:
+			return hit_chance::high;
+			break;
+		case 3:
+			return hit_chance::very_high;
+			break;
+		}
 		return hit_chance::medium;
 	}
 #pragma endregion
