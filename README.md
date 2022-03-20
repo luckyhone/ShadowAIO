@@ -12,3 +12,5 @@ Plugin for BGX.gg
 - Cho'Gath
 - Twitch
 - Kalista
+- Malzahar
+- Miss Fortune
