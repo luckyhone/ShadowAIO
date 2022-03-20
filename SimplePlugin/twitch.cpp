@@ -9,6 +9,7 @@ namespace twitch
     script_spell* w = nullptr;
     script_spell* e = nullptr;
     script_spell* r = nullptr;
+    script_spell* b = nullptr;
 
     // Declaration of menu objects
     TreeTab* main_tab = nullptr;
@@ -46,6 +47,8 @@ namespace twitch
     namespace laneclear
     {
         TreeEntry* spell_farm = nullptr;
+        TreeEntry* use_q = nullptr;
+        TreeEntry* use_q_on_turret = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_use_if_killable_minions = nullptr;
@@ -53,6 +56,7 @@ namespace twitch
 
     namespace jungleclear
     {
+        TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
     }
@@ -60,6 +64,12 @@ namespace twitch
     namespace fleemode
     {
         TreeEntry* use_q;
+    }
+
+    namespace misc
+    {
+        TreeEntry* stealth_recall;
+        TreeEntry* stealth_recall_key;
     }
 
     namespace hitchance
@@ -94,6 +104,7 @@ namespace twitch
         w->set_skillshot(0.25f, 200.f, 1400.0F, { }, skillshot_type::skillshot_circle);
         e = plugin_sdk->register_spell(spellslot::e, 1200);
         r = plugin_sdk->register_spell(spellslot::r, 1100);
+        b = plugin_sdk->register_spell(spellslot::recall, 0);
 
 
         // Create a menu according to the description in the "Menu Section"
@@ -138,6 +149,10 @@ namespace twitch
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
                 laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclear.enabled", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 'H', true);
+                laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q", "Use Q", false);
+                laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                laneclear::use_q_on_turret = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q.on_turret", "Use Q On Turret", false);
+                laneclear::use_q_on_turret->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", true);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", true);
@@ -150,6 +165,8 @@ namespace twitch
 
             auto jungleclear = main_tab->add_tab(myhero->get_model() + ".jungleclear", "Jungle Clear Settings");
             {
+                jungleclear::use_q = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.q", "Use Q", true);
+                jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 jungleclear::use_w = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.w", "Use W", true);
                 jungleclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", true);
@@ -161,6 +178,13 @@ namespace twitch
             {
                 fleemode::use_q = fleemode->add_checkbox(myhero->get_model() + ".flee.q", "I WAS HIDING HAHAHAHA", true);
                 fleemode::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+            }
+
+            auto misc = main_tab->add_tab(myhero->get_model() + ".misc", "Miscellaneous Settings");
+            {
+                misc::stealth_recall = misc->add_checkbox(myhero->get_model() + ".misc.stealth_recall", "Stealth Recall", true);
+                misc::stealth_recall->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                misc::stealth_recall_key = misc->add_hotkey(myhero->get_model() + ".misc.stealth_recall.key", "Stealth Recall Key", TreeHotkeyMode::Hold, 'S', true);
             }
 
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
@@ -227,6 +251,14 @@ namespace twitch
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
+            if (q->is_ready() && b->is_ready() && misc::stealth_recall->get_bool() && misc::stealth_recall_key->get_bool())
+            {
+                if (q->cast() && b->cast())
+                {
+                    return;
+                }
+            }
+
             if (e->is_ready() && combo::use_e->get_bool())
             {
                 e_logic();
@@ -529,6 +561,31 @@ namespace twitch
             if (combo::use_q->get_bool())
             {
                 q->cast();
+            }
+        }
+
+        // Use q after autoattack on lane minions
+        if (target->is_minion() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_q->get_bool())) {
+            if (q->cast())
+            {
+                return;
+            }
+        }
+
+        // Use q after autoattack on monsters
+        if (target->is_monster() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_q->get_bool())) {
+            if (q->cast())
+            {
+                return;
+            }
+        }
+
+        // Use q after autoattack on turrets
+        if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_q_on_turret->get_bool() && target->is_ai_turret())
+        {
+            if (q->cast())
+            {
+                return;
             }
         }
     }
