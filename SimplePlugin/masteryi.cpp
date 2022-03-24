@@ -177,9 +177,9 @@ namespace masteryi
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
+                float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", true);
                 draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::q_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.color", "Q Color", color);
             }
         }
@@ -464,7 +464,7 @@ namespace masteryi
 
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
     {
-        if (antigapclose::use_q->get_bool() && q->is_ready())
+        if (antigapclose::use_q->get_bool() && q->is_ready() && !orbwalker->flee_mode())
         {
             if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
             {
@@ -477,8 +477,7 @@ namespace masteryi
     }
 
     void on_draw()
-    {
-
+    {   
         if (myhero->is_dead())
         {
             return;

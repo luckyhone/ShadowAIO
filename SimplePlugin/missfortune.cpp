@@ -30,6 +30,7 @@ namespace missfortune
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
+        TreeEntry* r_semi_manual_cast = nullptr;
         TreeEntry* r_max_range = nullptr;
         TreeEntry* r_use_if_killable_by_x_waves = nullptr;
         TreeEntry* r_auto_if_enemies_more_than = nullptr;
@@ -77,6 +78,11 @@ namespace missfortune
         TreeEntry* use_e;
     }
 
+    namespace antigapclose
+    {
+        TreeEntry* use_e = nullptr;
+    }
+
     namespace hitchance
     {
         TreeEntry* e_hitchance = nullptr;
@@ -87,6 +93,7 @@ namespace missfortune
     void on_update();
     void on_draw();
     void on_before_attack_orbwalker(game_object_script target, bool* process);
+    void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 
     // Declaring functions responsible for spell-logic
     //
@@ -94,6 +101,7 @@ namespace missfortune
     void e_logic();
     bool r_logic();
     bool r_logic_auto();
+    bool r_logic_semi();
 
     // Utils
     //
@@ -133,6 +141,7 @@ namespace missfortune
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + "combo.r.config", "R Config");
                 {
+                    combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", 1200, 550, r->range());
                     combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use if killable by x waves", 6, 1, 14);
                     combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Auto R if hit enemies more than", 2, 1, 5);
@@ -207,6 +216,12 @@ namespace missfortune
                 fleemode::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
+            auto antigapclose = main_tab->add_tab(myhero->get_model() + ".antigapclose", "Anti Gapclose");
+            {
+                antigapclose::use_e = antigapclose->add_checkbox(myhero->get_model() + ".antigapclose.e", "Use E", true);
+                antigapclose::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+            }
+
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
             {
                 hitchance::e_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.e", "Hitchance E", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 1);
@@ -229,6 +244,10 @@ namespace missfortune
             }
         }
 
+        // Add anti gapcloser handler
+        //
+        antigapcloser::add_event_handler(on_gapcloser);
+
         // To add a new event you need to define a function and call add_calback
         //
         event_handler<events::on_update>::add_callback(on_update);
@@ -248,6 +267,10 @@ namespace missfortune
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove anti gapcloser handler
+        //
+        antigapcloser::remove_event_handler(on_gapcloser);
 
         // VERY important to remove always ALL events
         //
@@ -304,6 +327,10 @@ namespace missfortune
             if (r->is_ready() && combo::use_r->get_bool())
             {
                 if (r_logic_auto())
+                {
+                    return;
+                }
+                if (r_logic_semi())
                 {
                     return;
                 }
@@ -629,6 +656,44 @@ namespace missfortune
     }
 #pragma endregion
 
+#pragma region r_logic_semi
+    bool r_logic_semi()
+    {
+        if (combo::r_semi_manual_cast->get_bool())
+        {
+            // Get a target from a given range
+            auto target = target_selector->get_target(r->range(), damage_type::physical);
+
+            // Always check an object is not a nullptr!
+            if (target != nullptr)
+            {
+                if (can_use_r_on(target))
+                {
+                    auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
+                    if (pred.hitchance >= get_hitchance(hitchance::e_hitchance))
+                    {
+                        if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
+                        {
+                            evade->disable_evade();
+                            combo::previous_evade_state = true;
+                        }
+                        if (combo::r_disable_orbwalker_moving->get_bool())
+                        {
+                            orbwalker->set_movement(false);
+                            orbwalker->set_attack(false);
+                            combo::previous_orbwalker_state = true;
+                        }
+                        r->cast(pred.get_unit_position());
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+#pragma endregion
+
 #pragma region can_use_r_on
     bool can_use_r_on(game_object_script target)
     {
@@ -715,6 +780,8 @@ namespace missfortune
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
+        auto semi = combo::r_semi_manual_cast->get_bool();
+        draw_manager->add_text_on_screen(pos + vector(0, 8), (semi ? 0xFF00FF00 : 0xFF0000FF), 14, "SEMI R %s", (semi ? "ON" : "OFF"));
         auto lasthit = lasthit::lasthit->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 24), (lasthit ? 0xFF00FF00 : 0xFF0000FF), 14, "LASTHIT % s", (lasthit ? "ON" : "OFF"));
         auto spellfarm = laneclear::spell_farm->get_bool();
@@ -722,7 +789,8 @@ namespace missfortune
 
         if (draw_settings::draw_damage_r->get_bool())
         {
-            for (auto& enemy : entitylist->get_enemy_heroes()) {
+            for (auto& enemy : entitylist->get_enemy_heroes())
+            {
                 if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && r->is_ready())
                 {
                     draw_dmg_rl(enemy, r->get_damage(enemy) * combo::r_use_if_killable_by_x_waves->get_int(), 0x8000ff00);
@@ -767,6 +835,17 @@ namespace missfortune
             if (w->cast())
             {
                 return;
+            }
+        }
+    }
+
+    void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
+    {
+        if (antigapclose::use_e->get_bool() && e->is_ready())
+        {
+            if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
+            {
+                e->cast(sender, get_hitchance(hitchance::e_hitchance));
             }
         }
     }

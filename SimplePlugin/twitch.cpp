@@ -63,13 +63,18 @@ namespace twitch
 
     namespace fleemode
     {
-        TreeEntry* use_q;
+        TreeEntry* use_q = nullptr;
+    }
+
+    namespace antigapclose
+    {
+        TreeEntry* use_w = nullptr;
     }
 
     namespace misc
     {
-        TreeEntry* stealth_recall;
-        TreeEntry* stealth_recall_key;
+        TreeEntry* stealth_recall = nullptr;
+        TreeEntry* stealth_recall_key = nullptr;
     }
 
     namespace hitchance
@@ -81,6 +86,7 @@ namespace twitch
     void on_update();
     void on_draw();
     void on_after_attack_orbwalker(game_object_script target);
+    void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 
     // Declaring functions responsible for spell-logic
     //
@@ -173,11 +179,16 @@ namespace twitch
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
-
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".flee", "Flee Mode");
             {
                 fleemode::use_q = fleemode->add_checkbox(myhero->get_model() + ".flee.q", "I WAS HIDING HAHAHAHA", true);
                 fleemode::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+            }
+
+            auto antigapclose = main_tab->add_tab(myhero->get_model() + ".antigapclose", "Anti Gapclose");
+            {
+                antigapclose::use_w = antigapclose->add_checkbox(myhero->get_model() + ".antigapclose.w", "Use W", true);
+                antigapclose::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
             }
 
             auto misc = main_tab->add_tab(myhero->get_model() + ".misc", "Miscellaneous Settings");
@@ -211,6 +222,10 @@ namespace twitch
             }
         }
 
+        // Add anti gapcloser handler
+        //
+        antigapcloser::add_event_handler(on_gapcloser);
+
         // To add a new event you need to define a function and call add_calback
         //
         event_handler<events::on_update>::add_callback(on_update);
@@ -230,6 +245,10 @@ namespace twitch
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove anti gapcloser handler
+        //
+        antigapcloser::remove_event_handler(on_gapcloser);
 
         // VERY important to remove always ALL events
         //
@@ -545,7 +564,8 @@ namespace twitch
 
         if (draw_settings::draw_damage_e->get_bool())
         {
-            for (auto& enemy : entitylist->get_enemy_heroes()) {
+            for (auto& enemy : entitylist->get_enemy_heroes())
+            {
                 if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && e->is_ready())
                 {
                     draw_dmg_rl(enemy, e->get_damage(enemy), 0x8000ff00);
@@ -586,6 +606,17 @@ namespace twitch
             if (q->cast())
             {
                 return;
+            }
+        }
+    }
+
+    void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
+    {
+        if (antigapclose::use_w->get_bool() && w->is_ready())
+        {
+            if (sender->is_valid_target(w->range() + sender->get_bounding_radius()))
+            {
+                w->cast(sender, get_hitchance(hitchance::w_hitchance));
             }
         }
     }

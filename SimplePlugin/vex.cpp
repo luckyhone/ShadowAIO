@@ -33,7 +33,7 @@ namespace vex
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
-        TreeEntry* r_semi_manual_cast;
+        TreeEntry* r_semi_manual_cast = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
         TreeEntry* r_target_above_range = nullptr;
         TreeEntry* r_dont_use_target_under_turret = nullptr;
@@ -233,7 +233,7 @@ namespace vex
 
         // Remove menu tab
         //
-        menu->delete_tab("vex");
+        menu->delete_tab(main_tab);
 
         // Remove anti gapcloser handler
         //
@@ -470,7 +470,7 @@ namespace vex
     }
 #pragma endregion
 
-#pragma region r_logic
+#pragma region r_semi_manual_logic
     void r_semi_manual_logic()
     {
         if (combo::r_semi_manual_cast->get_bool())

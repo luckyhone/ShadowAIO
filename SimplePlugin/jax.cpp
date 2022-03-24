@@ -28,6 +28,7 @@ namespace jax
         TreeEntry* use_q = nullptr;
         TreeEntry* q_only_when_e_ready = nullptr;
         TreeEntry* q_dont_use_under_enemy_turret = nullptr;
+        TreeEntry* q_target_above_range = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
@@ -100,6 +101,7 @@ namespace jax
                 {
                     combo::q_only_when_e_ready = q_config->add_checkbox(myhero->get_model() + ".combo.q.only_when_e_ready", "Use Q only when E is ready", false);
                     combo::q_dont_use_under_enemy_turret = q_config->add_checkbox(myhero->get_model() + ".combo.q.dont_use_under_enemy_turret", "Dont use under enemy turret", true);
+                    combo::q_target_above_range = q_config->add_slider(myhero->get_model() + ".combo.q.target_above_range", "Only if target is above range", myhero->get_attack_range(), 0, q->range());
                 }
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
@@ -433,18 +435,21 @@ namespace jax
         {
             if (!combo::q_dont_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
             {
-                if (combo::q_only_when_e_ready->get_bool())
+                if (target->get_distance(myhero) > combo::q_target_above_range->get_int())
                 {
-                    if (e->is_ready())
+                    if (combo::q_only_when_e_ready->get_bool())
                     {
-                        e->cast();
-                        q->cast(target);
+                        if (e->is_ready())
+                        {
+                            e->cast();
+                            q->cast(target);
+                        }
+                        return;
                     }
-                    return;
-                }
 
-                if (q->cast(target))
-                    return;
+                    if (q->cast(target))
+                        return;
+                }
             }
         }
     }
