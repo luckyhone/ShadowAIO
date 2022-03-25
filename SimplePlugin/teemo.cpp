@@ -102,7 +102,7 @@ namespace teemo
     {
         // Registering a spells
         //
-        q = plugin_sdk->register_spell(spellslot::q, myhero->get_attack_range());
+        q = plugin_sdk->register_spell(spellslot::q, 680);
         w = plugin_sdk->register_spell(spellslot::w, 0);
         r = plugin_sdk->register_spell(spellslot::r, r_ranges[0]);
         r->set_skillshot(0.25f, 50.0f, 1200.0f, { }, skillshot_type::skillshot_circle);
