@@ -83,6 +83,7 @@ namespace teemo
     void on_update();
     void on_draw();
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
+    void on_after_attack(game_object_script target);
 
     // Declaring functions responsible for spell-logic
     //
@@ -105,7 +106,7 @@ namespace teemo
         q = plugin_sdk->register_spell(spellslot::q, 680);
         w = plugin_sdk->register_spell(spellslot::w, 0);
         r = plugin_sdk->register_spell(spellslot::r, r_ranges[0]);
-        r->set_skillshot(0.25f, 50.0f, 1600.0f, { }, skillshot_type::skillshot_circle);
+        r->set_skillshot(0.25f, 100.0f, 1600.0f, { }, skillshot_type::skillshot_circle);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -221,6 +222,7 @@ namespace teemo
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
+        event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack);
     }
 
     void unload()
@@ -243,6 +245,7 @@ namespace teemo
         //
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
+        event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack);
     }
 
     // Main update script function
@@ -413,7 +416,10 @@ namespace teemo
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            q->cast(target);
+            if (myhero->get_distance(target) > myhero->get_attack_range())
+            {
+                q->cast(target);
+            }
         }
     }
 #pragma endregion
@@ -561,7 +567,6 @@ namespace teemo
 
     void on_draw()
     {
-
         if (myhero->is_dead())
         {
             return;
@@ -617,6 +622,18 @@ namespace teemo
                 {
                     r->cast(sender, get_hitchance(hitchance::r_hitchance));
                 }
+            }
+        }
+    }
+
+    void on_after_attack(game_object_script target)
+    {
+        if (q->is_ready())
+        {
+            // Use w to reset AA
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+            {
+                q->cast(target);
             }
         }
     }
