@@ -31,6 +31,7 @@ namespace jax
         TreeEntry* q_target_above_range = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_auto_recast_if_enemy_leaving_range = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
@@ -61,9 +62,9 @@ namespace jax
 
     namespace fleemode
     {
-        TreeEntry* use_q;
-        TreeEntry* q_jump_on_ally_champions;
-        TreeEntry* q_jump_on_ally_minions;
+        TreeEntry* use_q = nullptr;
+        TreeEntry* q_jump_on_ally_champions = nullptr;
+        TreeEntry* q_jump_on_ally_minions = nullptr;
     }
 
 
@@ -108,6 +109,10 @@ namespace jax
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
+                {
+                    combo::e_auto_recast_if_enemy_leaving_range = e_config->add_checkbox(myhero->get_model() + ".combo.e.auto_recast_if_enemy_leaving_range", "Auto E2 if enemy leaving E range", true);
+                }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
@@ -215,6 +220,25 @@ namespace jax
         if (r->is_ready() && combo::use_r->get_bool())
         {
             r_logic();
+        }
+
+        if (e->is_ready() && combo::e_auto_recast_if_enemy_leaving_range->get_bool() && myhero->has_buff(buff_hash("JaxCounterStrike")))
+        {
+            // Get a target from a given range
+            auto target = target_selector->get_target(e->range(), damage_type::physical);
+
+            // Always check an object is not a nullptr!
+            if (target != nullptr)
+            {
+                if (myhero->get_distance(target) >= e->range() - 30)
+                {
+                    console->print("yes");
+                    if (e->cast())
+                    {
+                        console->print("yes2");
+                    }
+                }
+            }
         }
 
         // Very important if can_move ( extra_windup ) 
@@ -483,7 +507,10 @@ namespace jax
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast();
+            if (!myhero->has_buff(buff_hash("JaxCounterStrike")))
+            {
+                e->cast();
+            }
         }
     }
 #pragma endregion
