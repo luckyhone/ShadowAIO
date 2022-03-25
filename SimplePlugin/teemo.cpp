@@ -21,6 +21,7 @@ namespace teemo
         TreeEntry* e_color = nullptr;
         TreeEntry* draw_range_r = nullptr;
         TreeEntry* r_color = nullptr;
+        TreeEntry* r_draw_best_locations = nullptr;
     }
 
     namespace combo
@@ -32,6 +33,7 @@ namespace teemo
         TreeEntry* use_r = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
         TreeEntry* r_auto_on_cc = nullptr;
+        TreeEntry* r_auto_on_best_locations = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
@@ -78,6 +80,47 @@ namespace teemo
     //
     float last_r_time = 0.0f;
     float r_ranges[] = { 400.0f, 650.0f, 900.0f };
+    vector r_best_locations[] =
+    {
+        vector(1170.0f, 12330.0f),
+        vector(1690.0f, 13020.0f),
+        vector(2392.0f, 13530.0f),
+        vector(4458.0f, 11860.0f),
+        vector(2956.0f, 11120.0f),
+        vector(3008.0f, 9088.0f),
+        vector(2306.0f, 9800.0f),
+        vector(4684.0f, 10050.0f),
+        vector(5230.0f, 9170.0f),
+        vector(5058.0f, 8530.0f),
+        vector(4778.0f, 7140.0f),
+        vector(3384.0f, 7820.0f),
+        vector(8266.0f, 10280.0f),
+        vector(6748.0f, 11480.0f),
+        vector(7992.0f, 11820.0f),
+        vector(6538.0f, 8350.0f),
+        vector(9224.0f, 11400.0f),
+        vector(11500.0f, 71500.0f),
+        vector(5676.0f, 12780.0f),
+        vector(5634.0f, 3540.0f),
+        vector(6876.0f, 3160.0f),
+        vector(8090.0f, 3520.0f),
+        vector(9218.0f, 2190.0f),
+        vector(10390.0f, 3110.0f),
+        vector(8580.0f, 4740.0f),
+        vector(11870.0f, 3940.0f),
+        vector(10190.0f, 4820.0f),
+        vector(9430.0f, 5690.0f),
+        vector(9858.0f, 6490.0f),
+        vector(8390.0f, 6510.0f),
+        vector(10012.0f, 7958.0f),
+        vector(11484.0f, 7150.0f),
+        vector(11922.0f, 5910.0f),
+        vector(12532.0f, 5270.0f),
+        vector(6566.0f, 4750.0f),
+        vector(12410.0f, 1400.0f),
+        vector(13030.0f, 1950.0f),
+        vector(13534.0f, 2660.0f)
+    };
 
     // Event handler functions
     void on_update();
@@ -98,6 +141,7 @@ namespace teemo
     bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
+    bool is_trap_placed_in_loc(vector loc);
 
     void load()
     {
@@ -106,7 +150,7 @@ namespace teemo
         q = plugin_sdk->register_spell(spellslot::q, 680);
         w = plugin_sdk->register_spell(spellslot::w, 0);
         r = plugin_sdk->register_spell(spellslot::r, r_ranges[0]);
-        r->set_skillshot(0.25f, 100.0f, 1600.0f, { }, skillshot_type::skillshot_circle);
+        r->set_skillshot(0.25f, 75.0f, 1600.0f, { }, skillshot_type::skillshot_circle);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -134,6 +178,7 @@ namespace teemo
                 {
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 65, 0, 100);
                     combo::r_auto_on_cc = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_cc", "Auto R on CC", true);
+                    combo::r_auto_on_best_locations = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_best_locations", "Auto R on best locations", true);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
@@ -211,6 +256,7 @@ namespace teemo
                 draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".draw.r", "Draw R range", true);
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
+                draw_settings::r_draw_best_locations = draw_settings->add_checkbox(myhero->get_model() + ".draw.r.best_locations", "Draw R best locations", true);
             }
         }
 
@@ -255,6 +301,8 @@ namespace teemo
         {
             return;
         }
+
+        //console->print("X: %f, Y: %f", myhero->get_position().x, myhero->get_position().y);
 
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
@@ -484,6 +532,22 @@ namespace teemo
                 r->cast(target, hit_chance::immobile);
             }
         }
+        else if (combo::r_auto_on_best_locations->get_bool() && gametime->get_time() > last_r_time)
+        {
+            for (auto& loc : r_best_locations)
+            {
+                if (!is_trap_placed_in_loc(loc))
+                {
+                    if (r->is_in_range(loc, r->range()))
+                    {
+                        if (r->cast(loc))
+                        {
+                            last_r_time = gametime->get_time() + 2.0f;
+                        }
+                    }
+                }
+            }
+        }
     }
 #pragma endregion
 
@@ -565,6 +629,22 @@ namespace teemo
         }
     }
 
+
+    bool is_trap_placed_in_loc(vector loc)
+    {
+        for (auto& obj : entitylist->get_other_minion_objects())
+        {
+            if (obj->is_valid() && obj->get_name().compare("Noxious Trap") == 0)
+            {
+                if (obj->get_distance(loc) < 75)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     void on_draw()
     {
         if (myhero->is_dead())
@@ -595,6 +675,14 @@ namespace teemo
                 {
                     draw_dmg_rl(enemy, q->get_damage(enemy), 0x8000ff00);
                 }
+            }
+        }
+
+        if (draw_settings::r_draw_best_locations->get_bool())
+        {
+            for (auto& loc : r_best_locations)
+            {
+                draw_manager->add_circle(loc, 75, is_trap_placed_in_loc(loc) ? 0xFF00FF00 : 0xFF0000FF);
             }
         }
     }
