@@ -105,7 +105,7 @@ namespace teemo
         q = plugin_sdk->register_spell(spellslot::q, 680);
         w = plugin_sdk->register_spell(spellslot::w, 0);
         r = plugin_sdk->register_spell(spellslot::r, r_ranges[0]);
-        r->set_skillshot(0.25f, 50.0f, 1200.0f, { }, skillshot_type::skillshot_circle);
+        r->set_skillshot(0.25f, 50.0f, 1600.0f, { }, skillshot_type::skillshot_circle);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -283,7 +283,7 @@ namespace teemo
                 }
             }
 
-            if (orbwalker->last_hit_mode() || orbwalker->mixed_mode())
+            if (orbwalker->last_hit_mode() || orbwalker->mixed_mode() || orbwalker->lane_clear_mode())
             {
                 if (lasthit::lasthit->get_bool())
                 {
@@ -453,8 +453,10 @@ namespace teemo
                 {
                     if (gametime->get_time() > last_r_time)
                     {
-                        r->cast(target, get_hitchance(hitchance::r_hitchance));
-                        last_r_time = gametime->get_time() + 2.0f;
+                        if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
+                        {
+                            last_r_time = gametime->get_time() + 2.0f;
+                        }
                     }
                 }
             }
