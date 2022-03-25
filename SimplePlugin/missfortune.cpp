@@ -517,7 +517,7 @@ namespace missfortune
         }
     }
 
-#pragma region w_logic
+#pragma region q_logic
     void q_logic()
     {
         // Get a target from a given range
