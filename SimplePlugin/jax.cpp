@@ -95,6 +95,10 @@ namespace jax
         main_tab = menu->create_tab("jax", "Jax");
         main_tab->set_assigned_texture(myhero->get_square_icon_portrait());
         {
+            // Info
+            //
+            main_tab->add_separator(myhero->get_model() + ".aio", "ShadowAIO : " + myhero->get_model());
+
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
@@ -200,7 +204,7 @@ namespace jax
 
         // Remove menu tab
         //
-        menu->delete_tab("jax");
+        menu->delete_tab(main_tab);
 
         // VERY important to remove always ALL events
         //

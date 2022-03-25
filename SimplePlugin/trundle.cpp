@@ -104,6 +104,10 @@ namespace trundle
         main_tab = menu->create_tab("trundle", "Trundle");
         main_tab->set_assigned_texture(myhero->get_square_icon_portrait());
         {
+            // Info
+            //
+            main_tab->add_separator(myhero->get_model() + ".aio", "ShadowAIO : " + myhero->get_model());
+
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
@@ -220,7 +224,7 @@ namespace trundle
 
         // Remove menu tab
         //
-        menu->delete_tab("trundle");
+        menu->delete_tab(main_tab);
 
         // Remove anti gapcloser handler
         //
