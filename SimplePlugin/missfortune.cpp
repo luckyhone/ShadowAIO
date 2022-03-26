@@ -6,6 +6,7 @@ namespace missfortune
 
     // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
+    script_spell* q1 = nullptr;
     script_spell* w = nullptr;
     script_spell* e = nullptr;
     script_spell* r = nullptr;
@@ -36,8 +37,8 @@ namespace missfortune
         TreeEntry* r_auto_if_enemies_more_than = nullptr;
         TreeEntry* r_auto_on_cc = nullptr;
         TreeEntry* r_cancel_if_nobody_inside = nullptr;
-        TreeEntry* r_disable_evade = nullptr;
         TreeEntry* r_disable_orbwalker_moving = nullptr;
+        TreeEntry* r_disable_evade = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
         bool previous_evade_state = false;
         bool previous_orbwalker_state = false;
@@ -89,6 +90,8 @@ namespace missfortune
         TreeEntry* r_hitchance = nullptr;
     }
 
+    float last_r_time = 0.0f;
+
     // Event handler functions
     void on_update();
     void on_draw();
@@ -114,6 +117,8 @@ namespace missfortune
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, myhero->get_attack_range());
+        q1 = plugin_sdk->register_spell(spellslot::q, 1300.0f);
+        q1->set_skillshot(0.25f, 70.0f, 1500.0f, { }, skillshot_type::skillshot_line);
         w = plugin_sdk->register_spell(spellslot::w, 0);
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 200.f, FLT_MAX, { }, skillshot_type::skillshot_circle);
@@ -136,7 +141,7 @@ namespace missfortune
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W before AA", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
-                combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());               
+                combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R on killable", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + "combo.r.config", "R Config");
@@ -147,8 +152,8 @@ namespace missfortune
                     combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Auto R if hit enemies more than", 2, 1, 5);
                     combo::r_auto_on_cc = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_cc", "Auto R on CC", false);;
                     combo::r_cancel_if_nobody_inside = r_config->add_checkbox(myhero->get_model() + ".combo.r.cancel_if_nobody_inside", "Cancel R if nobody inside", false);
-                    combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
                     combo::r_disable_orbwalker_moving = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_orbwalker_moving", "Disable Orbwalker Moving on R", true);
+                    combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
@@ -287,35 +292,67 @@ namespace missfortune
             return;
         }
 
-        if (myhero->get_active_spell() != nullptr && myhero->get_active_spell()->is_channeling())
+        if ((myhero->get_active_spell() != nullptr && myhero->get_active_spell()->is_channeling()) || gametime->get_time() - last_r_time < 0.3f)
         {
+            if (combo::r_disable_orbwalker_moving->get_bool())
+            {
+                orbwalker->set_attack(false);
+                orbwalker->set_movement(false);
+                combo::previous_orbwalker_state = true;
+            }
             if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
             {
                 evade->disable_evade();
                 combo::previous_evade_state = true;
             }
-            if (combo::r_disable_orbwalker_moving->get_bool())
+
+            if (combo::r_cancel_if_nobody_inside->get_bool())
             {
-                orbwalker->set_movement(false);
-                orbwalker->set_attack(false);
-                combo::previous_orbwalker_state = true;
+                std::vector<game_object_script> hit_by_r;
+
+                for (auto& enemy : entitylist->get_enemy_heroes())
+                {
+                    if (enemy->is_valid() && enemy->is_valid_target(combo::r_max_range->get_int()))
+                    {
+                        auto pred = prediction->get_prediction(enemy, r->get_delay(), r->get_radius(), r->get_speed());
+                        if (pred.hitchance >= hit_chance::impossible)
+                        {
+                            hit_by_r.push_back(enemy);
+                        }
+                    }
+                }
+
+                if (hit_by_r.empty())
+                {
+                    if (combo::previous_orbwalker_state)
+                    {
+                        orbwalker->set_attack(true);
+                        orbwalker->set_movement(true);
+                        combo::previous_orbwalker_state = false;
+                    }
+                    if (combo::previous_evade_state)
+                    {
+                        evade->enable_evade();
+                        combo::previous_evade_state = false;
+                    }
+                }
             }
+
             return;
         }
 
         if (myhero->get_active_spell() == nullptr)
         {
+            if (combo::previous_orbwalker_state)
+            {
+                orbwalker->set_attack(true);
+                orbwalker->set_movement(true);
+                combo::previous_orbwalker_state = false;
+            }
             if (combo::previous_evade_state)
             {
                 evade->enable_evade();
                 combo::previous_evade_state = false;
-            }
-
-            if (combo::previous_orbwalker_state)
-            {
-                orbwalker->set_movement(true);
-                orbwalker->set_attack(true);
-                combo::previous_orbwalker_state = false;
             }
         }
 
@@ -358,37 +395,34 @@ namespace missfortune
                 }
             }
 
-            if (orbwalker->last_hit_mode() || orbwalker->mixed_mode())
+            if ((orbwalker->last_hit_mode() || orbwalker->mixed_mode() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
             {
-                if (lasthit::lasthit->get_bool())
-                {
-                    // Gets enemy minions from the entitylist
-                    auto lane_minions = entitylist->get_enemy_minions();
+                // Gets enemy minions from the entitylist
+                auto lane_minions = entitylist->get_enemy_minions();
 
-                    // You can use this function to delete minions that aren't in the specified range
-                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                        {
-                            return !x->is_valid_target(q->range());
-                        }), lane_minions.end());
-
-                    //std::sort -> sort lane minions by distance
-                    std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-                        {
-                            return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-                        });
-
-                    if (!lane_minions.empty())
+                // You can use this function to delete minions that aren't in the specified range
+                lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        if (q->is_ready() && lasthit::use_q->get_bool())
+                        return !x->is_valid_target(q->range());
+                    }), lane_minions.end());
+
+                //std::sort -> sort lane minions by distance
+                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                    {
+                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                    });
+
+                if (!lane_minions.empty())
+                {
+                    if (q->is_ready() && lasthit::use_q->get_bool())
+                    {
+                        for (auto&& minion : lane_minions)
                         {
-                            for (auto&& minion : lane_minions)
+                            if (q->get_damage(minion) > minion->get_health())
                             {
-                                if (q->get_damage(minion) > minion->get_health())
+                                if (q->cast(minion))
                                 {
-                                    if (q->cast(minion))
-                                    {
-                                        return;
-                                    }
+                                    return;
                                 }
                             }
                         }
@@ -561,19 +595,22 @@ namespace missfortune
                     auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
                     if (pred.hitchance >= get_hitchance(hitchance::e_hitchance))
                     {
+                        if (combo::r_disable_orbwalker_moving->get_bool())
+                        {
+                            orbwalker->set_attack(false);
+                            orbwalker->set_movement(false);
+                            combo::previous_orbwalker_state = true;
+                        }
                         if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                         {
                             evade->disable_evade();
                             combo::previous_evade_state = true;
                         }
-                        if (combo::r_disable_orbwalker_moving->get_bool())
+                        if (r->cast(pred.get_unit_position()))
                         {
-                            orbwalker->set_movement(false);
-                            orbwalker->set_attack(false);
-                            combo::previous_orbwalker_state = true;
+                            last_r_time = gametime->get_time();
+                            return true;
                         }
-                        r->cast(pred.get_unit_position());
-                        return true;
                     }
                 }
             }
@@ -599,25 +636,28 @@ namespace missfortune
                 }
             }
         }
-        
+
         if (hit_by_r.size() >= combo::r_auto_if_enemies_more_than->get_int())
         {
             auto pred = prediction->get_prediction(hit_by_r.front(), r->get_delay(), r->get_radius(), r->get_speed());
             if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
             {
+                if (combo::r_disable_orbwalker_moving->get_bool())
+                {
+                    orbwalker->set_attack(false);
+                    orbwalker->set_movement(false);
+                    combo::previous_orbwalker_state = true;
+                }
                 if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                 {
                     evade->disable_evade();
                     combo::previous_evade_state = true;
                 }
-                if (combo::r_disable_orbwalker_moving->get_bool())
+                if (r->cast(pred.get_unit_position()))
                 {
-                    orbwalker->set_movement(false);
-                    orbwalker->set_attack(false);
-                    combo::previous_orbwalker_state = true;
+                    last_r_time = gametime->get_time();
+                    return true;
                 }
-                r->cast(pred.get_unit_position());
-                return true;
             }
         }
 
@@ -634,19 +674,22 @@ namespace missfortune
                     auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
                     if (pred.hitchance >= hit_chance::immobile)
                     {
+                        if (combo::r_disable_orbwalker_moving->get_bool())
+                        {
+                            orbwalker->set_attack(false);
+                            orbwalker->set_movement(false);
+                            combo::previous_orbwalker_state = true;
+                        }
                         if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                         {
                             evade->disable_evade();
                             combo::previous_evade_state = true;
                         }
-                        if (combo::r_disable_orbwalker_moving->get_bool())
+                        if (r->cast(pred.get_unit_position()))
                         {
-                            orbwalker->set_movement(false);
-                            orbwalker->set_attack(false);
-                            combo::previous_orbwalker_state = true;
+                            last_r_time = gametime->get_time();
+                            return true;
                         }
-                        r->cast(pred.get_unit_position());
-                        return true;
                     }
                 }
             }
@@ -672,19 +715,22 @@ namespace missfortune
                     auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
                     if (pred.hitchance >= get_hitchance(hitchance::e_hitchance))
                     {
+                        if (combo::r_disable_orbwalker_moving->get_bool())
+                        {
+                            orbwalker->set_attack(false);
+                            orbwalker->set_movement(false);
+                            combo::previous_orbwalker_state = true;
+                        }
                         if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                         {
                             evade->disable_evade();
                             combo::previous_evade_state = true;
                         }
-                        if (combo::r_disable_orbwalker_moving->get_bool())
+                        if (r->cast(pred.get_unit_position()))
                         {
-                            orbwalker->set_movement(false);
-                            orbwalker->set_attack(false);
-                            combo::previous_orbwalker_state = true;
+                            last_r_time = gametime->get_time();
+                            return true;
                         }
-                        r->cast(pred.get_unit_position());
-                        return true;
                     }
                 }
             }
@@ -710,19 +756,19 @@ namespace missfortune
     {
         switch (entry->get_int())
         {
-            case 0:
-                return hit_chance::low;
-                break;
-            case 1:
-                return hit_chance::medium;
-                break;
-            case 2:
-                return hit_chance::high;
-                break;
-            case 3:
-                return hit_chance::very_high;
-                break;
-            }
+        case 0:
+            return hit_chance::low;
+            break;
+        case 1:
+            return hit_chance::medium;
+            break;
+        case 2:
+            return hit_chance::high;
+            break;
+        case 3:
+            return hit_chance::very_high;
+            break;
+        }
         return hit_chance::medium;
     }
 #pragma endregion
