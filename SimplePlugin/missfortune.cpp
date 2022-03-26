@@ -6,7 +6,6 @@ namespace missfortune
 
     // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
-    script_spell* q1 = nullptr;
     script_spell* w = nullptr;
     script_spell* e = nullptr;
     script_spell* r = nullptr;
@@ -117,8 +116,6 @@ namespace missfortune
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, myhero->get_attack_range());
-        q1 = plugin_sdk->register_spell(spellslot::q, 1300.0f);
-        q1->set_skillshot(0.25f, 70.0f, 1500.0f, { }, skillshot_type::skillshot_line);
         w = plugin_sdk->register_spell(spellslot::w, 0);
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 200.f, FLT_MAX, { }, skillshot_type::skillshot_circle);
