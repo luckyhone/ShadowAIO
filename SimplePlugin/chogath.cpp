@@ -411,7 +411,7 @@ namespace chogath
     void w_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(myhero->get_attack_range(), damage_type::magical);
+        auto target = target_selector->get_target(w->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
