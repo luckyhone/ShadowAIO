@@ -9,6 +9,7 @@ namespace jax
     script_spell* w = nullptr;
     script_spell* e = nullptr;
     script_spell* r = nullptr;
+    script_spell* ward = nullptr;
 
     // Declaration of menu objects
     TreeTab* main_tab = nullptr;
@@ -65,8 +66,14 @@ namespace jax
         TreeEntry* use_q = nullptr;
         TreeEntry* q_jump_on_ally_champions = nullptr;
         TreeEntry* q_jump_on_ally_minions = nullptr;
+        TreeEntry* q_ward_jump = nullptr;
     }
 
+    namespace misc
+    {
+        TreeEntry* ward_jump = nullptr;
+        TreeEntry* ward_jump_key = nullptr;
+    }
 
     // Event handler functions
     void on_update();
@@ -79,6 +86,7 @@ namespace jax
     void w_logic();
     void e_logic();
     void r_logic();
+    void ward_jump_logic();
 
     void load()
     {
@@ -88,6 +96,7 @@ namespace jax
         w = plugin_sdk->register_spell(spellslot::w, myhero->get_attack_range() + 50);
         e = plugin_sdk->register_spell(spellslot::e, 300);
         r = plugin_sdk->register_spell(spellslot::r, 0);
+        ward = plugin_sdk->register_spell(spellslot::trinket, 550);
 
 
         // Create a menu according to the description in the "Menu Section"
@@ -168,14 +177,21 @@ namespace jax
                 {
                     fleemode::q_jump_on_ally_champions = q_config->add_checkbox(myhero->get_model() + ".flee.q.jump_on_ally_champions", "Jump on ally champions", true);
                     fleemode::q_jump_on_ally_minions = q_config->add_checkbox(myhero->get_model() + ".flee.q.jump_on_ally_minions", "Jump on ally minions", true);
+                    fleemode::q_ward_jump = q_config->add_checkbox(myhero->get_model() + ".flee.q.ward_jump", "Ward jump", true);
                 }
+            }
+
+            auto misc = main_tab->add_tab(myhero->get_model() + ".misc", "Miscellaneous Settings");
+            {
+                misc::ward_jump = misc->add_checkbox(myhero->get_model() + ".misc.ward_jump", "Ward Jump", true);
+                misc::ward_jump_key = misc->add_hotkey(myhero->get_model() + ".misc.stealth_recall.key", "Ward Jump Key", TreeHotkeyMode::Hold, 'T', true);
             }
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
+                float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", true);
                 draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::q_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.color", "Q Color", color);
                 draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
                 draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
@@ -236,10 +252,9 @@ namespace jax
             {
                 if (myhero->get_distance(target) >= e->range() - 30)
                 {
-                    console->print("yes");
                     if (e->cast())
                     {
-                        console->print("yes2");
+                        return;
                     }
                 }
             }
@@ -250,6 +265,11 @@ namespace jax
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
+            if (q->is_ready() && misc::ward_jump->get_bool() && misc::ward_jump_key->get_bool())
+            {
+                ward_jump_logic();
+            }
+
             //Checking if the user has combo_mode() (Default SPACE)
             if (orbwalker->combo_mode())
             {
@@ -339,6 +359,8 @@ namespace jax
                             return;
                         }
                     }
+
+                    ward_jump_logic();
                 }
             }
 
@@ -475,6 +497,11 @@ namespace jax
                         return;
                     }
 
+                    if (e->is_ready())
+                    {
+                        e->cast();
+                    }
+
                     if (q->cast(target))
                         return;
                 }
@@ -536,6 +563,45 @@ namespace jax
                     return;
                 }
             }
+        }
+    }
+#pragma endregion
+
+#pragma region ward_jump_logic
+    void ward_jump_logic()
+    {
+        game_object_script near_ward = nullptr;
+
+        for (auto& object : entitylist->get_other_minion_objects())
+        {
+            if (object->is_valid())
+            {
+                if (object->get_distance(hud->get_hud_input_logic()->get_game_cursor_position()) < 75)
+                {
+                    if (myhero->is_facing(object))
+                    {
+                        if (object->get_name().compare("SightWard") == 0)
+                        {
+                            near_ward = object;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (near_ward == nullptr)
+        {
+            if (ward->is_ready() && fleemode::q_ward_jump->get_bool())
+            {
+                if (ward->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
+                {
+                    return;
+                }
+            }
+        }
+        else
+        {
+            q->cast(near_ward);
         }
     }
 #pragma endregion

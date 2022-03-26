@@ -30,8 +30,8 @@ namespace masteryi
         TreeEntry* r_use_to_chase = nullptr;
         TreeEntry* r_chase_search_range = nullptr;
         TreeEntry* r_dont_use_target_under_turret = nullptr;
-        TreeEntry* r_only_when_enemies_more_than = nullptr;
         TreeEntry* r_check_for_enemies_nearby_before_aa = nullptr;
+        TreeEntry* r_only_when_enemies_more_than = nullptr;
     }
 
     namespace harass
@@ -121,8 +121,8 @@ namespace masteryi
                     combo::r_use_to_chase = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_to_chase", "Use to chase enemies", true);
                     combo::r_chase_search_range = r_config->add_slider(myhero->get_model() + ".combo.r.chase_search_range", "Chase enemies search range", 1200, 300, 1600);
                     combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_target_under_turret", "Dont use if target is under turret", true);
+                    combo::r_check_for_enemies_nearby_before_aa = r_config->add_checkbox(myhero->get_model() + ".combo.r.check_for_enemies_nearby_before_aa", "Check for number of enemies before AA", true);
                     combo::r_only_when_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.use_only_when_enemies_more_than", "Use only when enemies more than", 2, 0, 4);
-                    combo::r_check_for_enemies_nearby_before_aa = r_config->add_checkbox(myhero->get_model() + ".combo.r.check_for_enemies_nearby_before_aa", "Check for enemies nearby before AA", true);
                 }
             }
 
@@ -368,6 +368,10 @@ namespace masteryi
         {
             if (!combo::q_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
             {
+                if (e->is_ready() && combo::use_e->get_bool())
+                {
+                    e->cast();
+                }
                 if (q->cast(target))
                 {
                     return;
