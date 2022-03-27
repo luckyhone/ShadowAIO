@@ -671,7 +671,7 @@ namespace teemo
         {
             for (auto& enemy : entitylist->get_enemy_heroes())
             {
-                if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && r->is_ready())
+                if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && q->is_ready())
                 {
                     draw_dmg_rl(enemy, q->get_damage(enemy), 0x8000ff00);
                 }
