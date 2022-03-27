@@ -625,7 +625,7 @@ namespace kayle
 	{
 		if (e->is_ready())
 		{
-			if (myhero->get_spell(spellslot::r)->level() != 0)
+			if (r->level() != 0)
 			{
 				e->set_range(myhero->get_attack_range());
 			}

@@ -556,11 +556,7 @@ namespace teemo
     {
         if (r->is_ready())
         {
-            int r_lvl = myhero->get_spell(spellslot::r)->level();
-            if (r_lvl != 0)
-            {
-                r->set_range(r_ranges[r_lvl - 1]);
-            }
+            r->set_range(r_ranges[r->level() - 1]);
         }
     }
 #pragma endregion

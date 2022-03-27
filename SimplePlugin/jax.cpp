@@ -22,6 +22,8 @@ namespace jax
         TreeEntry* w_color = nullptr;
         TreeEntry* draw_range_e = nullptr;
         TreeEntry* e_color = nullptr;
+        TreeEntry* draw_range_ward = nullptr;
+        TreeEntry* ward_color = nullptr;
     }
 
     namespace combo
@@ -96,7 +98,7 @@ namespace jax
         w = plugin_sdk->register_spell(spellslot::w, myhero->get_attack_range() + 50);
         e = plugin_sdk->register_spell(spellslot::e, 300);
         r = plugin_sdk->register_spell(spellslot::r, 0);
-        ward = plugin_sdk->register_spell(spellslot::trinket, 550);
+        ward = plugin_sdk->register_spell(spellslot::trinket, 600);
 
 
         // Create a menu according to the description in the "Menu Section"
@@ -199,6 +201,8 @@ namespace jax
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::e_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.color", "E Color", color);
+                draw_settings::draw_range_ward = draw_settings->add_checkbox(myhero->get_model() + ".draw.ward", "Draw Ward range", true);
+                draw_settings::ward_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.ward.color", "Ward Color", color);
             }
         }
 
@@ -576,7 +580,7 @@ namespace jax
         {
             if (object->is_valid())
             {
-                if (object->get_distance(hud->get_hud_input_logic()->get_game_cursor_position()) < 75)
+                if (object->get_distance(hud->get_hud_input_logic()->get_game_cursor_position()) < 100)
                 {
                     if (myhero->is_facing(object))
                     {
@@ -630,6 +634,7 @@ namespace jax
         }
     }
 
+
     void on_draw()
     {
 
@@ -649,6 +654,10 @@ namespace jax
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
             draw_manager->add_circle(myhero->get_position(), e->range(), draw_settings::e_color->get_color());
+
+        // Draw Ward range
+        if (ward->is_ready() && draw_settings::draw_range_ward->get_bool())
+            draw_manager->add_circle(myhero->get_position(), ward->range(), draw_settings::ward_color->get_color());
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
