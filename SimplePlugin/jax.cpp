@@ -32,6 +32,7 @@ namespace jax
         TreeEntry* q_only_when_e_ready = nullptr;
         TreeEntry* q_dont_use_under_enemy_turret = nullptr;
         TreeEntry* q_target_above_range = nullptr;
+        std::map<std::uint32_t, TreeEntry*> q_use_on;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_auto_recast_if_enemy_leaving_range = nullptr;
@@ -90,6 +91,10 @@ namespace jax
     void r_logic();
     void ward_jump_logic();
 
+    // Utils
+    //
+    bool can_use_q_on(game_object_script target);
+
     void load()
     {
         // Registering a spells
@@ -113,13 +118,27 @@ namespace jax
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
+                combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
                     combo::q_only_when_e_ready = q_config->add_checkbox(myhero->get_model() + ".combo.q.only_when_e_ready", "Use Q only when E is ready", false);
                     combo::q_dont_use_under_enemy_turret = q_config->add_checkbox(myhero->get_model() + ".combo.q.dont_use_under_enemy_turret", "Dont use under enemy turret", true);
                     combo::q_target_above_range = q_config->add_slider(myhero->get_model() + ".combo.q.target_above_range", "Only if target is above range", myhero->get_attack_range(), 0, q->range());
+
+                    auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
+                    {
+                        for (auto&& enemy : entitylist->get_enemy_heroes())
+                        {
+                            // In this case you HAVE to set should save to false since key contains network id which is unique per game
+                            //
+                            combo::q_use_on[enemy->get_network_id()] = use_q_on_tab->add_checkbox(std::to_string(enemy->get_network_id()), enemy->get_model(), true, false);
+
+                            // Set texture to enemy square icon
+                            //
+                            combo::q_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
+                        }
+                    }
                 }
-                combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
@@ -485,7 +504,7 @@ namespace jax
         auto target = target_selector->get_target(q->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && can_use_q_on(target))
         {
             if (!combo::q_dont_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
             {
@@ -634,7 +653,6 @@ namespace jax
         }
     }
 
-
     void on_draw()
     {
 
@@ -664,4 +682,15 @@ namespace jax
         auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }
+
+#pragma region can_use_q_on
+    bool can_use_q_on(game_object_script target)
+    {
+        auto it = combo::q_use_on.find(target->get_network_id());
+        if (it == combo::q_use_on.end())
+            return false;
+
+        return it->second->get_bool();
+    }
+#pragma endregion
 };
