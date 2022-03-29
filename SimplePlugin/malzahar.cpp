@@ -37,8 +37,8 @@ namespace malzahar
         TreeEntry* r_dont_use_target_under_turret = nullptr;
         TreeEntry* r_use_only_voidlings_more_than = nullptr;
         TreeEntry* r_ignore_voidlings_check_if_target_hp_under = nullptr;
-        TreeEntry* r_disable_evade = nullptr;
         TreeEntry* r_disable_orbwalker_moving = nullptr;
+        TreeEntry* r_disable_evade = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
         bool previous_evade_state = false;
         bool previous_orbwalker_state = false;
@@ -134,8 +134,8 @@ namespace malzahar
                     combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_if_target_is_under_turret", "Dont use if target is under turret", true);
                     combo::r_use_only_voidlings_more_than = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_only_voidlings_more_than", "Use only if alive Voidlings more than", true);
                     combo::r_ignore_voidlings_check_if_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.ignore_voidlings_check_if_target_hp_under", "Ignore Voidlings check if target hp under (in %)", 25, 0, 100);
-                    combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
                     combo::r_disable_orbwalker_moving = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_orbwalker_moving", "Disable Orbwalker Moving on R", true);
+                    combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
@@ -257,31 +257,31 @@ namespace malzahar
 
         if (myhero->has_buff(buff_hash("malzaharrsound")))
         {
+            if (combo::r_disable_orbwalker_moving->get_bool())
+            {
+                orbwalker->set_attack(false);
+                orbwalker->set_movement(false);
+                combo::previous_orbwalker_state = true;
+            }
             if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
             {
                 evade->disable_evade();
                 combo::previous_evade_state = true;
             }
-            if (combo::r_disable_orbwalker_moving->get_bool())
-            {
-                orbwalker->set_movement(false);
-                orbwalker->set_attack(false);
-                combo::previous_orbwalker_state = true;
-            }
             return;
+        }
+
+        if (combo::previous_orbwalker_state)
+        {
+            orbwalker->set_attack(true);
+            orbwalker->set_movement(true);
+            combo::previous_orbwalker_state = false;
         }
 
         if (combo::previous_evade_state)
         {
             evade->enable_evade();
             combo::previous_evade_state = false;
-        }
-
-        if (combo::previous_orbwalker_state)
-        {
-            orbwalker->set_movement(true);
-            orbwalker->set_attack(true);
-            combo::previous_orbwalker_state = false;
         }
 
         if (r->is_ready() && combo::use_r->get_bool())
@@ -485,16 +485,16 @@ namespace malzahar
                         {
                             if (r->cast(target))
                             {
+                                if (combo::r_disable_orbwalker_moving->get_bool())
+                                {
+                                    orbwalker->set_attack(false);
+                                    orbwalker->set_movement(false);
+                                    combo::previous_orbwalker_state = true;
+                                }
                                 if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                                 {
                                     evade->disable_evade();
                                     combo::previous_evade_state = true;
-                                }
-                                if (combo::r_disable_orbwalker_moving->get_bool())
-                                {
-                                    orbwalker->set_movement(false);
-                                    orbwalker->set_attack(false);
-                                    combo::previous_orbwalker_state = true;
                                 }
                             }
                         }

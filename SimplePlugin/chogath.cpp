@@ -27,6 +27,10 @@ namespace chogath
     namespace combo
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* q_max_range = nullptr;
+        TreeEntry* q_auto_on_cc = nullptr;
+        TreeEntry* q_auto_dashing = nullptr;
+        std::map<std::uint32_t, TreeEntry*> q_use_on;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
@@ -63,6 +67,11 @@ namespace chogath
         TreeEntry* use_q;
     }
 
+    namespace antigapclose
+    {
+        TreeEntry* use_q = nullptr;
+    }
+
     namespace hitchance
     {
         TreeEntry* q_hitchance = nullptr;
@@ -74,16 +83,19 @@ namespace chogath
     void on_update();
     void on_draw();
     void on_before_attack(game_object_script target, bool* process);
+    void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 
     // Declaring functions responsible for spell-logic
     //
     void q_logic();
+    void q_logic_auto();
     void w_logic();
     void e_logic();
     void r_logic();
 
     // Utils
     //
+    bool can_use_q_on(game_object_script target);
     bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
 
@@ -102,7 +114,6 @@ namespace chogath
         else if (myhero->get_spell(spellslot::summoner2)->get_spell_data()->get_name_hash() == spell_hash("SummonerFlash"))
             flash = plugin_sdk->register_spell(spellslot::summoner2, 400.f);
 
-
         // Create a menu according to the description in the "Menu Section"
         //
         main_tab = menu->create_tab("chogath", "Chogath");
@@ -116,6 +127,27 @@ namespace chogath
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
+                {
+                    combo::q_max_range = q_config->add_slider(myhero->get_model() + ".combo.q.max_range", "Maximum Q range", q->range(), 300, q->range());
+                    combo::q_auto_on_cc = q_config->add_checkbox(myhero->get_model() + ".combo.q.auto_on_cc", "Auto Q on CC", true);
+                    combo::q_auto_dashing = q_config->add_checkbox(myhero->get_model() + ".combo.q.auto_dashing", "Auto Q dashing", true);
+
+                    auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
+                    {
+                        for (auto&& enemy : entitylist->get_enemy_heroes())
+                        {
+                            // In this case you HAVE to set should save to false since key contains network id which is unique per game
+                            //
+                            combo::q_use_on[enemy->get_network_id()] = use_q_on_tab->add_checkbox(std::to_string(enemy->get_network_id()), enemy->get_model(), true, false);
+
+                            // Set texture to enemy square icon
+                            //
+                            combo::q_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
+                        }
+                    }
+                }
+
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
@@ -126,6 +158,7 @@ namespace chogath
                 {
                     combo::r_use_flash_r = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_flash_r", "Use Flash + R above R range", true);
                     combo::r_use_on_epic_monsters = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_on_epic_monsters", "Auto R on epic monsters", true);
+
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
                         for (auto&& enemy : entitylist->get_enemy_heroes())
@@ -162,7 +195,7 @@ namespace chogath
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", true);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 laneclear::use_e_on_turret = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e.on_turret", "Use E On Turret", true);
-                laneclear::use_e_on_turret->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                laneclear::use_e_on_turret->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto jungleclear = main_tab->add_tab(myhero->get_model() + ".jungleclear", "Jungle Clear Settings");
@@ -174,12 +207,17 @@ namespace chogath
                 jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", true);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
-
-
+            
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
             {
                 fleemode::use_q = fleemode->add_checkbox(myhero->get_model() + ".flee.q", "Use Q", true);
                 fleemode::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+            }
+
+            auto antigapclose = main_tab->add_tab(myhero->get_model() + ".antigapclose", "Anti Gapclose");
+            {
+                antigapclose::use_q = antigapclose->add_checkbox(myhero->get_model() + ".antigapclose.q", "Use Q", true);
+                antigapclose::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
             }
 
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
@@ -203,6 +241,10 @@ namespace chogath
             }
         }
 
+        // Add anti gapcloser handler
+        //
+        antigapcloser::add_event_handler(on_gapcloser);
+
         // To add a new event you need to define a function and call add_calback
         //
         event_handler<events::on_update>::add_callback(on_update);
@@ -222,6 +264,10 @@ namespace chogath
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove anti gapcloser handler
+        //
+        antigapcloser::remove_event_handler(on_gapcloser);
 
         // VERY important to remove always ALL events
         //
@@ -248,6 +294,11 @@ namespace chogath
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
+            if (q->is_ready() && combo::use_q->get_bool())
+            {
+                q_logic_auto();
+            }
+
             //Checking if the user has combo_mode() (Default SPACE)
             if (orbwalker->combo_mode())
             {
@@ -397,12 +448,40 @@ namespace chogath
     void q_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(q->range(), damage_type::magical);
+        auto target = target_selector->get_target(combo::q_max_range->get_int(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && can_use_q_on(target))
         {
             q->cast(target, get_hitchance(hitchance::q_hitchance));
+        }
+    }
+#pragma endregion
+
+#pragma region q_logic_auto
+    void q_logic_auto()
+    {
+        // Get a target from a given range
+        auto target = target_selector->get_target(combo::q_max_range->get_int(), damage_type::magical);
+
+        // Always check an object is not a nullptr!
+        if (target != nullptr && can_use_q_on(target))
+        {
+            if (combo::q_auto_on_cc->get_bool())
+            {
+                if (q->cast(target, hit_chance::immobile))
+                {
+                    return;
+                }
+            }
+
+            if (combo::q_auto_dashing->get_bool())
+            {
+                if (q->cast(target, hit_chance::dashing))
+                {
+                    return;
+                }
+            }
         }
     }
 #pragma endregion
@@ -433,8 +512,7 @@ namespace chogath
             // Checking if the target will die from E damage
             if (e->get_damage(target) >= target->get_health())
             {
-                if (e->cast())
-                    return;
+                e->cast();
             }
         }
     }
@@ -443,7 +521,6 @@ namespace chogath
 #pragma region r_logic
     void r_logic()
     {
-
         // Get a target from a given range
         auto target = target_selector->get_target(r->range(), damage_type::true_dmg);
 
@@ -452,7 +529,10 @@ namespace chogath
         {
             if (r->get_damage(target) > target->get_health() && can_use_r_on(target))
             {
-                r->cast(target);
+                if (r->cast(target))
+                {
+                    return;
+                }
             }
         }
         else
@@ -460,11 +540,12 @@ namespace chogath
             if (flash && flash->is_ready() && combo::r_use_flash_r->get_bool())
             {
                 auto target = target_selector->get_target(r->range() + flash->range(), damage_type::magical);
-                if (target != nullptr && can_use_r_on(target) && myhero->get_distance(target) > r->range() && r->get_damage(target) > target->get_health())
+                if (target != nullptr && can_use_r_on(target) && myhero->get_distance(target) > r->range() + 50 && r->get_damage(target) > target->get_health())
                 {
-                    flash->cast(target);
-                    r->cast(target);
-                    return;
+                    if (flash->cast(target) && r->cast(target))
+                    {
+                        return;
+                    }
                 }
             }
         }
@@ -500,6 +581,17 @@ namespace chogath
                 }
             }
         }
+    }
+#pragma endregion
+
+#pragma region can_use_q_on
+    bool can_use_q_on(game_object_script target)
+    {
+        auto it = combo::q_use_on.find(target->get_network_id());
+        if (it == combo::q_use_on.end())
+            return false;
+
+        return it->second->get_bool();
     }
 #pragma endregion
 
@@ -578,9 +670,19 @@ namespace chogath
         }
     }
 
+    void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
+    {
+        if (antigapclose::use_q->get_bool() && q->is_ready())
+        {
+            if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
+            {
+                q->cast(sender, get_hitchance(hitchance::q_hitchance));
+            }
+        }
+    }
+
     void on_draw()
     {
-
         if (myhero->is_dead())
         {
             return;
@@ -588,7 +690,7 @@ namespace chogath
 
         // Draw Q range
         if (q->is_ready() && draw_settings::draw_range_q->get_bool())
-            draw_manager->add_circle(myhero->get_position(), q->range(), draw_settings::q_color->get_color());
+            draw_manager->add_circle(myhero->get_position(), combo::q_max_range->get_int(), draw_settings::q_color->get_color());
 
         // Draw W range
         if (w->is_ready() && draw_settings::draw_range_w->get_bool())
