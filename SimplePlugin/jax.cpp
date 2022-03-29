@@ -579,7 +579,7 @@ namespace jax
                 return;
             }
 
-            if (!myhero->has_buff(buff_hash("JaxR")) && myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
+            if (myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
             {
                 if (r->cast())
                 {
@@ -655,7 +655,6 @@ namespace jax
 
     void on_draw()
     {
-
         if (myhero->is_dead())
         {
             return;
