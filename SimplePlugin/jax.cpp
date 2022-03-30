@@ -268,10 +268,10 @@ namespace jax
         if (e->is_ready() && combo::e_auto_recast_if_enemy_leaving_range->get_bool() && myhero->has_buff(buff_hash("JaxCounterStrike")))
         {
             // Get a target from a given range
-            auto target = target_selector->get_target(e->range(), damage_type::physical);
+            auto target = target_selector->get_target(e->range() + 25, damage_type::physical);
 
             // Always check an object is not a nullptr!
-            if (target != nullptr)
+            if (target != nullptr && target->is_attack_allowed_on_target())
             {
                 if (myhero->get_distance(target) >= e->range() - 30)
                 {
