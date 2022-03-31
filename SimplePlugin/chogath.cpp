@@ -107,7 +107,7 @@ namespace chogath
         q->set_skillshot(1.125f, 250.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         w = plugin_sdk->register_spell(spellslot::w, 650);
         e = plugin_sdk->register_spell(spellslot::e, myhero->get_attack_range());
-        r = plugin_sdk->register_spell(spellslot::r, 175);
+        r = plugin_sdk->register_spell(spellslot::r, 325);
 
         if (myhero->get_spell(spellslot::summoner1)->get_spell_data()->get_name_hash() == spell_hash("SummonerFlash"))
             flash = plugin_sdk->register_spell(spellslot::summoner1, 400.f);
@@ -558,13 +558,19 @@ namespace chogath
             // You can use this function to delete monsters that aren't in the specified range
             monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
                 {
-                    return !x->is_valid_target(r->range());
+                    return x->get_distance(myhero) > r->range();
                 }), monsters.end());
 
-            // Delete non epic monsters
+            // Remove non epic monsters
             monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
                 {
                     return !x->is_epic_monster();
+                }), monsters.end());
+
+            // Remove unkillable monsters
+            monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
+                {
+                    return x->get_health() > r->get_damage(x);
                 }), monsters.end());
 
             //std::sort -> sort monsters by max health
@@ -575,10 +581,7 @@ namespace chogath
 
             if (!monsters.empty())
             {
-                if (r->get_damage(monsters.front()) > monsters.front()->get_health())
-                {
-                    r->cast(monsters.front());
-                }
+                r->cast(monsters.front());
             }
         }
     }
