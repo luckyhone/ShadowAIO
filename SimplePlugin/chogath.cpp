@@ -116,7 +116,7 @@ namespace chogath
 
         // Create a menu according to the description in the "Menu Section"
         //
-        main_tab = menu->create_tab("chogath", "Chogath");
+        main_tab = menu->create_tab("chogath", "Cho'Gath");
         main_tab->set_assigned_texture(myhero->get_square_icon_portrait());
         {
             // Info
@@ -654,7 +654,7 @@ namespace chogath
             }
 
             // Using e before autoattack on minions
-            if (orbwalker->lane_clear_mode() && laneclear::use_e->get_bool() && target->is_ai_minion())
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_e->get_bool() && target->is_ai_minion())
             {
                 if (e->cast())
                 {
@@ -663,7 +663,7 @@ namespace chogath
             }
 
             // Using e before autoattack on monsters
-            if (orbwalker->lane_clear_mode() && jungleclear::use_e->get_bool() && target->is_monster())
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_e->get_bool() && target->is_monster())
             {
                 if (e->cast())
                 {
