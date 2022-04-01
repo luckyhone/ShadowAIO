@@ -34,6 +34,7 @@ namespace jax
         TreeEntry* q_target_above_range = nullptr;
         std::map<std::uint32_t, TreeEntry*> q_use_on;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_mode = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_auto_recast_if_enemy_leaving_range = nullptr;
         TreeEntry* use_r = nullptr;
@@ -82,6 +83,7 @@ namespace jax
     void on_update();
     void on_draw();
     void on_before_attack(game_object_script target, bool* process);
+    void on_after_attack_orbwalker(game_object_script target);
 
     // Declaring functions responsible for spell-logic
     //
@@ -141,6 +143,10 @@ namespace jax
                 }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
+                {
+                    combo::w_mode = w_config->add_combobox(myhero->get_model() + ".combo.w.mode", "W Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 0);
+                }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
@@ -230,6 +236,7 @@ namespace jax
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
         event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
+        event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
     }
 
     void unload()
@@ -250,6 +257,7 @@ namespace jax
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
         event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
+        event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack_orbwalker);
     }
 
     // Main update script function
@@ -631,7 +639,31 @@ namespace jax
 
     void on_before_attack(game_object_script target, bool* process)
     {
-        if (w->is_ready())
+        if (w->is_ready() && combo::w_mode->get_int() == 0)
+        {
+            // Using w before autoattack on enemies
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Using w before autoattack on turrets
+            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_w_on_turret->get_bool() && target->is_ai_turret())
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+        }
+    }
+
+    void on_after_attack_orbwalker(game_object_script target)
+    {
+        if (w->is_ready() && combo::w_mode->get_int() == 1)
         {
             // Using w before autoattack on enemies
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
