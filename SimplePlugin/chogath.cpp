@@ -17,7 +17,7 @@ namespace chogath
     namespace draw_settings
     {
         TreeEntry* draw_range_q = nullptr;
-        TreeEntry* q_color =     nullptr;
+        TreeEntry* q_color = nullptr;
         TreeEntry* draw_range_w = nullptr;
         TreeEntry* w_color = nullptr;
         TreeEntry* draw_range_r = nullptr;
@@ -775,7 +775,7 @@ namespace chogath
                 {
                     int damage = 0;
 
-                    if (q->is_ready() && draw_settings::draw_damage_settings::q_damage->get_bool())
+                    if (q->is_ready() && can_use_q_on(enemy) && draw_settings::draw_damage_settings::q_damage->get_bool())
                         damage += q->get_damage(enemy);
 
                     if (w->is_ready() && draw_settings::draw_damage_settings::w_damage->get_bool())
@@ -784,7 +784,7 @@ namespace chogath
                     if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
                         damage += e->get_damage(enemy);
 
-                    if (r->is_ready() && draw_settings::draw_damage_settings::r_damage->get_bool())
+                    if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
                         damage += r->get_damage(enemy);
 
                     if (damage != 0)
