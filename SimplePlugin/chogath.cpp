@@ -771,7 +771,7 @@ namespace chogath
         {
             for (auto& enemy : entitylist->get_enemy_heroes())
             {
-                if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && e->is_ready())
+                if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered())
                 {
                     int damage = 0;
 
