@@ -309,7 +309,7 @@ namespace missfortune
 
                 for (auto& enemy : entitylist->get_enemy_heroes())
                 {
-                    if (enemy->is_valid() && enemy->is_valid_target(combo::r_max_range->get_int()))
+                    if (enemy->is_valid() && enemy->is_valid_target(r->range()))
                     {
                         auto pred = prediction->get_prediction(enemy, r->get_delay(), r->get_radius(), r->get_speed());
                         if (pred.hitchance >= hit_chance::impossible)

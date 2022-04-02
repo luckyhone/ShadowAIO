@@ -17,11 +17,20 @@ namespace chogath
     namespace draw_settings
     {
         TreeEntry* draw_range_q = nullptr;
-        TreeEntry* q_color = nullptr;
+        TreeEntry* q_color =     nullptr;
         TreeEntry* draw_range_w = nullptr;
         TreeEntry* w_color = nullptr;
         TreeEntry* draw_range_r = nullptr;
         TreeEntry* r_color = nullptr;
+
+        namespace draw_damage_settings
+        {
+            TreeEntry* draw_damage = nullptr;
+            TreeEntry* q_damage = nullptr;
+            TreeEntry* w_damage = nullptr;
+            TreeEntry* e_damage = nullptr;
+            TreeEntry* r_damage = nullptr;
+        }
     }
 
     namespace combo
@@ -98,6 +107,7 @@ namespace chogath
     bool can_use_q_on(game_object_script target);
     bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
+    inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
     void load()
     {
@@ -238,6 +248,20 @@ namespace chogath
                 draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".draw.r", "Draw R range", true);
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
+
+
+                auto draw_damage = draw_settings->add_tab(myhero->get_model() + ".draw.damage", "Draw Damage");
+                {
+                    draw_settings::draw_damage_settings::draw_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.enabled", "Draw Combo Damage", true);
+                    draw_settings::draw_damage_settings::q_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.q", "Draw Q Damage", true);
+                    draw_settings::draw_damage_settings::q_damage->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                    draw_settings::draw_damage_settings::w_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.w", "Draw W Damage", true);
+                    draw_settings::draw_damage_settings::w_damage->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                    draw_settings::draw_damage_settings::e_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.e", "Draw E Damage", true);
+                    draw_settings::draw_damage_settings::e_damage->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                    draw_settings::draw_damage_settings::r_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.r", "Draw R Damage", true);
+                    draw_settings::draw_damage_settings::r_damage->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+                }
             }
         }
 
@@ -581,7 +605,11 @@ namespace chogath
 
             if (!monsters.empty())
             {
-                r->cast(monsters.front());
+                auto monster = monsters.front();
+                if (monster->get_name().compare("MiniKrugA") != 0 && monster->get_name().compare("MiniKrugB") != 0)
+                {
+                    r->cast(monster);
+                }
             }
         }
     }
@@ -684,6 +712,37 @@ namespace chogath
         }
     }
 
+    inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color)
+    {
+        if (target != nullptr && target->is_valid() && target->is_hpbar_recently_rendered())
+        {
+            auto bar_pos = target->get_hpbar_pos();
+
+            if (bar_pos.is_valid() && !target->is_dead() && target->is_visible())
+            {
+                const auto health = target->get_health();
+
+                bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
+
+                auto damage_size = (105 * (damage / target->get_max_health()));
+
+                if (damage >= health)
+                {
+                    damage_size = (105 * (health / target->get_max_health()));
+                }
+
+                if (damage_size > 105)
+                {
+                    damage_size = 105;
+                }
+
+                const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
+
+                draw_manager->add_filled_rect(bar_pos, size, color);
+            }
+        }
+    }
+
     void on_draw()
     {
         if (myhero->is_dead())
@@ -707,5 +766,31 @@ namespace chogath
         renderer->world_to_screen(pos, pos);
         auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
+
+        if (draw_settings::draw_damage_settings::draw_damage->get_bool())
+        {
+            for (auto& enemy : entitylist->get_enemy_heroes())
+            {
+                if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && e->is_ready())
+                {
+                    int damage = 0;
+
+                    if (q->is_ready() && draw_settings::draw_damage_settings::q_damage->get_bool())
+                        damage += q->get_damage(enemy);
+
+                    if (w->is_ready() && draw_settings::draw_damage_settings::w_damage->get_bool())
+                        damage += w->get_damage(enemy);
+
+                    if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
+                        damage += e->get_damage(enemy);
+
+                    if (r->is_ready() && draw_settings::draw_damage_settings::r_damage->get_bool())
+                        damage += r->get_damage(enemy);
+
+                    if (damage != 0)
+                        draw_dmg_rl(enemy, damage, 0x8000ff00);
+                }
+            }
+        }
     }
 };
