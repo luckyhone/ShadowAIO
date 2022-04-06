@@ -14,3 +14,5 @@ Plugin for BGX.gg
 - Kalista
 - Malzahar
 - Miss Fortune
+- Teemo
+- Gwen
