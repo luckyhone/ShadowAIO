@@ -548,7 +548,7 @@ namespace kayle
 	void e_logic()
 	{
 		// Get a target from a given range
-		auto target = target_selector->get_target(e->range(), damage_type::magical);
+		auto target = target_selector->get_target(r->level() == 0 ? e->range() : myhero->get_attack_range(), damage_type::magical);
 
 		// Always check an object is not a nullptr!
 		if (target != nullptr)
