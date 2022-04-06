@@ -35,6 +35,7 @@ namespace kayle
 		TreeEntry* w_dont_use_target_under_turret = nullptr;
 		TreeEntry* w_check_if_target_is_not_facing = nullptr;
 		TreeEntry* use_e = nullptr;
+		TreeEntry* e_mode = nullptr;
 		TreeEntry* use_r = nullptr;
 		TreeEntry* r_myhero_hp_under = nullptr;
 		TreeEntry* r_only_when_enemies_nearby = nullptr;
@@ -87,6 +88,7 @@ namespace kayle
 	void on_update();
 	void on_draw();
 	void on_before_attack(game_object_script target, bool* process);
+	void on_after_attack_orbwalker(game_object_script target);
 
 	// Declaring functions responsible for spell-logic
 	//
@@ -94,7 +96,6 @@ namespace kayle
 	void w_logic();
 	void e_logic();
 	void r_logic();
-	void update_range();
 
 	// Utils
 	//
@@ -108,7 +109,7 @@ namespace kayle
 		q = plugin_sdk->register_spell(spellslot::q, 900);
 		q->set_skillshot(0.25f, 150.0f, 1600.0f, { collisionable_objects::minions, collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
 		w = plugin_sdk->register_spell(spellslot::w, 900);
-		e = plugin_sdk->register_spell(spellslot::e, 525);
+		e = plugin_sdk->register_spell(spellslot::e, 550);
 		r = plugin_sdk->register_spell(spellslot::r, 900);
 
 
@@ -136,6 +137,10 @@ namespace kayle
 				}
 				combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
 				combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+				auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
+				{
+					combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 0);
+				}
 				combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
 				combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
 				auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
@@ -234,6 +239,7 @@ namespace kayle
 		event_handler<events::on_update>::add_callback(on_update);
 		event_handler<events::on_draw>::add_callback(on_draw);
 		event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
+		event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
 	}
 
 	void unload()
@@ -254,6 +260,7 @@ namespace kayle
 		event_handler<events::on_update>::remove_handler(on_update);
 		event_handler<events::on_draw>::remove_handler(on_draw);
 		event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
+		event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack_orbwalker);
 	}
 
 	// Main update script function
@@ -264,13 +271,9 @@ namespace kayle
 			return;
 		}
 
-		if (r->is_ready())
+		if (r->is_ready() && combo::use_r->get_bool())
 		{
-			if (combo::use_r->get_bool())
-			{
-				r_logic();
-			}
-			update_range();
+			r_logic();
 		}
 
 		// Very important if can_move ( extra_windup ) 
@@ -359,7 +362,7 @@ namespace kayle
 			if (orbwalker->harass())
 			{
 				// Get a target from a given range
-				auto target = target_selector->get_target(e->range(), damage_type::magical);
+				auto target = target_selector->get_target(q->range(), damage_type::magical);
 
 				// Always check an object is not a nullptr!
 				if (target != nullptr)
@@ -417,13 +420,13 @@ namespace kayle
 				// You can use this function to delete minions that aren't in the specified range
 				lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
 					{
-						return !x->is_valid_target(e->range());
+						return !x->is_valid_target(q->range());
 					}), lane_minions.end());
 
 				// You can use this function to delete monsters that aren't in the specified range
 				monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
 					{
-						return !x->is_valid_target(e->range());
+						return !x->is_valid_target(q->range());
 					}), monsters.end());
 
 				//std::sort -> sort lane minions by distance
@@ -446,13 +449,13 @@ namespace kayle
 						{
 							if (myhero->count_enemies_in_range(900) == 0)
 							{
-								if (q->cast(lane_minions.front()))
+								if (q->cast_on_best_farm_position(1))
 								{
 									return;
 								}
 							}
 						}
-						if (q->cast(lane_minions.front()))
+						if (q->cast_on_best_farm_position(1))
 							return;
 					}
 
@@ -550,7 +553,7 @@ namespace kayle
 		// Always check an object is not a nullptr!
 		if (target != nullptr)
 		{
-			if (myhero->get_level() < 6 || e->get_damage(target) >= target->get_health())
+			if (r->level() == 0 || e->get_damage(target) >= target->get_health())
 			{
 				e->cast();
 			}
@@ -620,22 +623,33 @@ namespace kayle
 	}
 #pragma endregion
 
-#pragma region update_range
-	void update_range()
+	void on_before_attack(game_object_script target, bool* process)
 	{
-		if (e->is_ready())
+		if (e->is_ready() && combo::e_mode->get_int() == 0)
 		{
-			if (r->level() != 0)
+			// Using e before autoattack on enemies
+			if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
 			{
-				e->set_range(myhero->get_attack_range());
+				if (e->cast())
+				{
+					return;
+				}
+			}
+
+			// Using e before autoattack on turrets
+			if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_e_on_turret->get_bool() && target->is_ai_turret())
+			{
+				if (e->cast())
+				{
+					return;
+				}
 			}
 		}
 	}
-#pragma endregion
 
-	void on_before_attack(game_object_script target, bool* process)
+	void on_after_attack_orbwalker(game_object_script target)
 	{
-		if (e->is_ready())
+		if (e->is_ready() && combo::e_mode->get_int() == 1)
 		{
 			// Using e before autoattack on enemies
 			if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
@@ -674,7 +688,7 @@ namespace kayle
 			draw_manager->add_circle(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
 
 		// Draw E range
-		if (e->is_ready() && draw_settings::draw_range_e->get_bool() && myhero->get_level() < 6)
+		if (e->is_ready() && draw_settings::draw_range_e->get_bool() && r->level() == 0)
 			draw_manager->add_circle(myhero->get_position(), e->range(), draw_settings::e_color->get_color());
 
 		// Draw R range
