@@ -518,7 +518,7 @@ namespace missfortune
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        if (e->cast(lane_minions.front(), get_hitchance(hitchance::e_hitchance)))
+                        if (e->cast_on_best_farm_position(1))
                         {
                             return;
                         }
@@ -538,7 +538,7 @@ namespace missfortune
 
                     if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
-                        if (e->cast(monsters.front(), get_hitchance(hitchance::e_hitchance)))
+                        if (e->cast_on_best_farm_position(1, true))
                         {
                             return;
                         }

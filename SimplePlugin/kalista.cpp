@@ -366,7 +366,7 @@ namespace kalista
                 {
                     if (q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        if (q->cast(lane_minions.front(), get_hitchance(hitchance::q_hitchance)))
+                        if (q->cast_on_best_farm_position(1))
                         {
                             return;
                         }
@@ -398,7 +398,7 @@ namespace kalista
                 {
                     if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
-                        if (q->cast(monsters.front(), get_hitchance(hitchance::q_hitchance)))
+                        if (q->cast_on_best_farm_position(1, true))
                         {
                             return;
                         }

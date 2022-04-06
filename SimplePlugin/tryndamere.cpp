@@ -183,9 +183,9 @@ namespace tryndamere
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
+                float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
                 draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::w_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.w.color", "W Color", color);
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -335,7 +335,7 @@ namespace tryndamere
                         {
                             if (myhero->count_enemies_in_range(900) == 0)
                             {
-                                if (e->cast(lane_minions.front()))
+                                if (e->cast_on_best_farm_position(laneclear::e_only_when_minions_more_than->get_int()))
                                 {
                                     return;
                                 }
@@ -357,7 +357,7 @@ namespace tryndamere
                     // Logic responsible for monsters
                     if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
-                        if (e->cast(monsters.front()))
+                        if (e->cast_on_best_farm_position(1, true))
                             return;
                     }
                 }

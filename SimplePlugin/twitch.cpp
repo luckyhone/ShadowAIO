@@ -363,7 +363,7 @@ namespace twitch
                 {
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (w->cast(lane_minions.front()))
+                        if (w->cast_on_best_farm_position(1))
                         {
                             return;
                         }
@@ -396,7 +396,7 @@ namespace twitch
                 {
                     if (w->is_ready() && jungleclear::use_w->get_bool())
                     {
-                        if (w->cast(monsters.front()))
+                        if (w->cast_on_best_farm_position(1, true))
                         {
                             return;
                         }

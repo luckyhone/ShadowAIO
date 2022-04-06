@@ -421,13 +421,13 @@ namespace chogath
                         {
                             if (myhero->count_enemies_in_range(900) == 0)
                             {
-                                if (q->cast(lane_minions.front()))
+                                if (q->cast_on_best_farm_position(1))
                                 {
                                     return;
                                 }
                             }
                         }
-                        if (q->cast(lane_minions.front()))
+                        if (q->cast_on_best_farm_position(1))
                             return;
                     }
 
@@ -437,13 +437,13 @@ namespace chogath
                         {
                             if (myhero->count_enemies_in_range(900) == 0)
                             {
-                                if (w->cast(lane_minions.front()))
+                                if (w->cast_on_best_farm_position(1))
                                 {
                                     return;
                                 }
                             }
                         }
-                        if (w->cast(lane_minions.front()))
+                        if (w->cast_on_best_farm_position(1))
                             return;
                     }
                 }
@@ -454,13 +454,13 @@ namespace chogath
                     // Logic responsible for monsters
                     if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
-                        if (q->cast(monsters.front()))
+                        if (q->cast_on_best_farm_position(1, true))
                             return;
                     }
 
                     if (w->is_ready() && jungleclear::use_w->get_bool())
                     {
-                        if (w->cast(monsters.front()))
+                        if (w->cast_on_best_farm_position(1, true))
                             return;
                     }
                 }
