@@ -61,6 +61,9 @@
     <ClCompile Include="teemo.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="gwen.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -112,6 +115,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="teemo.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="gwen.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
