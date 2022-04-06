@@ -482,7 +482,7 @@ namespace kayle
 					// Logic responsible for monsters
 					if (q->is_ready() && jungleclear::use_q->get_bool())
 					{
-						if (q->cast(monsters.front()))
+						if (q->cast_on_best_farm_position(1, true))
 							return;
 					}
 
