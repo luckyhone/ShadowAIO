@@ -523,9 +523,16 @@ namespace jax
                         if (e->is_ready())
                         {
                             e->cast();
+                            if (w->is_ready())
+                                w->cast();
                             q->cast(target);
                         }
                         return;
+                    }
+
+                    if (w->is_ready())
+                    {
+                        w->cast();
                     }
 
                     if (e->is_ready())
