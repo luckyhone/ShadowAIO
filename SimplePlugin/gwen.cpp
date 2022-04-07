@@ -54,6 +54,7 @@ namespace gwen
     namespace harass
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* q_only_on_stacks = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
@@ -94,6 +95,7 @@ namespace gwen
     // Declaring functions responsible for spell-logic
     //
     void q_logic();
+    void q_logic_harass();
     void w_logic();
     void e_logic();
     void r_logic();
@@ -133,7 +135,7 @@ namespace gwen
 
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
-                    combo::q_only_on_stacks = q_config->add_slider(myhero->get_model() + ".combo.only_on_stacks", "Use Q only on x stacks", 4, 1, 4);
+                    combo::q_only_on_stacks = q_config->add_slider(myhero->get_model() + ".combo.q.only_on_stacks", "Use Q only on x stacks", 4, 1, 4);
                 }
 
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
@@ -183,8 +185,12 @@ namespace gwen
 
             auto harass = main_tab->add_tab(myhero->get_model() + ".harass", "Harass Settings");
             {
-                harass::use_q = harass->add_checkbox(myhero->get_model() + ".harass.q", "Use Q", false);
+                harass::use_q = harass->add_checkbox(myhero->get_model() + ".harass.q", "Use Q", true);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                auto q_config = harass->add_tab(myhero->get_model() + ".harass.q.config", "Q Config");
+                {
+                    harass::q_only_on_stacks = q_config->add_slider(myhero->get_model() + ".harass.q.only_on_stacks", "Use Q only on x stacks", 4, 1, 4);
+                }
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", false);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
@@ -346,7 +352,7 @@ namespace gwen
                     {
                         if (q->is_ready() && harass::use_q->get_bool())
                         {
-                            q_logic();
+                            q_logic_harass();
                         }
 
                         if (e->is_ready() && harass::use_e->get_bool())
@@ -474,6 +480,22 @@ namespace gwen
     }
 #pragma endregion
 
+#pragma region q_logic_harass
+    void q_logic_harass()
+    {
+        // Get a target from a given range
+        auto target = target_selector->get_target(q->range(), damage_type::magical);
+
+        // Always check an object is not a nullptr!
+        if (target != nullptr)
+        {
+            if (get_gwen_q_stacks() >= harass::q_only_on_stacks->get_int())
+            {
+                q->cast(target);
+            }
+        }
+    }
+#pragma endregion
 
 #pragma region w_logic
     void w_logic()
@@ -753,6 +775,8 @@ namespace gwen
 
                     if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
                         damage += r->get_damage(enemy) * 3.0f;
+
+                    damage += myhero->get_auto_attack_damage(enemy);
 
                     if (damage != 0)
                         draw_dmg_rl(enemy, damage, 0x8000ff00);
