@@ -42,10 +42,12 @@ namespace gwen
         TreeEntry* use_e = nullptr;
         TreeEntry* e_mode = nullptr;
         TreeEntry* e_only_above_aa_range = nullptr;
+        TreeEntry* e_dont_use_under_enemy_turret = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
         TreeEntry* r_max_range = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
+        TreeEntry* r_dont_use_under_enemy_turret = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
@@ -150,6 +152,7 @@ namespace gwen
                 {
                     combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Cursor Position", nullptr},{"Enemy Position", nullptr } }, 0);
                     combo::e_only_above_aa_range = e_config->add_checkbox(myhero->get_model() + ".combo.e.only_above_aa_range", "Use only above AA range", true);
+                    combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".combo.e.dont_use_under_enemy_turret", "Dont use under enemy turret", false);
                 }
 
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
@@ -160,6 +163,7 @@ namespace gwen
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", 525, 100, r->range());
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 50, 0, 100);
+                    combo::r_dont_use_under_enemy_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_under_enemy_turret", "Dont use under enemy turret", true);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
@@ -511,13 +515,16 @@ namespace gwen
         {
             if (!combo::e_only_above_aa_range->get_bool() || myhero->get_distance(target) > myhero->get_attack_range() + 50)
             {
-                if (combo::e_mode->get_int() == 0)
+                if (!combo::e_dont_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
                 {
-                    e->cast(hud->get_hud_input_logic()->get_game_cursor_position());
-                }
-                else
-                {
-                    e->cast(target);
+                    if (combo::e_mode->get_int() == 0)
+                    {
+                        e->cast(hud->get_hud_input_logic()->get_game_cursor_position());
+                    }
+                    else
+                    {
+                        e->cast(target);
+                    }
                 }
             }
         }
@@ -535,30 +542,33 @@ namespace gwen
         // Always check an object is not a nullptr!
         if (target != nullptr && can_use_r_on(target))
         {
-            if (target->get_health_percent() < combo::r_target_hp_under->get_int() || is_recast)
+            if (!combo::r_dont_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret() || is_recast)
             {
-                prediction_input x;
-
-                x._from = myhero->get_position();
-                x.unit = target;
-                x.delay = is_recast ? 0.50f : r->delay;
-                x.radius = r->radius;
-                x.speed = r->speed;
-                x.collision_objects = r->get_collision_flags();
-                x.range = r->range();
-                x.type = skillshot_type::skillshot_cone;
-                x.spell_slot = r->get_slot();
-                x.use_bounding_radius = true;
-
-                auto output = prediction->get_prediction(&x);
-
-                if (output.hitchance >= get_hitchance(hitchance::r_hitchance))
+                if (target->get_health_percent() < combo::r_target_hp_under->get_int() || is_recast)
                 {
-                    if (gametime->get_time() - last_r_time > 1.0f)
+                    prediction_input x;
+
+                    x._from = myhero->get_position();
+                    x.unit = target;
+                    x.delay = is_recast ? 0.50f : r->delay;
+                    x.radius = r->radius;
+                    x.speed = r->speed;
+                    x.collision_objects = r->get_collision_flags();
+                    x.range = r->range();
+                    x.type = skillshot_type::skillshot_cone;
+                    x.spell_slot = r->get_slot();
+                    x.use_bounding_radius = true;
+
+                    auto output = prediction->get_prediction(&x);
+
+                    if (output.hitchance >= get_hitchance(hitchance::r_hitchance))
                     {
-                        if (r->cast(output.get_cast_position()))
+                        if (gametime->get_time() - last_r_time > 1.0f)
                         {
-                            last_r_time = gametime->get_time();
+                            if (r->cast(output.get_cast_position()))
+                            {
+                                last_r_time = gametime->get_time();
+                            }
                         }
                     }
                 }
