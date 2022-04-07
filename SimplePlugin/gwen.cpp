@@ -28,7 +28,6 @@ namespace gwen
         {
             TreeEntry* draw_damage = nullptr;
             TreeEntry* q_damage = nullptr;
-            TreeEntry* e_damage = nullptr;
             TreeEntry* r_damage = nullptr;
         }
     }
@@ -114,7 +113,7 @@ namespace gwen
         w = plugin_sdk->register_spell(spellslot::w, 425);
         e = plugin_sdk->register_spell(spellslot::e, 350);
         r = plugin_sdk->register_spell(spellslot::r, 1200);
-        r->set_skillshot(0.25f, 240.0f, 1800.0f, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line);
+        r->set_skillshot(0.25f, 150.0f, 1800.0f, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -247,8 +246,6 @@ namespace gwen
                     draw_settings::draw_damage_settings::draw_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.enabled", "Draw Combo Damage", true);
                     draw_settings::draw_damage_settings::q_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.q", "Draw Q Damage", true);
                     draw_settings::draw_damage_settings::q_damage->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                    draw_settings::draw_damage_settings::e_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.e", "Draw E Damage", true);
-                    draw_settings::draw_damage_settings::e_damage->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                     draw_settings::draw_damage_settings::r_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.r", "Draw R Damage", true);
                     draw_settings::draw_damage_settings::r_damage->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 }
@@ -725,8 +722,11 @@ namespace gwen
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
-        auto semi = combo::r_semi_manual_cast->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 24), (semi ? 0xFF00FF00 : 0xFF0000FF), 14, "SEMI R %s", (semi ? "ON" : "OFF"));
+        if (combo::use_r->get_bool())
+        {
+            auto semi = combo::r_semi_manual_cast->get_bool();
+            draw_manager->add_text_on_screen(pos + vector(0, 24), (semi ? 0xFF00FF00 : 0xFF0000FF), 14, "SEMI R %s", (semi ? "ON" : "OFF"));
+        }
         auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
 
@@ -741,11 +741,8 @@ namespace gwen
                     if (q->is_ready() && draw_settings::draw_damage_settings::q_damage->get_bool())
                         damage += q->get_damage(enemy);
 
-                    if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
-                        damage += e->get_damage(enemy);
-
                     if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
-                        damage += r->get_damage(enemy);
+                        damage += r->get_damage(enemy) * 3.0f;
 
                     if (damage != 0)
                         draw_dmg_rl(enemy, damage, 0x8000ff00);

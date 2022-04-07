@@ -823,8 +823,11 @@ namespace missfortune
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
-        auto semi = combo::r_semi_manual_cast->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 8), (semi ? 0xFF00FF00 : 0xFF0000FF), 14, "SEMI R %s", (semi ? "ON" : "OFF"));
+        if (combo::use_r->get_bool())
+        {
+            auto semi = combo::r_semi_manual_cast->get_bool();
+            draw_manager->add_text_on_screen(pos + vector(0, 8), (semi ? 0xFF00FF00 : 0xFF0000FF), 14, "SEMI R %s", (semi ? "ON" : "OFF"));
+        }
         auto lasthit = lasthit::lasthit->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 24), (lasthit ? 0xFF00FF00 : 0xFF0000FF), 14, "LASTHIT % s", (lasthit ? "ON" : "OFF"));
         auto spellfarm = laneclear::spell_farm->get_bool();
