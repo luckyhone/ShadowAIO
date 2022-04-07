@@ -759,7 +759,7 @@ namespace chogath
             draw_manager->add_circle(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
 
         // Draw R range
-        if (e->is_ready() && draw_settings::draw_range_r->get_bool())
+        if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
 
         auto pos = myhero->get_position();

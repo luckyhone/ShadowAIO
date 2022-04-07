@@ -19,6 +19,8 @@ namespace gwen
         TreeEntry* q_color = nullptr;
         TreeEntry* draw_range_w = nullptr;
         TreeEntry* w_color = nullptr;
+        TreeEntry* draw_range_e = nullptr;
+        TreeEntry* e_color = nullptr;
         TreeEntry* draw_range_r = nullptr;
         TreeEntry* r_color = nullptr;
 
@@ -232,6 +234,9 @@ namespace gwen
                 draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
                 draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 draw_settings::w_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.w.color", "W Color", color);
+                draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
+                draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                draw_settings::e_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.color", "E Color", color);
                 draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".draw.r", "Draw R range", true);
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
@@ -707,8 +712,12 @@ namespace gwen
         if (w->is_ready() && draw_settings::draw_range_w->get_bool())
             draw_manager->add_circle(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
 
+        // Draw E range
+        if (e->is_ready() && draw_settings::draw_range_e->get_bool())
+            draw_manager->add_circle(myhero->get_position(), e->range(), draw_settings::e_color->get_color());
+
         // Draw R range
-        if (e->is_ready() && draw_settings::draw_range_r->get_bool())
+        if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), combo::r_max_range->get_int(), draw_settings::r_color->get_color());
 
         auto pos = myhero->get_position();
