@@ -598,9 +598,12 @@ namespace gwen
 
             if (output.hitchance >= get_hitchance(hitchance::r_hitchance))
             {
-                if (gametime->get_time() - r->get_last_cast_spell_time() < 1.0f)
+                if (gametime->get_time() - last_r_time > 1.0f)
                 {
-                    r->cast(output.get_cast_position());
+                    if (r->cast(output.get_cast_position()))
+                    {
+                        last_r_time = gametime->get_time();
+                    }
                 }
             }
         }
