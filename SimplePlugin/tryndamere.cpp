@@ -343,7 +343,7 @@ namespace tryndamere
                         }
                         else
                         {
-                            if (e->cast_on_best_farm_position(1, true))
+                            if (e->cast_on_best_farm_position(laneclear::e_only_when_minions_more_than->get_int()))
                             {
                                 return;
                             }
@@ -460,7 +460,7 @@ namespace tryndamere
     {
         if (combo::r_disable_evade->get_bool())
         {
-            if (myhero->has_buff(buff_hash("UndyingRage")))
+            if (myhero->has_buff(buff_hash("UndyingRage")) && myhero->has_buff(buff_hash("ChronoShift")) && myhero->has_buff(buff_hash("KayleR")) && myhero->has_buff(buff_hash("KindredRNoDeathBuff")))
             {
                 if (!evade->is_evade_disabled() && !combo::previous_evade_state)
                 {
@@ -477,7 +477,7 @@ namespace tryndamere
 
         if (r->is_ready() && combo::use_r->get_bool())
         {
-            if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ZileanR")))
+            if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ChronoShift")) && !myhero->has_buff(buff_hash("KayleR")) && !myhero->has_buff(buff_hash("KindredRNoDeathBuff")))
             {
                 if ((myhero->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(myhero, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= myhero->get_health()))
                 {

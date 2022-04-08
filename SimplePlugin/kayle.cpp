@@ -571,7 +571,7 @@ namespace kayle
 			{
 				if (ally->get_distance(myhero->get_position()) <= r->range())
 				{
-					if (!ally->has_buff(buff_hash("KayleR")))
+					if (!ally->has_buff(buff_hash("UndyingRage")) && !ally->has_buff(buff_hash("KayleR")) && !ally->has_buff(buff_hash("ChronoShift")) && !ally->has_buff(buff_hash("KindredRNoDeathBuff")))
 					{
 						if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
 						{

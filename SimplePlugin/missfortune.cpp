@@ -753,19 +753,19 @@ namespace missfortune
     {
         switch (entry->get_int())
         {
-        case 0:
-            return hit_chance::low;
-            break;
-        case 1:
-            return hit_chance::medium;
-            break;
-        case 2:
-            return hit_chance::high;
-            break;
-        case 3:
-            return hit_chance::very_high;
-            break;
-        }
+            case 0:
+                return hit_chance::low;
+                break;
+            case 1:
+                return hit_chance::medium;
+                break;
+            case 2:
+                return hit_chance::high;
+                break;
+            case 3:
+                return hit_chance::very_high;
+                break;
+            }
         return hit_chance::medium;
     }
 #pragma endregion
@@ -803,7 +803,6 @@ namespace missfortune
 
     void on_draw()
     {
-
         if (myhero->is_dead())
         {
             return;
@@ -887,6 +886,11 @@ namespace missfortune
 
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
     {
+        if ((myhero->get_active_spell() != nullptr && myhero->get_active_spell()->is_channeling()) || gametime->get_time() - last_r_time < 0.3f)
+        {
+            return;
+        }
+
         if (antigapclose::use_e->get_bool() && e->is_ready())
         {
             if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))

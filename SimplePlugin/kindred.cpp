@@ -79,6 +79,8 @@ namespace kindred
     // Utils
     //
     bool can_use_r_on(game_object_script target);
+    int get_kindred_passive_stacks();
+    void update_range();
 
     void load()
     {
@@ -86,7 +88,7 @@ namespace kindred
         //
         q = plugin_sdk->register_spell(spellslot::q, 300); //dash range = 300, arrows range = myhero attack range (affected by rapid firecannon)
         w = plugin_sdk->register_spell(spellslot::w, 500);
-        e = plugin_sdk->register_spell(spellslot::e, 500); //todo, range based on marks (500-750 based on marks)
+        e = plugin_sdk->register_spell(spellslot::e, 500);
         r = plugin_sdk->register_spell(spellslot::r, 535);
 
 
@@ -162,7 +164,6 @@ namespace kindred
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
-
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".flee", "Flee Mode");
             {
                 fleemode::use_q = fleemode->add_checkbox(myhero->get_model() + ".flee.e", "Use Q to ran away", true);
@@ -171,9 +172,9 @@ namespace kindred
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
+                float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", true);
                 draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::q_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.color", "Q Color", color);
                 draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
                 draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
@@ -220,8 +221,12 @@ namespace kindred
             return;
         }
 
+        if (r->is_ready() && combo::use_r->get_bool())
+        {
+            r_logic();
+        }
 
-        r_logic();
+        update_range();
 
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
@@ -457,21 +462,13 @@ namespace kindred
 #pragma region r_logic
     void r_logic()
     {
-        //debug to get kindred ult buff name
-        //for (auto&& buff : myhero->get_bufflist())
-        //{
-        //    if (buff->is_valid() && buff->is_alive())
-        //    {
-        //        console->print("[ShadowAIO] [DEBUG] Buff name %s", buff->get_name_cstr());
-        //    }
-        //}
         if (r->is_ready() && combo::use_r->get_bool())
         {
             for (auto&& ally : entitylist->get_ally_heroes())
             {
                 if (ally->get_distance(myhero->get_position()) <= r->range())
                 {
-                    if (!ally->has_buff(buff_hash("KindredRNoDeathBuff")))
+                    if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ChronoShift")) && !myhero->has_buff(buff_hash("KayleR")) && !myhero->has_buff(buff_hash("KindredRNoDeathBuff")))
                     {
                         if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, 1.0f, true) >= ally->get_health()))
                         {
@@ -504,13 +501,69 @@ namespace kindred
     }
 #pragma endregion
 
-    void on_before_attack(game_object_script sender, bool* process)
+    int get_kindred_passive_stacks()
     {
+        auto buff = myhero->get_buff(buff_hash("kindredmarkofthekindredstackcounter"));
+        if (buff != nullptr && buff->is_valid() && buff->is_alive())
+        {
+            return buff->get_count();
+        }
+        return 0;
+    }
+
+    void update_range()
+    {
+        if (e->is_ready())
+        {
+            int stacks = get_kindred_passive_stacks();
+            switch (stacks)
+            {
+                case 4:
+                {
+                    e->set_range(575);
+                    break;
+                }
+                case 7:
+                {
+                    e->set_range(600);
+                    break;
+                }
+                case 10:
+                {
+                    e->set_range(625);
+                    break;
+                }
+                case 13:
+                {
+                    e->set_range(650);
+                    break;
+                }
+                case 16:
+                {
+                    e->set_range(675);
+                    break;
+                }
+                case 19:
+                {
+                    e->set_range(700);
+                    break;
+                }
+                case 22:
+                {
+                    e->set_range(725);
+                    break;
+                }
+                case 25:
+                {
+                    e->set_range(750);
+                    break;
+                }
+            }
+        }
     }
 
     void on_draw()
     {
-
         if (myhero->is_dead())
         {
             return;
