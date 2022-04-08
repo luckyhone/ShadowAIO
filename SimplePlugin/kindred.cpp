@@ -462,24 +462,21 @@ namespace kindred
 #pragma region r_logic
     void r_logic()
     {
-        if (r->is_ready() && combo::use_r->get_bool())
+        for (auto&& ally : entitylist->get_ally_heroes())
         {
-            for (auto&& ally : entitylist->get_ally_heroes())
+            if (ally->get_distance(myhero->get_position()) <= r->range())
             {
-                if (ally->get_distance(myhero->get_position()) <= r->range())
+                if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ChronoShift")) && !myhero->has_buff(buff_hash("KayleR")) && !myhero->has_buff(buff_hash("KindredRNoDeathBuff")))
                 {
-                    if (!myhero->has_buff(buff_hash("UndyingRage")) && !myhero->has_buff(buff_hash("ChronoShift")) && !myhero->has_buff(buff_hash("KayleR")) && !myhero->has_buff(buff_hash("KindredRNoDeathBuff")))
+                    if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, 1.0f, true) >= ally->get_health()))
                     {
-                        if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, 1.0f, true) >= ally->get_health()))
+                        if (can_use_r_on(ally))
                         {
-                            if (can_use_r_on(ally))
+                            if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(900) != 0)
                             {
-                                if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(900) != 0)
+                                if (r->cast())
                                 {
-                                    if (r->cast())
-                                    {
-                                        return;
-                                    }
+                                    return;
                                 }
                             }
                         }
