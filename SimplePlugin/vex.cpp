@@ -25,6 +25,15 @@ namespace vex
         TreeEntry* draw_range_r = nullptr;
         TreeEntry* draw_range_r_minimap = nullptr;
         TreeEntry* r_color = nullptr;
+
+        namespace draw_damage_settings
+        {
+            TreeEntry* draw_damage = nullptr;
+            TreeEntry* q_damage = nullptr;
+            TreeEntry* w_damage = nullptr;
+            TreeEntry* e_damage = nullptr;
+            TreeEntry* r_damage = nullptr;
+        }
     }
 
     namespace combo
@@ -95,6 +104,11 @@ namespace vex
     //
     bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
+    inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
+
+    // Champion data
+    //
+    float r_ranges[] = { 2000.0f, 2500.0f, 3000.0f };
 
     void load()
     {
@@ -105,7 +119,7 @@ namespace vex
         w = plugin_sdk->register_spell(spellslot::w, 475); //550 against dashing enemies
         e = plugin_sdk->register_spell(spellslot::e, 800);
         e->set_skillshot(0.25f, 200.0f, 1300.0f, { }, skillshot_type::skillshot_circle);
-        r = plugin_sdk->register_spell(spellslot::r, 2000); //2000, 2500, 3000
+        r = plugin_sdk->register_spell(spellslot::r, r_ranges[0]);
         r->set_skillshot(0.25f, 260.0f, 1600.0f, { collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
 
 
@@ -213,6 +227,19 @@ namespace vex
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 draw_settings::draw_range_r_minimap = draw_settings->add_checkbox(myhero->get_model() + ".draw.r.minimap", "Draw R range on minimap", true);
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
+
+                auto draw_damage = draw_settings->add_tab(myhero->get_model() + ".draw.damage", "Draw Damage");
+                {
+                    draw_settings::draw_damage_settings::draw_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.enabled", "Draw Combo Damage", true);
+                    draw_settings::draw_damage_settings::q_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.q", "Draw Q Damage", true);
+                    draw_settings::draw_damage_settings::q_damage->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                    draw_settings::draw_damage_settings::w_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.w", "Draw W Damage", true);
+                    draw_settings::draw_damage_settings::w_damage->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                    draw_settings::draw_damage_settings::e_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.e", "Draw E Damage", true);
+                    draw_settings::draw_damage_settings::e_damage->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                    draw_settings::draw_damage_settings::r_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.r", "Draw R Damage", true);
+                    draw_settings::draw_damage_settings::r_damage->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+                }
             }
         }
 
@@ -553,10 +580,9 @@ namespace vex
 #pragma region update_range
     void update_range()
     {
-        auto level = r->level();
-        if (level != 1)
+        if (r->is_ready())
         {
-            r->set_range(level == 1 ? 2000 : level == 2 ? 2500 : 3000);
+            r->set_range(r_ranges[r->level() - 1]);
         }
     }
 #pragma endregion
@@ -572,9 +598,39 @@ namespace vex
         }
     }
 
+    inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color)
+    {
+        if (target != nullptr && target->is_valid() && target->is_hpbar_recently_rendered())
+        {
+            auto bar_pos = target->get_hpbar_pos();
+
+            if (bar_pos.is_valid() && !target->is_dead() && target->is_visible())
+            {
+                const auto health = target->get_health();
+
+                bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
+
+                auto damage_size = (105 * (damage / target->get_max_health()));
+
+                if (damage >= health)
+                {
+                    damage_size = (105 * (health / target->get_max_health()));
+                }
+
+                if (damage_size > 105)
+                {
+                    damage_size = 105;
+                }
+
+                const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
+
+                draw_manager->add_filled_rect(bar_pos, size, color);
+            }
+        }
+    }
+
     void on_draw()
     {
-
         if (myhero->is_dead())
         {
             return;
@@ -609,5 +665,31 @@ namespace vex
         }
         auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
+
+        if (draw_settings::draw_damage_settings::draw_damage->get_bool())
+        {
+            for (auto& enemy : entitylist->get_enemy_heroes())
+            {
+                if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered())
+                {
+                    int damage = 0;
+
+                    if (q->is_ready() && draw_settings::draw_damage_settings::q_damage->get_bool())
+                        damage += q->get_damage(enemy);
+
+                    if (w->is_ready() && draw_settings::draw_damage_settings::w_damage->get_bool())
+                        damage += w->get_damage(enemy);
+
+                    if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
+                        damage += e->get_damage(enemy);
+
+                    if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
+                        damage += r->get_damage(enemy);
+
+                    if (damage != 0)
+                        draw_dmg_rl(enemy, damage, 0x8000ff00);
+                }
+            }
+        }
     }
 };
