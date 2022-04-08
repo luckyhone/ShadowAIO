@@ -327,7 +327,7 @@ namespace tryndamere
                         return a->get_max_health() > b->get_max_health();
                     });
 
-                if (!lane_minions.empty() && lane_minions.size() >= laneclear::e_only_when_minions_more_than->get_int())
+                if (!lane_minions.empty())
                 {
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
@@ -343,7 +343,7 @@ namespace tryndamere
                         }
                         else
                         {
-                            if (e->cast(lane_minions.front()))
+                            if (e->cast_on_best_farm_position(1, true))
                             {
                                 return;
                             }
