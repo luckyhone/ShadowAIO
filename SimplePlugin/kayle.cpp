@@ -300,57 +300,41 @@ namespace kayle
 				}
 			}
 
-			if (orbwalker->last_hit_mode() || orbwalker->mixed_mode())
+			if ((orbwalker->last_hit_mode() || orbwalker->mixed_mode() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
 			{
-				if (lasthit::lasthit->get_bool())
-				{
-					// Gets enemy minions from the entitylist
-					auto lane_minions = entitylist->get_enemy_minions();
+				// Gets enemy minions from the entitylist
+				auto lane_minions = entitylist->get_enemy_minions();
 
-					// You can use this function to delete minions that aren't in the specified range
-					lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-						{
-							return !x->is_valid_target(q->range());
-						}), lane_minions.end());
-
-					//std::sort -> sort lane minions by distance
-					std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-						{
-							return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-						});
-
-					if (!lane_minions.empty())
+				// You can use this function to delete minions that aren't in the specified range
+				lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
 					{
-						if (q->is_ready() && lasthit::use_q->get_bool())
+						return !x->is_valid_target(q->range());
+					}), lane_minions.end());
+
+				//std::sort -> sort lane minions by distance
+				std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+					{
+						return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+					});
+
+				if (!lane_minions.empty())
+				{
+					for (auto&& minion : lane_minions)
+					{
+						if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
 						{
-							for (auto&& minion : lane_minions)
+							if (q->is_ready() && lasthit::use_q->get_bool() && q->get_damage(minion) > minion->get_health())
 							{
-								if (q->get_damage(minion) > minion->get_health())
+								if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
 								{
-									if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
-									{
-										if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
-										{
-											return;
-										}
-									}
+									return;
 								}
 							}
-						}
-
-						if (e->is_ready() && lasthit::use_e->get_bool())
-						{
-							for (auto&& minion : lane_minions)
+							if (e->is_ready() && lasthit::use_e->get_bool() && e->get_damage(minion) + myhero->get_auto_attack_damage(minion) > minion->get_health())
 							{
-								if (e->get_damage(minion) + myhero->get_auto_attack_damage(minion) > minion->get_health())
+								if (e->cast())
 								{
-									if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
-									{
-										if (farm::cast_verify_range(e, minion))
-										{
-											return;
-										}
-									}
+									return;
 								}
 							}
 						}
