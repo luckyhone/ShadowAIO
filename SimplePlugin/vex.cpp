@@ -103,7 +103,7 @@ namespace vex
         q = plugin_sdk->register_spell(spellslot::q, 1200);
         q->set_skillshot(0.15f, 160.f, 600.0f, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line); //width 360-160, speed 600-3200
         w = plugin_sdk->register_spell(spellslot::w, 475); //550 against dashing enemies
-        e = plugin_sdk->register_spell(spellslot::e, 1000);
+        e = plugin_sdk->register_spell(spellslot::e, 800);
         e->set_skillshot(0.25f, 200.0f, 1300.0f, { }, skillshot_type::skillshot_circle);
         r = plugin_sdk->register_spell(spellslot::r, 2000); //2000, 2500, 3000
         r->set_skillshot(0.25f, 260.0f, 1600.0f, { collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
