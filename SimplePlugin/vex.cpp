@@ -383,17 +383,17 @@ namespace vex
 
                 if (!monsters.empty())
                 {
-                    if (q->is_ready() && laneclear::use_q->get_bool())
+                    if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
                         q->cast_on_best_farm_position(1, true);
                     }
 
-                    if (w->is_ready() && laneclear::use_w->get_bool())
+                    if (w->is_ready() && jungleclear::use_w->get_bool())
                     {
                         farm::cast_verify_range(w, monsters.front());
                     }
 
-                    if (e->is_ready() && laneclear::use_e->get_bool())
+                    if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
                         e->cast_on_best_farm_position(1, true);
                     }
