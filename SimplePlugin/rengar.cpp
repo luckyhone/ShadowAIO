@@ -336,13 +336,13 @@ namespace rengar
 
                 if (!lane_minions.empty())
                 {
+                    if (q->is_ready() && laneclear::use_q->get_bool() && laneclear::q_use_empowered->get_bool() && is_empowered())
+                    {
+                        if (q->cast())
+                            return;
+                    }
                     if (!is_empowered())
                     {
-                        if (q->is_ready() && laneclear::use_q->get_bool() && laneclear::q_use_empowered->get_bool())
-                        {
-                            if (q->cast())
-                                return;
-                        }
                         if (w->is_ready() && laneclear::use_w->get_bool())
                         {
                             if (farm::cast_verify_range(w, lane_minions.front()))
