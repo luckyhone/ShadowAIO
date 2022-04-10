@@ -16,3 +16,5 @@ Plugin for BGX.gg
 - Miss Fortune
 - Teemo
 - Gwen
+- Ivern
+- Rengar
