@@ -8,6 +8,7 @@ namespace rengar
     script_spell* q = nullptr;
     script_spell* w = nullptr;
     script_spell* e = nullptr;
+    script_spell* r = nullptr;
 
     // Declaration of menu objects
     TreeTab* main_tab = nullptr;
@@ -18,14 +19,20 @@ namespace rengar
         TreeEntry* w_color = nullptr;
         TreeEntry* draw_range_e = nullptr;
         TreeEntry* e_color = nullptr;
+        TreeEntry* draw_range_r = nullptr;
+        TreeEntry* r_color = nullptr;
+        TreeEntry* draw_range_r_tracing = nullptr;
+        TreeEntry* r_tracing_color = nullptr;
     }
 
     namespace combo
     {
+        TreeEntry* empowered_spell_priority = nullptr;
         TreeEntry* use_q = nullptr;
-        TreeEntry* q_mode = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_use_empowered_if_immobile = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_use_empowered_if_chasing = nullptr;
     }
 
     namespace harass
@@ -86,6 +93,11 @@ namespace rengar
     hit_chance get_hitchance(TreeEntry* entry);
     bool is_empowered();
     bool is_on_r();
+    inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
+
+    // Champion data
+    //
+    float r_tracking_radius[] = { 2500.0f, 3000.0f, 3500.0f };
 
     void load()
     {
@@ -95,6 +107,7 @@ namespace rengar
         w = plugin_sdk->register_spell(spellslot::w, 450);
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 140.0f, 1500.0f, { collisionable_objects::minions, collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
+        r = plugin_sdk->register_spell(spellslot::r, 745);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -107,16 +120,21 @@ namespace rengar
 
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
+                combo::empowered_spell_priority = combo->add_combobox(myhero->get_model() + ".combo.empowered_spell_priority", "Empowered Spell Priority", { {"Q", nullptr},{"W", nullptr },{"E", nullptr } }, 0);
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
-                {
-                    combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "W Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 0);
-                }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
+                {
+                    combo::w_use_empowered_if_immobile = w_config->add_checkbox(myhero->get_model() + ".combo.w.use_empowered_if_immobile", "Use empowered W if immobile", true);
+                }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
+                {
+                    combo::e_use_empowered_if_chasing = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_empowered_if_immobile", "Use empowered E if chasing enemy", true);
+                }
             }
 
             auto harass = main_tab->add_tab(myhero->get_model() + ".harass", "Harass Settings");
@@ -181,6 +199,12 @@ namespace rengar
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::e_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.color", "E Color", color);
+                draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".draw.r", "Draw R range", true);
+                draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+                draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
+                draw_settings::draw_range_r_tracing = draw_settings->add_checkbox(myhero->get_model() + ".draw.r.tracing", "Draw R tracing range on minimap", true);
+                draw_settings::draw_range_r_tracing->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+                draw_settings::r_tracing_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.tracing.color", "R Color", color);
             }
         }
 
@@ -390,7 +414,10 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            q->cast();
+            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 0)
+            {
+                q->cast();
+            }
         }
     }
 #pragma endregion
@@ -404,7 +431,7 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!is_empowered() || myhero->is_immovable())
+            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 1 || (myhero->is_immovable() && combo::w_use_empowered_if_immobile->get_bool()))
             {
                 w->cast();
             }
@@ -421,7 +448,7 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!is_empowered() || target->get_distance(myhero) > myhero->get_attack_range() + 100)
+            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 2 || (target->get_distance(myhero) > myhero->get_attack_range() + 150 && combo::e_use_empowered_if_chasing->get_bool()))
             {
                 e->cast(target, get_hitchance(hitchance::e_hitchance));
             }
@@ -476,14 +503,17 @@ namespace rengar
 
     void on_before_attack(game_object_script target, bool* process)
     {
-        if (q->is_ready() && combo::q_mode->get_int() == 0)
+        if (q->is_ready())
         {
             // Using q before autoattack on enemies
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
             {
-                if (q->cast())
+                if (!is_empowered() || combo::empowered_spell_priority->get_int() == 0)
                 {
-                    return;
+                    if (q->cast())
+                    {
+                        return;
+                    }
                 }
             }
 
@@ -524,48 +554,49 @@ namespace rengar
 
     void on_after_attack_orbwalker(game_object_script target)
     {
-        if (q->is_ready() && combo::q_mode->get_int() == 1)
+        if (q->is_ready())
         {
             // Using q after autoattack on enemies
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
             {
-                if (q->cast())
-                {
-                    return;
-                }
-            }
-
-            // Using q after autoattack on turrets
-            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::q_use_on_turret->get_bool() && target->is_ai_turret())
-            {
-                if (q->cast())
-                {
-                    return;
-                }
-            }
-
-            if (laneclear::spell_farm->get_bool())
-            {
-                // Using q after autoattack on minions
-                if (orbwalker->lane_clear_mode() && laneclear::use_q->get_bool() && target->is_lane_minion())
-                {
-                    if (!is_empowered() || laneclear::q_use_empowered->get_bool())
-                    {
-                        if (q->cast())
-                        {
-                            return;
-                        }
-                    }
-                }
-
-                // Using q after autoattack on monsters
-                if (orbwalker->lane_clear_mode() && jungleclear::use_q->get_bool() && target->is_monster())
+                if (!is_empowered() || combo::empowered_spell_priority->get_int() == 0)
                 {
                     if (q->cast())
                     {
                         return;
                     }
                 }
+            }
+        }
+    }
+
+    inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color)
+    {
+        if (target != nullptr && target->is_valid() && target->is_hpbar_recently_rendered())
+        {
+            auto bar_pos = target->get_hpbar_pos();
+
+            if (bar_pos.is_valid() && !target->is_dead() && target->is_visible())
+            {
+                const auto health = target->get_health();
+
+                bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
+
+                auto damage_size = (105 * (damage / target->get_max_health()));
+
+                if (damage >= health)
+                {
+                    damage_size = (105 * (health / target->get_max_health()));
+                }
+
+                if (damage_size > 105)
+                {
+                    damage_size = 105;
+                }
+
+                const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
+
+                draw_manager->add_filled_rect(bar_pos, size, color);
             }
         }
     }
@@ -584,6 +615,14 @@ namespace rengar
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
             draw_manager->add_circle(myhero->get_position(), e->range(), draw_settings::e_color->get_color());
+
+        // Draw R range
+        if (r->is_ready() && draw_settings::draw_range_r->get_bool())
+            draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
+
+        // Draw R tracing range on minimap
+        if (r->is_ready() && draw_settings::draw_range_r_tracing->get_bool())
+            draw_manager->draw_circle_on_minimap(myhero->get_position(), r_tracking_radius[r->level() - 1], draw_settings::r_tracing_color->get_color());
 
         auto pos = myhero->get_position();
         renderer->world_to_screen(pos, pos);
