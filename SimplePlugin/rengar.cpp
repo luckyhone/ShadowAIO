@@ -1,6 +1,5 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "rengar.h"
-#include "farm.h"
 
 namespace rengar
 {
@@ -313,13 +312,13 @@ namespace rengar
                 // You can use this function to delete minions that aren't in the specified range
                 lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(e->range());
+                        return !x->is_valid_target(w->range());
                     }), lane_minions.end());
 
                 // You can use this function to delete monsters that aren't in the specified range
                 monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(e->range());
+                        return !x->is_valid_target(w->range());
                     }), monsters.end());
 
                 //std::sort -> sort lane minions by distance
@@ -345,12 +344,12 @@ namespace rengar
                     {
                         if (w->is_ready() && laneclear::use_w->get_bool())
                         {
-                            if (farm::cast_verify_range(w, lane_minions.front()))
+                            if (w->cast())
                                 return;
                         }
                         if (e->is_ready() && laneclear::use_e->get_bool())
                         {
-                            if (e->cast(lane_minions.front(), get_hitchance(hitchance::e_hitchance)))
+                            if (e->cast_on_best_farm_position(1))
                                 return;
                         }
                     }
@@ -368,12 +367,12 @@ namespace rengar
                     {
                         if (w->is_ready() && jungleclear::use_w->get_bool())
                         {
-                            if (farm::cast_verify_range(w, monsters.front()))
+                            if (w->cast())
                                 return;
                         }
                         if (e->is_ready() && jungleclear::use_e->get_bool())
                         {
-                            if (e->cast(monsters.front(), get_hitchance(hitchance::e_hitchance)))
+                            if (e->cast_on_best_farm_position(1, true))
                                 return;
                         }
                     }
