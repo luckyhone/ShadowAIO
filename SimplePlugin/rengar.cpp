@@ -334,17 +334,25 @@ namespace rengar
                         return a->get_max_health() > b->get_max_health();
                     });
 
-                if (!lane_minions.empty() && !is_empowered())
+                if (!lane_minions.empty())
                 {
-                    if (w->is_ready() && laneclear::use_w->get_bool())
+                    if (!is_empowered())
                     {
-                        if (farm::cast_verify_range(w, lane_minions.front()))
-                            return;
-                    }
-                    if (e->is_ready() && laneclear::use_e->get_bool())
-                    {
-                        if (e->cast(lane_minions.front(), get_hitchance(hitchance::e_hitchance)))
-                            return;
+                        if (q->is_ready() && laneclear::use_q->get_bool() && laneclear::q_use_empowered->get_bool())
+                        {
+                            if (q->cast())
+                                return;
+                        }
+                        if (w->is_ready() && laneclear::use_w->get_bool())
+                        {
+                            if (farm::cast_verify_range(w, lane_minions.front()))
+                                return;
+                        }
+                        if (e->is_ready() && laneclear::use_e->get_bool())
+                        {
+                            if (e->cast(lane_minions.front(), get_hitchance(hitchance::e_hitchance)))
+                                return;
+                        }
                     }
                 }
 
@@ -354,9 +362,7 @@ namespace rengar
                     if (q->is_ready() && jungleclear::use_q->get_bool() && is_empowered())
                     {
                         if (q->cast())
-                        {
                             return;
-                        }
                     }
                     if (!is_empowered())
                     {
