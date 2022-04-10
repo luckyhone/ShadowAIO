@@ -479,10 +479,9 @@ namespace jax
                     }
                 }
 
-
+                // Logic responsible for monsters
                 if (!monsters.empty())
                 {
-                    // Logic responsible for monsters
                     if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
                         if (q->cast(monsters.front()))

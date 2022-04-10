@@ -3,7 +3,7 @@
 // Declare plugin name & supported champions
 //
 PLUGIN_NAME("ShadowAIO");
-SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::Trundle, champion_id::Jax, champion_id::Kayle, champion_id::Vex, champion_id::MasterYi, champion_id::Chogath, champion_id::Twitch, champion_id::Kalista, champion_id::Malzahar, champion_id::MissFortune, champion_id::Teemo, champion_id::Gwen);
+SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::Trundle, champion_id::Jax, champion_id::Kayle, champion_id::Vex, champion_id::MasterYi, champion_id::Chogath, champion_id::Twitch, champion_id::Kalista, champion_id::Malzahar, champion_id::MissFortune, champion_id::Teemo, champion_id::Gwen, champion_id::Ivern, champion_id::Rengar);
 
 // Include champion file
 //
@@ -21,6 +21,8 @@ SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::
 #include "missfortune.h"
 #include "teemo.h"
 #include "gwen.h"
+#include "ivern.h"
+#include "rengar.h"
 
 // Entry point of plugin
 //
@@ -99,11 +101,20 @@ PLUGIN_API bool on_sdk_load(plugin_sdk_core* plugin_sdk_good)
             //
             teemo::load();
             break;
-
         case champion_id::Gwen:
             // Load gwen script
             //
             gwen::load();
+            break;
+        case champion_id::Ivern:
+            // Load ivern script
+            //
+            ivern::load();
+            break;
+        case champion_id::Rengar:
+            // Load rengar script
+            //
+            rengar::load();
             break;
         default:
             // We don't support this champ, print message and return false (core will not load this plugin and on_sdk_unload will be never called)
@@ -193,6 +204,16 @@ PLUGIN_API void on_sdk_unload()
             // Unload gwen script
             //
             gwen::unload();
+            break;
+        case champion_id::Ivern:
+            // Unload ivern script
+            //
+            ivern::unload();
+            break;
+        case champion_id::Rengar:
+            // Unload rengar script
+            //
+            rengar::unload();
             break;
         default:
             break;

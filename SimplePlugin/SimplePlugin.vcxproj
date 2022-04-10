@@ -161,6 +161,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="farm.cpp" />
     <ClCompile Include="gwen.cpp" />
+    <ClCompile Include="ivern.cpp" />
     <ClCompile Include="jax.cpp" />
     <ClCompile Include="kalista.cpp" />
     <ClCompile Include="kayle.cpp" />
@@ -168,6 +169,7 @@
     <ClCompile Include="malzahar.cpp" />
     <ClCompile Include="masteryi.cpp" />
     <ClCompile Include="missfortune.cpp" />
+    <ClCompile Include="rengar.cpp" />
     <ClCompile Include="teemo.cpp" />
     <ClCompile Include="trundle.cpp" />
     <ClCompile Include="tryndamere.cpp" />
@@ -181,6 +183,7 @@
     <ClInclude Include="chogath.h" />
     <ClInclude Include="farm.h" />
     <ClInclude Include="gwen.h" />
+    <ClInclude Include="ivern.h" />
     <ClInclude Include="jax.h" />
     <ClInclude Include="kalista.h" />
     <ClInclude Include="kayle.h" />
@@ -188,6 +191,7 @@
     <ClInclude Include="malzahar.h" />
     <ClInclude Include="masteryi.h" />
     <ClInclude Include="missfortune.h" />
+    <ClInclude Include="rengar.h" />
     <ClInclude Include="teemo.h" />
     <ClInclude Include="trundle.h" />
     <ClInclude Include="tryndamere.h" />
