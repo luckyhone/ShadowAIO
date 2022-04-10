@@ -483,24 +483,27 @@ namespace rengar
                 }
             }
 
-            // Using q before autoattack on lane minions
-            if (orbwalker->lane_clear_mode() && laneclear::use_q->get_bool() && target->is_lane_minion())
+            if (laneclear::spell_farm->get_bool())
             {
-                if (!is_empowered() || laneclear::q_use_empowered->get_bool())
+                // Using q before autoattack on lane minions
+                if (orbwalker->lane_clear_mode() && laneclear::use_q->get_bool() && target->is_lane_minion())
+                {
+                    if (!is_empowered() || laneclear::q_use_empowered->get_bool())
+                    {
+                        if (q->cast())
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                // Using q before autoattack on monsters
+                if (orbwalker->lane_clear_mode() && jungleclear::use_q->get_bool() && target->is_monster())
                 {
                     if (q->cast())
                     {
                         return;
                     }
-                }
-            }
-
-            // Using q before autoattack on monsters
-            if (orbwalker->lane_clear_mode() && jungleclear::use_q->get_bool() && target->is_monster())
-            {
-                if (q->cast())
-                {
-                    return;
                 }
             }
         }
@@ -528,24 +531,27 @@ namespace rengar
                 }
             }
 
-            // Using q after autoattack on minions
-            if (orbwalker->lane_clear_mode() && laneclear::use_q->get_bool() && target->is_lane_minion())
+            if (laneclear::spell_farm->get_bool())
             {
-                if (!is_empowered() || laneclear::q_use_empowered->get_bool())
+                // Using q after autoattack on minions
+                if (orbwalker->lane_clear_mode() && laneclear::use_q->get_bool() && target->is_lane_minion())
+                {
+                    if (!is_empowered() || laneclear::q_use_empowered->get_bool())
+                    {
+                        if (q->cast())
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                // Using q after autoattack on monsters
+                if (orbwalker->lane_clear_mode() && jungleclear::use_q->get_bool() && target->is_monster())
                 {
                     if (q->cast())
                     {
                         return;
                     }
-                }
-            }
-
-            // Using q after autoattack on monsters
-            if (orbwalker->lane_clear_mode() && jungleclear::use_q->get_bool() && target->is_monster())
-            {
-                if (q->cast())
-                {
-                    return;
                 }
             }
         }
