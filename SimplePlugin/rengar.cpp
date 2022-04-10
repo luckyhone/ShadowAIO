@@ -391,10 +391,7 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (target->get_distance(myhero) > myhero->get_attack_range() || is_empowered())
-            {
-                q->cast();
-            }
+            q->cast();
         }
     }
 #pragma endregion

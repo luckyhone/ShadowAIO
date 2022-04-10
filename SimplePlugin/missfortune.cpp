@@ -33,6 +33,7 @@ namespace missfortune
         TreeEntry* r_semi_manual_cast = nullptr;
         TreeEntry* r_max_range = nullptr;
         TreeEntry* r_use_if_killable_by_x_waves = nullptr;
+        TreeEntry* r_dont_waste_if_target_hp_below = nullptr;
         TreeEntry* r_auto_if_enemies_more_than = nullptr;
         TreeEntry* r_auto_on_cc = nullptr;
         TreeEntry* r_cancel_if_nobody_inside = nullptr;
@@ -146,6 +147,7 @@ namespace missfortune
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", 1200, 550, r->range());
                     combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use if killable by x waves", 6, 1, 14);
+                    combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
                     combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Auto R if hit enemies more than", 2, 1, 5);
                     combo::r_auto_on_cc = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_cc", "Auto R on CC", false);;
                     combo::r_cancel_if_nobody_inside = r_config->add_checkbox(myhero->get_model() + ".combo.r.cancel_if_nobody_inside", "Cancel R if nobody inside", false);
@@ -583,9 +585,9 @@ namespace missfortune
         auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && target->is_attack_allowed_on_target())
+        if (target != nullptr && target->is_attack_allowed_on_target() && can_use_r_on(target))
         {
-            if (can_use_r_on(target))
+            if (target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
                 if (r->get_damage(target) * combo::r_use_if_killable_by_x_waves->get_int() > target->get_health())
                 {
@@ -609,6 +611,7 @@ namespace missfortune
                             return true;
                         }
                     }
+
                 }
             }
         }
