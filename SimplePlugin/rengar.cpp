@@ -349,17 +349,27 @@ namespace rengar
                 }
 
                 // Logic responsible for monsters
-                if (!monsters.empty() && !is_empowered())
+                if (!monsters.empty())
                 {
-                    if (w->is_ready() && jungleclear::use_w->get_bool())
+                    if (q->is_ready() && jungleclear::use_q->get_bool() && is_empowered())
                     {
-                        if (farm::cast_verify_range(w, monsters.front()))
+                        if (q->cast())
+                        {
                             return;
+                        }
                     }
-                    if (e->is_ready() && jungleclear::use_e->get_bool())
+                    if (!is_empowered())
                     {
-                        if (e->cast(monsters.front(), get_hitchance(hitchance::e_hitchance)))
-                            return;
+                        if (w->is_ready() && jungleclear::use_w->get_bool())
+                        {
+                            if (farm::cast_verify_range(w, monsters.front()))
+                                return;
+                        }
+                        if (e->is_ready() && jungleclear::use_e->get_bool())
+                        {
+                            if (e->cast(monsters.front(), get_hitchance(hitchance::e_hitchance)))
+                                return;
+                        }
                     }
                 }
             }
@@ -375,7 +385,7 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (target->get_distance(myhero) > myhero->get_attack_range())
+            if (target->get_distance(myhero) > myhero->get_attack_range() || is_empowered())
             {
                 q->cast();
             }
