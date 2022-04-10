@@ -359,7 +359,7 @@ namespace rengar
                 // Logic responsible for monsters
                 if (!monsters.empty())
                 {
-                    if (q->is_ready() && jungleclear::use_q->get_bool() && is_empowered())
+                    if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
                         if (q->cast())
                             return;
@@ -457,7 +457,8 @@ namespace rengar
 
     bool is_empowered()
     {
-        return myhero->get_mana() == 4.0f;
+        auto empowered_q = myhero->get_buff(buff_hash("rengarqasbuff"));
+        return myhero->get_mana() == 4.0f || (empowered_q != nullptr && empowered_q->is_valid() && empowered_q->is_alive());
     }
 
     bool is_on_r()
