@@ -84,12 +84,13 @@ namespace rengar
 
     // Declaring functions responsible for spell-logic
     //
-    void q_logic();
-    void w_logic();
-    void e_logic();
+    bool q_logic();
+    bool w_logic();
+    bool e_logic();
 
     // Utils
     //
+    //bool can_use_r_leap_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     bool is_empowered();
     bool is_on_r();
@@ -135,6 +136,19 @@ namespace rengar
                 {
                     combo::e_use_empowered_if_chasing = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_empowered_if_immobile", "Use empowered E if chasing enemy", true);
                 }
+                //auto use_r_leap_on_tab = combo->add_tab(myhero->get_model() + ".combo.r_leap_use_on", "Use R leap On");
+                //{
+                //    for (auto&& enemy : entitylist->get_enemy_heroes())
+                //    {
+                //        // In this case you HAVE to set should save to false since key contains network id which is unique per game
+                //        //
+                //        combo::r_leap_use_on[enemy->get_network_id()] = use_r_leap_on_tab->add_checkbox(std::to_string(enemy->get_network_id()), enemy->get_model(), true, false);
+
+                //        // Set texture to enemy square icon
+                //        //
+                //        combo::r_leap_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
+                //    }
+                //}
             }
 
             auto harass = main_tab->add_tab(myhero->get_model() + ".harass", "Harass Settings");
@@ -262,19 +276,22 @@ namespace rengar
             {
                 if (q->is_ready() && combo::use_q->get_bool())
                 {
-                    q_logic();
+                    if (q_logic())
+                        return;
                 }
 
                 if (!is_on_r())
                 {
                     if (w->is_ready() && combo::use_w->get_bool())
                     {
-                        w_logic();
+                        if (w_logic())
+                            return;
                     }
 
                     if (e->is_ready() && combo::use_e->get_bool())
                     {
-                        e_logic();
+                        if (e_logic())
+                            return;
                     }
                 }
             }
@@ -283,7 +300,7 @@ namespace rengar
             if (orbwalker->harass())
             {
                 // Get a target from a given range
-                auto target = target_selector->get_target(q->range(), damage_type::physical);
+                auto target = target_selector->get_target(e->range(), damage_type::physical);
 
                 // Always check an object is not a nullptr!
                 if (target != nullptr)
@@ -406,7 +423,7 @@ namespace rengar
     }
 
 #pragma region q_logic
-    void q_logic()
+    bool q_logic()
     {
         // Get a target from a given range
         auto target = target_selector->get_target(myhero->get_attack_range() + 25, damage_type::physical);
@@ -416,14 +433,16 @@ namespace rengar
         {
             if (!is_empowered() || combo::empowered_spell_priority->get_int() == 0)
             {
-                q->cast();
+                return q->cast();
             }
         }
+
+        return false;
     }
 #pragma endregion
 
 #pragma region w_logic
-    void w_logic()
+    bool w_logic()
     {
         // Get a target from a given range
         auto target = target_selector->get_target(w->range(), damage_type::magical);
@@ -431,16 +450,18 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 1 || (myhero->is_immovable() && combo::w_use_empowered_if_immobile->get_bool()))
+            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 1 || (!myhero->can_move() && combo::w_use_empowered_if_immobile->get_bool()))
             {
-                w->cast();
+                return w->cast();
             }
         }
+
+        return false;
     }
 #pragma endregion
 
 #pragma region e_logic
-    void e_logic()
+    bool e_logic()
     {
         // Get a target from a given range
         auto target = target_selector->get_target(e->range(), damage_type::physical);
@@ -448,13 +469,26 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 2 || (target->get_distance(myhero) > myhero->get_attack_range() + 150 && combo::e_use_empowered_if_chasing->get_bool()))
+            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 2 || (target->get_distance(myhero) > myhero->get_attack_range() + 275 && target->is_moving() && combo::e_use_empowered_if_chasing->get_bool()))
             {
-                e->cast(target, get_hitchance(hitchance::e_hitchance));
+                return e->cast(target, get_hitchance(hitchance::e_hitchance));
             }
         }
+
+        return false;
     }
 #pragma endregion
+    
+//#pragma region can_use_r_leap_on
+//    bool can_use_r_leap_on(game_object_script target)
+//    {
+//        auto it = combo::r_leap_use_on.find(target->get_network_id());
+//        if (it == combo::r_leap_use_on.end())
+//            return false;
+//
+//        return it->second->get_bool();
+//    }
+//#pragma endregion
 
 #pragma region get_hitchance
     hit_chance get_hitchance(TreeEntry* entry)
