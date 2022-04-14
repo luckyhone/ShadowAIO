@@ -67,7 +67,7 @@ namespace rengar
     namespace antigapclose
     {
         TreeEntry* use_e = nullptr;
-    }
+    } 
 
     namespace hitchance
     {
@@ -94,7 +94,6 @@ namespace rengar
     hit_chance get_hitchance(TreeEntry* entry);
     bool is_empowered();
     bool is_on_r();
-    inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
     // Champion data
     //
@@ -134,30 +133,17 @@ namespace rengar
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
-                    combo::e_use_empowered_if_chasing = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_empowered_if_immobile", "Use empowered E if chasing enemy", true);
+                    combo::e_use_empowered_if_chasing = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_empowered_if_chasing", "Use empowered E if chasing enemy", true);
                 }
-                //auto use_r_leap_on_tab = combo->add_tab(myhero->get_model() + ".combo.r_leap_use_on", "Use R leap On");
-                //{
-                //    for (auto&& enemy : entitylist->get_enemy_heroes())
-                //    {
-                //        // In this case you HAVE to set should save to false since key contains network id which is unique per game
-                //        //
-                //        combo::r_leap_use_on[enemy->get_network_id()] = use_r_leap_on_tab->add_checkbox(std::to_string(enemy->get_network_id()), enemy->get_model(), true, false);
-
-                //        // Set texture to enemy square icon
-                //        //
-                //        combo::r_leap_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
-                //    }
-                //}
             }
 
             auto harass = main_tab->add_tab(myhero->get_model() + ".harass", "Harass Settings");
             {
                 harass::use_q = harass->add_checkbox(myhero->get_model() + ".harass.q", "Use Q", true);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                harass::use_w = harass->add_checkbox(myhero->get_model() + ".harass.w", "Use W", false);
+                harass::use_w = harass->add_checkbox(myhero->get_model() + ".harass.w", "Use W", true);
                 harass::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", false);
+                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -189,7 +175,7 @@ namespace rengar
 
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
             {
-                fleemode::use_e = fleemode->add_checkbox(myhero->get_model() + ".flee.q", "Use E to slow enemy", true);
+                fleemode::use_e = fleemode->add_checkbox(myhero->get_model() + ".flee.e", "Use E to slow enemy", true);
                 fleemode::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -266,6 +252,14 @@ namespace rengar
             return;
         }
 
+        if (orbwalker->combo_mode() && myhero->get_attack_range() == 745 && !is_on_r())
+        {
+            if (e->is_ready() && combo::use_e->get_bool())
+            {
+                e_logic();
+            }
+        }
+
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
         // Too small time can interrupt the attack
@@ -276,22 +270,19 @@ namespace rengar
             {
                 if (q->is_ready() && combo::use_q->get_bool())
                 {
-                    if (q_logic())
-                        return;
+                    q_logic();
                 }
 
                 if (!is_on_r())
                 {
                     if (w->is_ready() && combo::use_w->get_bool())
                     {
-                        if (w_logic())
-                            return;
+                        w_logic();
                     }
 
                     if (e->is_ready() && combo::use_e->get_bool())
                     {
-                        if (e_logic())
-                            return;
+                        e_logic();
                     }
                 }
             }
@@ -469,7 +460,7 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 2 || (target->get_distance(myhero) > myhero->get_attack_range() + 275 && target->can_move() && target->is_moving() && combo::e_use_empowered_if_chasing->get_bool()))
+            if (!is_empowered()|| combo::empowered_spell_priority->get_int() == 2 || (target->get_distance(myhero) > myhero->get_attack_range() + 275 && target->can_move() && target->is_moving() && combo::e_use_empowered_if_chasing->get_bool()))
             {
                 return e->cast(target, get_hitchance(hitchance::e_hitchance));
             }
@@ -478,17 +469,6 @@ namespace rengar
         return false;
     }
 #pragma endregion
-    
-//#pragma region can_use_r_leap_on
-//    bool can_use_r_leap_on(game_object_script target)
-//    {
-//        auto it = combo::r_leap_use_on.find(target->get_network_id());
-//        if (it == combo::r_leap_use_on.end())
-//            return false;
-//
-//        return it->second->get_bool();
-//    }
-//#pragma endregion
 
 #pragma region get_hitchance
     hit_chance get_hitchance(TreeEntry* entry)
@@ -600,37 +580,6 @@ namespace rengar
                         return;
                     }
                 }
-            }
-        }
-    }
-
-    inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color)
-    {
-        if (target != nullptr && target->is_valid() && target->is_hpbar_recently_rendered())
-        {
-            auto bar_pos = target->get_hpbar_pos();
-
-            if (bar_pos.is_valid() && !target->is_dead() && target->is_visible())
-            {
-                const auto health = target->get_health();
-
-                bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
-
-                auto damage_size = (105 * (damage / target->get_max_health()));
-
-                if (damage >= health)
-                {
-                    damage_size = (105 * (health / target->get_max_health()));
-                }
-
-                if (damage_size > 105)
-                {
-                    damage_size = 105;
-                }
-
-                const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
-
-                draw_manager->add_filled_rect(bar_pos, size, color);
             }
         }
     }
