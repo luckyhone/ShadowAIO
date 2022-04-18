@@ -291,7 +291,7 @@ namespace missfortune
             return;
         }
 
-        if ((myhero->get_active_spell() != nullptr && myhero->get_active_spell()->is_channeling()) || gametime->get_time() - last_r_time < 0.3f)
+        if (myhero->is_casting_interruptible_spell() || gametime->get_time() - last_r_time < 0.3f)
         {
             if (combo::r_disable_orbwalker_moving->get_bool())
             {
@@ -340,19 +340,16 @@ namespace missfortune
             return;
         }
 
-        if (myhero->get_active_spell() == nullptr)
+        if (combo::previous_orbwalker_state)
         {
-            if (combo::previous_orbwalker_state)
-            {
-                orbwalker->set_attack(true);
-                orbwalker->set_movement(true);
-                combo::previous_orbwalker_state = false;
-            }
-            if (combo::previous_evade_state)
-            {
-                evade->enable_evade();
-                combo::previous_evade_state = false;
-            }
+            orbwalker->set_attack(true);
+            orbwalker->set_movement(true);
+            combo::previous_orbwalker_state = false;
+        }
+        if (combo::previous_evade_state)
+        {
+            evade->enable_evade();
+            combo::previous_evade_state = false;
         }
 
         // Very important if can_move ( extra_windup ) 
