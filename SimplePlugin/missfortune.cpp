@@ -194,7 +194,7 @@ namespace missfortune
                 laneclear::use_w_on_turret->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                auto e_config = laneclear->add_tab(myhero->get_model() + ".laneclear.w.config", "W Config");
+                auto e_config = laneclear->add_tab(myhero->get_model() + ".laneclear.e.config", "E Config");
                 {
                     laneclear::e_minimum_minions = e_config->add_slider(myhero->get_model() + ".laneclear.e.minimum_minions", "Minimum minions", 3, 0, 5);
                 }
