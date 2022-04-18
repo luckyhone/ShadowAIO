@@ -58,6 +58,7 @@ namespace missfortune
         TreeEntry* use_w = nullptr;
         TreeEntry* use_w_on_turret = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_minimum_minions = nullptr;
     }
 
     namespace jungleclear
@@ -193,6 +194,10 @@ namespace missfortune
                 laneclear::use_w_on_turret->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                auto e_config = laneclear->add_tab(myhero->get_model() + ".laneclear.w.config", "W Config");
+                {
+                    laneclear::e_minimum_minions = e_config->add_slider(myhero->get_model() + ".laneclear.e.minimum_minions", "Minimum minions", 3, 0, 5);
+                }
             }
 
             auto jungleclear = main_tab->add_tab(myhero->get_model() + ".jungleclear", "Jungle Clear Settings");
@@ -517,7 +522,7 @@ namespace missfortune
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        if (e->cast_on_best_farm_position(1))
+                        if (e->cast_on_best_farm_position(laneclear::e_minimum_minions->get_int()))
                         {
                             return;
                         }
