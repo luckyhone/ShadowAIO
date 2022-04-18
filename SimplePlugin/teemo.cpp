@@ -663,11 +663,11 @@ namespace teemo
         auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
 
-        if (draw_settings::draw_damage_q->get_bool())
+        if (q->is_ready() && draw_settings::draw_damage_q->get_bool())
         {
             for (auto& enemy : entitylist->get_enemy_heroes())
             {
-                if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && q->is_ready())
+                if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
                 {
                     draw_dmg_rl(enemy, q->get_damage(enemy), 0x8000ff00);
                 }

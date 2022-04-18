@@ -50,6 +50,7 @@ namespace twitch
         TreeEntry* use_q = nullptr;
         TreeEntry* use_q_on_turret = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_minimum_minions = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_use_if_killable_minions = nullptr;
     }
@@ -148,8 +149,11 @@ namespace twitch
                 harass::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                harass::e_only_on_full_stacks = harass->add_checkbox(myhero->get_model() + ".harass.e.only_on_full_stacks", "Use E only on full stacks", true);
-                harass::e_only_on_full_stacks->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                auto e_config = harass->add_tab(myhero->get_model() + ".harass.e.config", "E Config");
+                {
+                    harass::e_only_on_full_stacks = e_config->add_checkbox(myhero->get_model() + ".harass.e.only_on_full_stacks", "Use E only on full stacks", true);
+                    harass::e_only_on_full_stacks->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                }
             }
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
@@ -161,6 +165,10 @@ namespace twitch
                 laneclear::use_q_on_turret->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", true);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                auto w_config = laneclear->add_tab(myhero->get_model() + ".laneclear.w.config", "W Config");
+                {
+                    laneclear::w_minimum_minions = w_config->add_slider(myhero->get_model() + ".laneclear.w.minimum_minions", "Minimum minions", 3, 0, 5);
+                }
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", true);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = laneclear->add_tab(myhero->get_model() + ".laneclear.e.config", "E Config");
@@ -363,7 +371,7 @@ namespace twitch
                 {
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (w->cast_on_best_farm_position(1))
+                        if (w->cast_on_best_farm_position(laneclear::w_minimum_minions->get_int()))
                         {
                             return;
                         }
@@ -562,11 +570,11 @@ namespace twitch
         auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
 
-        if (draw_settings::draw_damage_e->get_bool())
+        if (e->is_ready() && draw_settings::draw_damage_e->get_bool())
         {
             for (auto& enemy : entitylist->get_enemy_heroes())
             {
-                if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && e->is_ready())
+                if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
                 {
                     draw_dmg_rl(enemy, e->get_damage(enemy), 0x8000ff00);
                 }

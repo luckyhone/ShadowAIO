@@ -633,11 +633,11 @@ namespace kalista
         auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
 
-        if (draw_settings::draw_damage_e->get_bool())
+        if (e->is_ready() && draw_settings::draw_damage_e->get_bool())
         {
             for (auto& enemy : entitylist->get_enemy_heroes())
             {
-                if (!enemy->is_dead() && enemy->is_valid() && enemy->is_hpbar_recently_rendered() && e->is_ready())
+                if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
                 {
                     draw_dmg_rl(enemy, e->get_damage(enemy), 0x8000ff00);
                 }
