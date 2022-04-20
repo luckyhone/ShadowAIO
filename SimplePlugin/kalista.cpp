@@ -43,6 +43,7 @@ namespace kalista
         TreeEntry* use_r = nullptr;
         TreeEntry* r_ally_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
+        TreeEntry* r_enemies_search_radius = nullptr;
         TreeEntry* r_calculate_incoming_damage = nullptr;
         TreeEntry* r_coming_damage_time = nullptr;
     }
@@ -71,7 +72,7 @@ namespace kalista
 
     namespace misc
     {
-        TreeEntry* kite_on_minions_when_chasing_enemy = nullptr;
+        TreeEntry* jump_on_minions_when_chasing_enemy = nullptr;
     }
 
     namespace hitchance
@@ -143,6 +144,7 @@ namespace kalista
                 {
                     combo::r_ally_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.myhero_hp_under", "Ally HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
+                    combo::r_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies search radius", 900, 300, 1600);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
                     combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 1000, 0, 1000);
                 }
@@ -154,9 +156,12 @@ namespace kalista
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                harass::e_only_on_x_stacks = harass->add_slider(myhero->get_model() + ".harass.e.only_onx_stacks", "Use E only on x stacks", 6, 1, 16);
-                harass::e_only_on_x_stacks->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                harass::e_if_nearby_minion_killable = harass->add_checkbox(myhero->get_model() + ".harass.e.if_nearby_minion_killable", "Use E if nearby minion killable", true);
+                auto e_config = harass->add_tab(myhero->get_model() + ".harass.e.config", "E Config");
+                {
+                    harass::e_only_on_x_stacks = e_config->add_slider(myhero->get_model() + ".harass.e.only_onx_stacks", "Use E only on x stacks", 6, 1, 16);
+                    harass::e_only_on_x_stacks->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                    harass::e_if_nearby_minion_killable = e_config->add_checkbox(myhero->get_model() + ".harass.e.if_nearby_minion_killable", "Use E if nearby minion killable", true);
+                }
             }
 
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
@@ -185,9 +190,9 @@ namespace kalista
                 hitchance::q_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.q", "Hitchance Q", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
             }
 
-            auto misc = main_tab->add_tab(myhero->get_model() + ".misc", "Misc Settings");
+            auto misc = main_tab->add_tab(myhero->get_model() + ".misc", "Miscellaneous Settings");
             {
-                misc::kite_on_minions_when_chasing_enemy = misc->add_checkbox(myhero->get_model() + ".misc.kite_on_minions_when_chasing_enemy", "Kite on minions when chasing enemy", true);
+                misc::jump_on_minions_when_chasing_enemy = misc->add_checkbox(myhero->get_model() + ".misc.jump_on_minions_when_chasing_enemy", "Jump on minions when chasing enemy", true);
             }
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
@@ -261,7 +266,7 @@ namespace kalista
         {
             //console->print("AA range: %d | In E range: %d | In 1200 range: %d | Target: %s", myhero->count_enemies_in_range(myhero->get_attack_range()), myhero->count_enemies_in_range(e->range()), myhero->count_enemies_in_range(1200), orbwalker->get_target() == nullptr ? "null" : orbwalker->get_target()->get_name_cstr());
 
-            if (misc::kite_on_minions_when_chasing_enemy->get_bool() && orbwalker->get_target() == nullptr && myhero->count_enemies_in_range(myhero->get_attack_range()) == 0 && myhero->count_enemies_in_range(e->range()) != 0 && myhero->can_attack())
+            if (misc::jump_on_minions_when_chasing_enemy->get_bool() && orbwalker->get_target() == nullptr && myhero->count_enemies_in_range(myhero->get_attack_range()) == 0 && myhero->count_enemies_in_range(e->range()) != 0 && myhero->can_attack())
             {
                 // Gets enemy minions from the entitylist
                 auto lane_minions = entitylist->get_enemy_minions();
@@ -443,7 +448,8 @@ namespace kalista
                 auto dragon_distance = myhero->get_distance(dragon_location);
                 if (w->range() > dragon_distance && dragon_distance > 1400)
                 {
-                    w->cast(dragon_location);
+                    if (w->cast(dragon_location))
+                        return;
                 }
             }
 
@@ -451,8 +457,9 @@ namespace kalista
             {
                 auto baron_distance = myhero->get_distance(baron_location);
                 if (w->range() > baron_distance && baron_distance > 1400)
-                {
-                    w->cast(baron_location);
+                {   
+                    if (w->cast(baron_location))
+                        return;
                 }
             }
         }
@@ -533,7 +540,7 @@ namespace kalista
                 {
                     if ((ally->get_health_percent() < combo::r_ally_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
                     {
-                        if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(900) != 0)
+                        if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0)
                         {
                             if (r->cast())
                             {
@@ -647,7 +654,7 @@ namespace kalista
 
     void on_after_attack_orbwalker(game_object_script target)
     {
-        if (orbwalker->combo_mode() && misc::kite_on_minions_when_chasing_enemy->get_bool() && target->is_valid() && target->is_ai_minion())
+        if (orbwalker->combo_mode() && misc::jump_on_minions_when_chasing_enemy->get_bool() && target->is_valid() && target->is_ai_minion())
         {
             orbwalker->set_orbwalking_target(nullptr);
         }
