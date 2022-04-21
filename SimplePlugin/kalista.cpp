@@ -37,9 +37,14 @@ namespace kalista
         TreeEntry* w_auto_on_dragon_location = nullptr;
         TreeEntry* w_auto_on_baron_location = nullptr;
         TreeEntry* w_dont_use_if_enemies_nearby = nullptr;
+        TreeEntry* w_enemies_search_radius = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_use_before_death = nullptr;
-        TreeEntry* e_use_on_x_stacks_before_death = nullptr;
+        TreeEntry* e_before_death_use_on_x_stacks = nullptr;
+        TreeEntry* e_before_death_myhero_under_hp = nullptr;
+        TreeEntry* e_before_death_calculate_incoming_damage = nullptr;
+        TreeEntry* e_before_death_damage_time = nullptr;
+        TreeEntry* e_before_death_over_my_hp_in_percent = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_ally_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
@@ -68,6 +73,7 @@ namespace kalista
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_epic_monsters_only = nullptr;
     }
 
     namespace misc
@@ -130,13 +136,21 @@ namespace kalista
                     combo::w_auto_on_dragon_location = w_config->add_checkbox(myhero->get_model() + ".combo.w.auto_on_dragon_location", "Auto W on Dragon Location", true);
                     combo::w_auto_on_baron_location  = w_config->add_checkbox(myhero->get_model() + ".combo.w.auto_on_baron_location", "Auto W on Baron Location", true);
                     combo::w_dont_use_if_enemies_nearby = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_if_enemies_nearby", "Dont use if enemies nearby", true);
+                    combo::w_enemies_search_radius = w_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies nearby search radius", 1200, 300, 1600);
                 }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E on Killable", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + "combo.e.config", "E Config");
                 {
                     combo::e_use_before_death = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_before_death", "Use before death", true);
-                    combo::e_use_on_x_stacks_before_death = e_config->add_slider(myhero->get_model() + ".combo.e.use_on_x_stacks_before_death", "Use on x stacks before death", 6, 0, 16);
+                    auto before_death_config = e_config->add_tab(myhero->get_model() + "combo.e.before_death.config", "Use before death Config");
+                    {
+                        combo::e_before_death_use_on_x_stacks = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_use_on_x_stacks", "Use on x stacks", 6, 1, 16);
+                        combo::e_before_death_myhero_under_hp = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_myhero_under_hp", "Myhero HP is under (in %)", 10, 0, 100);
+                        combo::e_before_death_calculate_incoming_damage = before_death_config->add_checkbox(myhero->get_model() + ".combo.e.before_death_calculate_incoming_damage", "Calculate incoming damage", true);
+                        combo::e_before_death_damage_time = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_damage_time", "Incoming damage time (in ms)", 1000, 0, 1000);
+                        combo::e_before_death_over_my_hp_in_percent = before_death_config->add_slider(myhero->get_model() + ".combo.w.before_death_over_my_hp_in_percent", "Coming damage is over my HP (in %)", 90, 0, 100);
+                    }
                 }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R to save ally", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
@@ -144,7 +158,7 @@ namespace kalista
                 {
                     combo::r_ally_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.myhero_hp_under", "Ally HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
-                    combo::r_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies search radius", 900, 300, 1600);
+                    combo::r_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies nearby search radius", 900, 300, 1600);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
                     combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 1000, 0, 1000);
                 }
@@ -183,6 +197,10 @@ namespace kalista
                 jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", true);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                auto e_config = jungleclear->add_tab(myhero->get_model() + ".jungleclear.e.config", "E Config");
+                {
+                    jungleclear::e_epic_monsters_only = e_config->add_checkbox(myhero->get_model() + ".jungleclear.e.epic_monsters_only", "Use on epic monsters only", false);
+                }
             }
 
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
@@ -255,7 +273,7 @@ namespace kalista
             r_logic();
         }
 
-        if (e->is_ready() && combo::use_e->get_bool())
+        if (e->is_ready())
         {
             e_logic();
         }
@@ -325,11 +343,6 @@ namespace kalista
                     if (q->is_ready() && harass::use_q->get_bool())
                     {
                         q_logic();
-                    }
-
-                    if (e->is_ready() && harass::use_e->get_bool())
-                    {
-                        e_logic();
                     }
                 }
             }
@@ -411,11 +424,12 @@ namespace kalista
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        if (e->get_damage(monsters.front()) > monsters.front()->get_health())
+                        for (auto& monster : monsters)
                         {
-                            if (e->cast())
+                            if ((monster->is_epic_monster() || !jungleclear::e_epic_monsters_only->get_bool()) && e->get_damage(monster) > monster->get_health())
                             {
-                                return;
+                                if (e->cast())
+                                    return;
                             }
                         }
                     }
@@ -441,9 +455,36 @@ namespace kalista
 #pragma region w_logic
     void w_logic()
     {
-        if (!combo::w_dont_use_if_enemies_nearby->get_bool() || myhero->count_enemies_in_range(e->range()) == 0)
+        auto sentinels = entitylist->get_other_minion_objects();
+
+        sentinels.erase(std::remove_if(sentinels.begin(), sentinels.end(), [](game_object_script x)
+            {
+                return !x->is_valid();
+            }), sentinels.end());
+
+        sentinels.erase(std::remove_if(sentinels.begin(), sentinels.end(), [](game_object_script x)
+            {
+                return x->get_model().compare("KalistaSpawn") != 0;
+            }), sentinels.end());
+
+        bool sentinel_alive_on_dragon = false;
+        bool sentinel_alive_on_baron = false;
+
+        for (auto& sentinel : sentinels)
         {
-            if (combo::w_auto_on_dragon_location->get_bool())
+            if (sentinel->get_distance(dragon_location) < 1600)
+            {
+                sentinel_alive_on_dragon = true;
+            }
+            if (sentinel->get_distance(baron_location) < 1600)
+            {
+                sentinel_alive_on_baron = true;
+            }
+        }
+
+        if (!combo::w_dont_use_if_enemies_nearby->get_bool() || myhero->count_enemies_in_range(combo::w_enemies_search_radius->get_int()) == 0)
+        {
+            if (combo::w_auto_on_dragon_location->get_bool() && !sentinel_alive_on_dragon)
             {
                 auto dragon_distance = myhero->get_distance(dragon_location);
                 if (w->range() > dragon_distance && dragon_distance > 1400)
@@ -453,7 +494,7 @@ namespace kalista
                 }
             }
 
-            if (combo::w_auto_on_baron_location->get_bool())
+            if (combo::w_auto_on_baron_location->get_bool() && !sentinel_alive_on_baron)
             {
                 auto baron_distance = myhero->get_distance(baron_location);
                 if (w->range() > baron_distance && baron_distance > 1400)
@@ -469,60 +510,73 @@ namespace kalista
 #pragma region e_logic
     void e_logic()
     {
-        // Get a target from a given range
-        auto target = target_selector->get_target(e->range(), damage_type::physical);
+        auto enemies = entitylist->get_enemy_heroes();
 
-        // Always check an object is not a nullptr!
-        if (target != nullptr)
-        {
-            if (orbwalker->harass())
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
             {
-                if (harass::use_e->get_bool())
+                return !x->is_valid();
+            }), enemies.end());
+
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
+            {
+                return x->is_dead();
+            }), enemies.end());
+
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
+            {
+                return !x->is_valid_target(e->range());
+            }), enemies.end());
+
+        if ((orbwalker->harass() || orbwalker->lane_clear_mode()) && harass::use_e->get_bool())
+        {
+            for (auto& enemy : enemies)
+            {
+                if (get_kalista_e_stacks(enemy) >= harass::e_only_on_x_stacks->get_int())
                 {
-                    if (get_kalista_e_stacks(target) >= harass::e_only_on_x_stacks->get_int())
+                    if (e->cast())
+                        return;
+                }
+
+                if (harass::e_if_nearby_minion_killable->get_bool())
+                {
+                    // Gets enemy minions from the entitylist
+                    auto lane_minions = entitylist->get_enemy_minions();
+
+                    // You can use this function to delete minions that aren't in the specified range
+                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                        {
+                            return !x->is_valid_target(e->range());
+                        }), lane_minions.end());
+
+                    // Remove unkillable minions
+                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                        {
+                            return e->get_damage(x) < x->get_health();
+                        }), lane_minions.end());
+
+                    if (!lane_minions.empty())
                     {
                         if (e->cast())
-                        {
                             return;
-                        }
-                    }
-
-                    if (harass::e_if_nearby_minion_killable->get_bool())
-                    {
-                        // Gets enemy minions from the entitylist
-                        auto lane_minions = entitylist->get_enemy_minions();
-
-                        // You can use this function to delete minions that aren't in the specified range
-                        lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                            {
-                                return !x->is_valid_target(e->range());
-                            }), lane_minions.end());
-
-                        // Remove unkillable minions
-                        lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                            {
-                                return e->get_damage(x) < x->get_health();
-                            }), lane_minions.end());
-
-                        if (!lane_minions.empty())
-                        {
-                            e->cast();
-                        }
                     }
                 }
             }
-            else
+        }
+
+        if (combo::use_e->get_bool())
+        {
+            for (auto& enemy : enemies)
             {
-                if (e->get_damage(target) > target->get_health())
+                if (e->get_damage(enemy) > enemy->get_health())
                 {
                     e->cast();
                 }
-                else if (combo::e_use_before_death->get_bool() && myhero->get_health_percent() <= 10)
+                else if (combo::e_use_before_death->get_bool()
+                    && (myhero->get_health_percent() <= combo::e_before_death_myhero_under_hp->get_int()
+                        || (combo::e_before_death_calculate_incoming_damage->get_bool() && (health_prediction->get_incoming_damage(myhero, combo::e_before_death_damage_time->get_int() / 1000.f, true) * 100.f) /
+                            myhero->get_max_health() > myhero->get_health_percent() * (combo::e_before_death_over_my_hp_in_percent->get_int() / 100.f))) && get_kalista_e_stacks(enemy) >= combo::e_before_death_use_on_x_stacks->get_int())
                 {
-                    if (get_kalista_e_stacks(target) >= combo::e_use_on_x_stacks_before_death->get_int())
-                    {
-                        e->cast();
-                    }
+                    e->cast();
                 }
             }
         }
@@ -534,9 +588,9 @@ namespace kalista
     {
         for (auto&& ally : entitylist->get_ally_heroes())
         {
-            if (ally->has_buff(buff_hash("kalistacoopstrikeally")))
+            if (ally->get_distance(myhero->get_position()) <= r->range())
             {
-                if (ally->get_distance(myhero->get_position()) <= r->range())
+                if (ally->has_buff(buff_hash("kalistacoopstrikeally")))
                 {
                     if ((ally->get_health_percent() < combo::r_ally_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
                     {
@@ -609,7 +663,6 @@ namespace kalista
 
     void on_draw()
     {
-
         if (myhero->is_dead())
         {
             return;
