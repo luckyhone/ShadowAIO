@@ -347,32 +347,12 @@ namespace trundle
                 {
                     if (q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        if (lane_minions.front()->is_under_ally_turret())
-                        {
-                            if (myhero->count_enemies_in_range(900) == 0)
-                            {
-                                if (q->cast())
-                                {
-                                    return;
-                                }
-                            }
-                        }
                         if (q->cast())
                             return;
                     }
 
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (lane_minions.front()->is_under_ally_turret())
-                        {
-                            if (myhero->count_enemies_in_range(900) == 0)
-                            {
-                                if (w->cast(myhero))
-                                {
-                                    return;
-                                }
-                            }
-                        }
                         if (w->cast(myhero))
                             return;
                     }

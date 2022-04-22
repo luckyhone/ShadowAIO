@@ -26,6 +26,7 @@ namespace tryndamere
         TreeEntry* use_q = nullptr;
         TreeEntry* q_myhero_hp_under = nullptr;
         TreeEntry* q_only_when_no_enemies_nearby = nullptr;
+        TreeEntry* q_enemies_search_radius = nullptr;
         TreeEntry* q_use_if_fury_above = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_target_above_range = nullptr;
@@ -39,6 +40,7 @@ namespace tryndamere
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
+        TreeEntry* r_enemies_search_radius = nullptr;
         TreeEntry* r_calculate_incoming_damage = nullptr;
         TreeEntry* r_coming_damage_time = nullptr;
         TreeEntry* r_disable_evade = nullptr;
@@ -115,6 +117,7 @@ namespace tryndamere
                 {
                     combo::q_myhero_hp_under = q_config->add_slider(myhero->get_model() + ".combo.q.myhero_hp_under", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::q_only_when_no_enemies_nearby = q_config->add_checkbox(myhero->get_model() + ".combo.q.only_when_no_enemies_nearby", "Only when no enemies are nearby", true);
+                    combo::q_enemies_search_radius = q_config->add_slider(myhero->get_model() + ".combo.q.enemies_search_radius", "Enemies nearby search radius", 900, 300, 1600);
                     combo::q_use_if_fury_above = q_config->add_slider(myhero->get_model() + ".combo.q.use_if_fury_above", "Use if fury is above", 50, 0, 100);
                 }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W on escaping enemies", true);
@@ -140,6 +143,7 @@ namespace tryndamere
                 {
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.myhero_hp_under", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
+                    combo::r_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies nearby search radius", 900, 300, 1600);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
                     combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 1000, 0, 1000);
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable evade on R", false);
@@ -375,19 +379,11 @@ namespace tryndamere
 
         if (q->is_ready() && combo::use_q->get_bool())
         {
-            //debug to get tryndamere ult buff name
-            //for (auto&& buff : myhero->get_bufflist())
-            //{
-            //    if (buff->is_valid() && buff->is_alive())
-            //    {
-            //        console->print("[ShadowAIO] [DEBUG] Buff name %s", buff->get_name_cstr());
-            //    }
-            //}
             if (!myhero->has_buff(buff_hash("UndyingRage")))
             {
                 if (myhero->get_health_percent() < combo::q_myhero_hp_under->get_int())
                 {
-                    if (!combo::q_only_when_no_enemies_nearby->get_bool() || myhero->count_enemies_in_range(900) != 0)
+                    if (!combo::q_only_when_no_enemies_nearby->get_bool() || myhero->count_enemies_in_range(combo::q_enemies_search_radius->get_int()) != 0)
                     {
                         if (myhero->get_mana() >= combo::q_use_if_fury_above->get_int())
                         {
@@ -481,7 +477,7 @@ namespace tryndamere
             {
                 if ((myhero->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(myhero, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= myhero->get_health()))
                 {
-                    if (!combo::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(900) != 0)
+                    if (!combo::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0)
                     {
                         if (r->cast())
                         {

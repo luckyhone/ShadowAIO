@@ -40,6 +40,7 @@ namespace jax
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
+        TreeEntry* r_enemies_search_radius = nullptr;
     }
 
     namespace harass
@@ -159,6 +160,7 @@ namespace jax
                 {
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.myhero_hp_under", "Myhero HP is under (in %)", 50, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
+                    combo::r_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies nearby search radius", 900, 300, 1600);
                 }
             }
 
@@ -448,16 +450,6 @@ namespace jax
 
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (lane_minions.front()->is_under_ally_turret())
-                        {
-                            if (myhero->count_enemies_in_range(900) == 0)
-                            {
-                                if (w->cast())
-                                {
-                                    return;
-                                }
-                            }
-                        }
                         if (w->cast())
                             return;
                     }
@@ -588,7 +580,7 @@ namespace jax
     {
         if (r->is_ready() && combo::use_r->get_bool())
         {
-            if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(1000) == 0)
+            if (combo::r_only_when_enemies_nearby->get_bool() && myhero->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) == 0)
             {
                 return;
             }

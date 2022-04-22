@@ -39,6 +39,7 @@ namespace kayle
 		TreeEntry* use_r = nullptr;
 		TreeEntry* r_myhero_hp_under = nullptr;
 		TreeEntry* r_only_when_enemies_nearby = nullptr;
+		TreeEntry* r_enemies_search_radius = nullptr;
 		TreeEntry* r_calculate_incoming_damage = nullptr;
 		TreeEntry* r_coming_damage_time = nullptr;
 		std::map<std::uint32_t, TreeEntry*> r_use_on;
@@ -147,6 +148,7 @@ namespace kayle
 				{
 					combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.myhero_hp_under", "Myhero HP is under (in %)", 20, 0, 100);
 					combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
+					combo::r_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies nearby search radius", 900, 300, 1600);
 					combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
 					combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 1000, 0, 1000);
 
@@ -429,32 +431,12 @@ namespace kayle
 				{
 					if (q->is_ready() && laneclear::use_q->get_bool())
 					{
-						if (lane_minions.front()->is_under_ally_turret())
-						{
-							if (myhero->count_enemies_in_range(900) == 0)
-							{
-								if (q->cast_on_best_farm_position(1))
-								{
-									return;
-								}
-							}
-						}
 						if (q->cast_on_best_farm_position(1))
 							return;
 					}
 
 					if (e->is_ready() && laneclear::use_e->get_bool())
 					{
-						if (lane_minions.front()->is_under_ally_turret())
-						{
-							if (myhero->count_enemies_in_range(900) == 0)
-							{
-								if (e->cast())
-								{
-									return;
-								}
-							}
-						}
 						if (e->cast())
 							return;
 					}
@@ -559,7 +541,7 @@ namespace kayle
 					{
 						if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
 						{
-							if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(900) != 0)
+							if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0)
 							{
 								if (r->cast(ally))
 								{

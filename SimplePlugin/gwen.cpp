@@ -500,27 +500,35 @@ namespace gwen
 #pragma region w_logic
     void w_logic()
     {
-        if (!myhero->has_buff(buff_hash("gwenwuntargetabilitymanager")))
+        if (!myhero->has_buff(buff_hash("gwenwuntargetabilitymanager")) && (health_prediction->get_incoming_damage(myhero, combo::w_damage_time->get_int() / 1000.f, true) * 100.f) /
+            myhero->get_max_health() > myhero->get_health_percent() * (combo::w_over_my_hp_in_percent->get_int() / 100.f))
         {
-            if ((health_prediction->get_incoming_damage(myhero, combo::w_damage_time->get_int() / 1000.f, true) * 100.f) /
-                myhero->get_max_health() > myhero->get_health_percent() * (combo::w_over_my_hp_in_percent->get_int() / 100.f))
-            {
-                auto enemies = entitylist->get_enemy_heroes();
 
-                enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
-                    {
-                        return myhero->get_distance(x) > 900;
-                    }), enemies.end());
+            auto enemies = entitylist->get_enemy_heroes();
 
-                enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
-                    {
-                        return myhero->get_distance(x) < w->range();
-                    }), enemies.end());
-
-                if (!enemies.empty())
+            enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
                 {
-                    w->cast();
-                }
+                    return x->is_dead();
+                }), enemies.end());
+
+            enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
+                {
+                    return !x->is_visible();
+                }), enemies.end());
+
+            enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
+                {
+                    return myhero->get_distance(x) > 900;
+                }), enemies.end());
+
+            enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
+                {
+                    return myhero->get_distance(x) < w->range();
+                }), enemies.end());
+
+            if (!enemies.empty())
+            {
+                w->cast();
             }
         }
     }

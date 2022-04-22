@@ -277,7 +277,7 @@ namespace masteryi
                 {
                     if (myhero->get_health_percent() < fleemode::r_myhero_hp_under->get_int())
                     {
-                        if (!fleemode::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(900) != 0)
+                        if (!fleemode::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(1200) != 0)
                         {
                             if (!myhero->is_under_ally_turret())
                             {

@@ -33,6 +33,7 @@ namespace kindred
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
+        TreeEntry* r_enemies_search_radius = nullptr;
         TreeEntry* r_calculate_incoming_damage = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
@@ -115,6 +116,7 @@ namespace kindred
                 {
                     combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.myhero_hp_under", "Myhero HP is under (in %)", 20, 0, 100);
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
+                    combo::r_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies nearby search radius", 900, 300, 1600);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R on");
@@ -351,43 +353,17 @@ namespace kindred
 
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (lane_minions.front()->is_under_ally_turret())
+                        if (w->cast(lane_minions.front()->get_position()))
                         {
-                            if (myhero->count_enemies_in_range(900) == 0)
-                            {
-                                if (w->cast(lane_minions.front()->get_position()))
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (w->cast(lane_minions.front()->get_position()))
-                            {
-                                return;
-                            }
+                            return;
                         }
                     }
 
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
-                        if (lane_minions.front()->is_under_ally_turret())
+                        if (e->cast(lane_minions.front()))
                         {
-                            if (myhero->count_enemies_in_range(900) == 0)
-                            {
-                                if (e->cast(lane_minions.front()))
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (e->cast(lane_minions.front()))
-                            {
-                                return;
-                            }
+                            return;
                         }
                     }
                 }
@@ -472,7 +448,7 @@ namespace kindred
                     {
                         if (can_use_r_on(ally))
                         {
-                            if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(900) != 0)
+                            if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0)
                             {
                                 if (r->cast())
                                 {
