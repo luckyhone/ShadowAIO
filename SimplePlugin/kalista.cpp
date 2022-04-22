@@ -187,7 +187,7 @@ namespace kalista
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = laneclear->add_tab(myhero->get_model() + ".laneclear.e.config", "E Config");
                 {
-                    laneclear::e_use_if_killable_minions = e_config->add_slider(myhero->get_model() + ".laneclear.e.use_if_killable_minions", "Use only when killable minions more than", 2, 0, 5);
+                    laneclear::e_use_if_killable_minions = e_config->add_slider(myhero->get_model() + ".laneclear.e.use_if_killable_minions", "Use only when killable minions more than", 2, 1, 5);
                 }
             }
 
@@ -359,13 +359,13 @@ namespace kalista
                 // You can use this function to delete minions that aren't in the specified range
                 lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(q->range());
+                        return !x->is_valid_target(e->range());
                     }), lane_minions.end());
 
                 // You can use this function to delete monsters that aren't in the specified range
                 monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(q->range());
+                        return !x->is_valid_target(e->range());
                     }), monsters.end());
 
                 //std::sort -> sort lane minions by distance
@@ -531,33 +531,38 @@ namespace kalista
         {
             for (auto& enemy : enemies)
             {
-                if (get_kalista_e_stacks(enemy) >= harass::e_only_on_x_stacks->get_int())
+                auto stacks = get_kalista_e_stacks(enemy);
+
+                if (stacks != 0)
                 {
-                    if (e->cast())
-                        return;
-                }
-
-                if (harass::e_if_nearby_minion_killable->get_bool())
-                {
-                    // Gets enemy minions from the entitylist
-                    auto lane_minions = entitylist->get_enemy_minions();
-
-                    // You can use this function to delete minions that aren't in the specified range
-                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                        {
-                            return !x->is_valid_target(e->range());
-                        }), lane_minions.end());
-
-                    // Remove unkillable minions
-                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                        {
-                            return e->get_damage(x) < x->get_health();
-                        }), lane_minions.end());
-
-                    if (!lane_minions.empty())
+                    if (stacks >= harass::e_only_on_x_stacks->get_int())
                     {
                         if (e->cast())
                             return;
+                    }
+
+                    if (harass::e_if_nearby_minion_killable->get_bool())
+                    {
+                        // Gets enemy minions from the entitylist
+                        auto lane_minions = entitylist->get_enemy_minions();
+
+                        // You can use this function to delete minions that aren't in the specified range
+                        lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                            {
+                                return !x->is_valid_target(e->range());
+                            }), lane_minions.end());
+
+                        // Remove unkillable minions
+                        lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                            {
+                                return e->get_damage(x) < x->get_health();
+                            }), lane_minions.end());
+
+                        if (!lane_minions.empty())
+                        {
+                            if (e->cast())
+                                return;
+                        }
                     }
                 }
             }
