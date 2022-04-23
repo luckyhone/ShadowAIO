@@ -268,14 +268,14 @@ namespace kalista
             return;
         }
 
-        if (r->is_ready() && combo::use_r->get_bool())
-        {
-            r_logic();
-        }
-
         if (e->is_ready())
         {
             e_logic();
+        }
+
+        if (r->is_ready() && combo::use_r->get_bool())
+        {
+            r_logic();
         }
 
         //console->print("X: %f, Y: %f", myhero->get_position().x, myhero->get_position().y);
@@ -313,25 +313,12 @@ namespace kalista
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
-            if (!orbwalker->flee_mode() && !myhero->is_recalling())
-            {
-                if (w->is_ready() && combo::use_w->get_bool())
-                {
-                    w_logic();
-                }
-            }
-
             //Checking if the user has combo_mode() (Default SPACE)
             if (orbwalker->combo_mode())
             {
                 if (q->is_ready() && combo::use_q->get_bool())
                 {
                     q_logic();
-                }
-
-                if (r->is_ready() && combo::use_r->get_bool())
-                {
-                    r_logic();
                 }
             }
 
@@ -344,6 +331,14 @@ namespace kalista
                     {
                         q_logic();
                     }
+                }
+            }
+
+            if (!orbwalker->flee_mode() && !myhero->is_recalling())
+            {
+                if (w->is_ready() && combo::use_w->get_bool())
+                {
+                    w_logic();
                 }
             }
 
