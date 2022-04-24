@@ -134,7 +134,7 @@ namespace tryndamere
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
-                    combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".combo.e.dont_use_under_enemy_turret", "Dont use under enemy turret", true);
+                    combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".combo.e.dont_use_under_enemy_turret", "Dont use if target is under turret", true);
                     combo::e_use_prediction = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_prediction", "Use prediction", false);
                 }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
@@ -163,7 +163,7 @@ namespace tryndamere
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = laneclear->add_tab(myhero->get_model() + ".laneclear.e.config", "E Config");
                 {
-                   laneclear::e_only_when_minions_more_than = e_config->add_slider(myhero->get_model() + ".laneclear.e.use_only_when_minions_more_than", "Use only when minions more than", 3, 0, 5);
+                    laneclear::e_only_when_minions_more_than = e_config->add_slider(myhero->get_model() + ".laneclear.e.use_only_when_minions_more_than", "Use only when minions more than", 3, 0, 5);
                 }
             }
 
@@ -379,7 +379,7 @@ namespace tryndamere
 
         if (q->is_ready() && combo::use_q->get_bool())
         {
-            if (!myhero->has_buff(buff_hash("UndyingRage")))
+            if (!myhero->has_buff({ buff_hash("UndyingRage"), buff_hash("ChronoShift"), buff_hash("KayleR"), buff_hash("KindredRNoDeathBuff") }))
             {
                 if (myhero->get_health_percent() < combo::q_myhero_hp_under->get_int())
                 {
@@ -387,10 +387,7 @@ namespace tryndamere
                     {
                         if (myhero->get_mana() >= combo::q_use_if_fury_above->get_int())
                         {
-                            if (q->cast())
-                            {
-                                return;
-                            }
+                            q->cast();
                         }
                     }
                 }
@@ -418,10 +415,7 @@ namespace tryndamere
                         {
                             if (!combo::w_check_if_target_is_not_facing->get_bool() || !target->is_facing(myhero))
                             {
-                                if (w->cast())
-                                {
-                                    return;
-                                }
+                                w->cast();
                             }
                         }
                     }
@@ -479,10 +473,7 @@ namespace tryndamere
                 {
                     if (!combo::r_only_when_enemies_nearby->get_bool() || myhero->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0)
                     {
-                        if (r->cast())
-                        {
-                            return true;
-                        }
+                        return r->cast();
                     }
                 }
             }
@@ -496,18 +487,18 @@ namespace tryndamere
     {
         switch (entry->get_int())
         {
-        case 0:
-            return hit_chance::low;
-            break;
-        case 1:
-            return hit_chance::medium;
-            break;
-        case 2:
-            return hit_chance::high;
-            break;
-        case 3:
-            return hit_chance::very_high;
-            break;
+            case 0:
+                return hit_chance::low;
+                break;
+            case 1:
+                return hit_chance::medium;
+                break;
+            case 2:
+                return hit_chance::high;
+                break;
+            case 3:
+                return hit_chance::very_high;
+                break;
         }
         return hit_chance::medium;
     }
@@ -515,7 +506,6 @@ namespace tryndamere
 
     void on_draw()
     {
-
         if (myhero->is_dead())
         {
             return;

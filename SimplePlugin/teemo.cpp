@@ -543,6 +543,7 @@ namespace teemo
                         if (r->cast(loc))
                         {
                             last_r_time = gametime->get_time() + 2.0f;
+                            return;
                         }
                     }
                 }

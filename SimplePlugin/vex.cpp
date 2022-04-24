@@ -268,14 +268,6 @@ namespace vex
             r_logic_semi();
         }
 
-        /*for (auto& buff : myhero->get_bufflist())
-        {
-            if (buff->is_valid() && buff->is_alive())
-            {
-                console->print("[%f] %s: %d", gametime->get_time(), buff->get_name_cstr(), buff->get_count());
-            }
-        }*/
-
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
         // Too small time can interrupt the attack
@@ -411,8 +403,7 @@ namespace vex
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (q->cast(target, get_hitchance(hitchance::q_hitchance)))
-                return;
+            q->cast(target, get_hitchance(hitchance::q_hitchance));
         }
     }
 #pragma endregion
@@ -482,10 +473,7 @@ namespace vex
                         {
                             if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
                             {
-                                if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
-                                {
-                                    return;
-                                }
+                                r->cast(target, get_hitchance(hitchance::r_hitchance));
                             }
                         }
                     }
@@ -518,10 +506,7 @@ namespace vex
                         {
                             if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
                             {
-                                if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
-                                {
-                                    return;
-                                }
+                                r->cast(target, get_hitchance(hitchance::r_hitchance));
                             }
                         }
                     }

@@ -474,8 +474,7 @@ namespace kayle
 			// Check if the distance between myhero and enemy is smaller than q range
 			if (target->get_distance(myhero) <= q->range())
 			{
-				if (q->cast(target, get_hitchance(hitchance::q_hitchance)))
-					return;
+				q->cast(target, get_hitchance(hitchance::q_hitchance));
 			}
 		}
 	}
@@ -498,10 +497,7 @@ namespace kayle
 					{
 						if (!combo::w_check_if_target_is_not_facing->get_bool() || !target->is_facing(myhero))
 						{
-							if (w->cast(myhero))
-							{
-								return;
-							}
+							w->cast(myhero);
 						}
 					}
 				}
@@ -572,18 +568,18 @@ namespace kayle
 	{
 		switch (entry->get_int())
 		{
-		case 0:
-			return hit_chance::low;
-			break;
-		case 1:
-			return hit_chance::medium;
-			break;
-		case 2:
-			return hit_chance::high;
-			break;
-		case 3:
-			return hit_chance::very_high;
-			break;
+			case 0:
+				return hit_chance::low;
+				break;
+			case 1:
+				return hit_chance::medium;
+				break;
+			case 2:
+				return hit_chance::high;
+				break;
+			case 3:
+				return hit_chance::very_high;
+				break;
 		}
 		return hit_chance::medium;
 	}
@@ -639,7 +635,6 @@ namespace kayle
 
 	void on_draw()
 	{
-
 		if (myhero->is_dead())
 		{
 			return;

@@ -303,8 +303,7 @@ namespace ivern
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (q->cast(target, get_hitchance(hitchance::q_hitchance)))
-                return;
+            q->cast(target, get_hitchance(hitchance::q_hitchance));
         }
     }
 #pragma endregion

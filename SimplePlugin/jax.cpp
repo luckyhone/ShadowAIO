@@ -531,8 +531,7 @@ namespace jax
                         e->cast();
                     }
 
-                    if (q->cast(target))
-                        return;
+                    q->cast(target);
                 }
             }
         }
@@ -551,8 +550,7 @@ namespace jax
             // Checking if the target will die from W damage
             if (w->get_damage(target) >= target->get_health())
             {
-                if (w->cast())
-                    return;
+                w->cast();
             }
         }
     }
@@ -587,10 +585,7 @@ namespace jax
 
             if (myhero->get_health_percent() < combo::r_myhero_hp_under->get_int())
             {
-                if (r->cast())
-                {
-                    return;
-                }
+                r->cast();
             }
         }
     }
@@ -612,6 +607,7 @@ namespace jax
                         if (object->get_name().compare("SightWard") == 0)
                         {
                             near_ward = object;
+                            break;
                         }
                     }
                 }

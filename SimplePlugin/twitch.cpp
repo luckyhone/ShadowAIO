@@ -568,7 +568,6 @@ namespace twitch
 
     void on_draw()
     {
-
         if (myhero->is_dead())
         {
             return;

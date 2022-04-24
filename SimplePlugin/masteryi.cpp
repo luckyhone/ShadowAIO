@@ -369,13 +369,8 @@ namespace masteryi
             if (!combo::q_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
             {
                 if (e->is_ready() && combo::use_e->get_bool())
-                {
                     e->cast();
-                }
-                if (q->cast(target))
-                {
-                    return;
-                }
+                q->cast(target);
             }
         }
     }
@@ -396,10 +391,7 @@ namespace masteryi
                 {
                     if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
                     {
-                        if (r->cast())
-                        {
-                            return;
-                        }
+                        r->cast();
                     }
                 }
             }
