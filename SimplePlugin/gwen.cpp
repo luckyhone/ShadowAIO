@@ -152,7 +152,7 @@ namespace gwen
 
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
-                    combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Cursor Position", nullptr},{"Enemy Position", nullptr } }, 0);
+                    combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Cursor Position", nullptr},{"Enemy Position", nullptr } }, 1);
                     combo::e_only_above_aa_range = e_config->add_checkbox(myhero->get_model() + ".combo.e.only_above_aa_range", "Use only above AA range", true);
                     combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".combo.e.dont_use_under_enemy_turret", "Dont use under enemy turret", false);
                 }
