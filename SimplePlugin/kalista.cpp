@@ -483,7 +483,7 @@ namespace kalista
             if (combo::w_auto_on_dragon_location->get_bool() && !sentinel_alive_on_dragon)
             {
                 auto dragon_distance = myhero->get_distance(dragon_location);
-                if (w->range() - 50 > dragon_distance && dragon_distance > 1400)
+                if (w->range() - 50 > dragon_distance && dragon_distance > 1450)
                 {
                     if (w->cast(dragon_location))
                         return;
@@ -493,7 +493,7 @@ namespace kalista
             if (combo::w_auto_on_baron_location->get_bool() && !sentinel_alive_on_baron)
             {
                 auto baron_distance = myhero->get_distance(baron_location);
-                if (w->range() - 50 > baron_distance && baron_distance > 1400)
+                if (w->range() - 50 > baron_distance && baron_distance > 1450)
                 {   
                     if (w->cast(baron_location))
                         return;
