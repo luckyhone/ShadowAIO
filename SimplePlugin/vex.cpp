@@ -25,6 +25,15 @@ namespace vex
         TreeEntry* draw_range_r = nullptr;
         TreeEntry* draw_range_r_minimap = nullptr;
         TreeEntry* r_color = nullptr;
+
+        namespace draw_damage_settings
+        {
+            TreeEntry* draw_damage = nullptr;
+            TreeEntry* q_damage = nullptr;
+            TreeEntry* w_damage = nullptr;
+            TreeEntry* e_damage = nullptr;
+            TreeEntry* r_damage = nullptr;
+        }
     }
 
     namespace combo
@@ -34,6 +43,7 @@ namespace vex
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
+        TreeEntry* r_killable_by_combo = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
         TreeEntry* r_target_above_range = nullptr;
         TreeEntry* r_dont_use_target_under_turret = nullptr;
@@ -95,6 +105,7 @@ namespace vex
     //
     bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
+    float get_damage(game_object_script target);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
     // Champion data
@@ -136,6 +147,7 @@ namespace vex
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
+                    combo::r_killable_by_combo = r_config->add_checkbox(myhero->get_model() + ".combo.r.killable_by_combo", "Use if target is killable by combo", true);
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 30, 0, 100);
                     combo::r_target_above_range = r_config->add_slider(myhero->get_model() + ".combo.r.target_is_above_range", "Target is above range", 300, 0, 800);
                     combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_if_target_is_under_turret", "Dont use if target is under turret", true);
@@ -218,6 +230,19 @@ namespace vex
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 draw_settings::draw_range_r_minimap = draw_settings->add_checkbox(myhero->get_model() + ".draw.r.minimap", "Draw R range on minimap", true);
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
+
+                auto draw_damage = draw_settings->add_tab(myhero->get_model() + ".draw.damage", "Draw Damage");
+                {
+                    draw_settings::draw_damage_settings::draw_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.enabled", "Draw Combo Damage", true);
+                    draw_settings::draw_damage_settings::q_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.q", "Draw Q Damage", true);
+                    draw_settings::draw_damage_settings::q_damage->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                    draw_settings::draw_damage_settings::w_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.w", "Draw W Damage", true);
+                    draw_settings::draw_damage_settings::w_damage->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                    draw_settings::draw_damage_settings::e_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.e", "Draw E Damage", true);
+                    draw_settings::draw_damage_settings::e_damage->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                    draw_settings::draw_damage_settings::r_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.r", "Draw R Damage", true);
+                    draw_settings::draw_damage_settings::r_damage->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+                }
             }
         }
 
@@ -260,6 +285,17 @@ namespace vex
         if (myhero->is_dead())
         {
             return;
+        }
+
+        for (auto& target : entitylist->get_enemy_heroes())
+        {
+            if (target->is_valid() && !target->is_dead())
+            {
+                console->print("Q %s: %f", target->get_model_cstr(), q->get_damage(target));
+                console->print("W %s: %f", target->get_model_cstr(), w->get_damage(target));
+                console->print("E %s: %f", target->get_model_cstr(), e->get_damage(target));
+                console->print("R %s: %f", target->get_model_cstr(), r->get_damage(target));
+            }
         }
 
         if (r->is_ready() && combo::use_r->get_bool())
@@ -467,7 +503,7 @@ namespace vex
                 if (!target->has_buff(buff_hash("vexr2timer")))
                 {
                     //bool is_recast_after_kill = myhero->has_buff(buff_hash("vexrresettimer"));
-                    if ((target->get_health_percent() < combo::r_target_hp_under->get_int()))
+                    if ( (target->get_health_percent() < combo::r_target_hp_under->get_int()) || (get_damage(target) > target->get_health() && combo::r_killable_by_combo->get_bool()) )
                     {
                         if (target->get_distance(myhero) > combo::r_target_above_range->get_int())
                         {
@@ -571,6 +607,27 @@ namespace vex
         }
     }
 
+
+    float get_damage(game_object_script target)
+    {
+        float damage = 0.0f;
+
+        if (q->is_ready())
+            damage += q->get_damage(target);
+
+        if (w->is_ready())
+            damage += w->get_damage(target);
+
+        if (e->is_ready())
+            damage += e->get_damage(target);
+
+        if (r->is_ready() && can_use_r_on(target))
+            damage += r->get_damage(target);
+
+        return damage;
+    }
+
+
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color)
     {
         if (target != nullptr && target->is_valid() && target->is_hpbar_recently_rendered())
@@ -638,5 +695,31 @@ namespace vex
         }
         auto spellfarm = laneclear::spell_farm->get_bool();
         draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
+
+        if (draw_settings::draw_damage_settings::draw_damage->get_bool())
+        {
+            for (auto& enemy : entitylist->get_enemy_heroes())
+            {
+                if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
+                {
+                    float damage = 0.0f;
+
+                    if (q->is_ready() && draw_settings::draw_damage_settings::q_damage->get_bool())
+                        damage += q->get_damage(enemy);
+
+                    if (w->is_ready() && draw_settings::draw_damage_settings::w_damage->get_bool())
+                        damage += w->get_damage(enemy);
+
+                    if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
+                        damage += e->get_damage(enemy);
+
+                    if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
+                        damage += r->get_damage(enemy);
+
+                    if (damage != 0.0f)
+                        draw_dmg_rl(enemy, damage, 0x8000ff00);
+                }
+            }
+        }
     }
 };
