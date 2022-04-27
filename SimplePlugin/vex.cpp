@@ -287,17 +287,6 @@ namespace vex
             return;
         }
 
-        for (auto& target : entitylist->get_enemy_heroes())
-        {
-            if (target->is_valid() && !target->is_dead())
-            {
-                console->print("Q %s: %f", target->get_model_cstr(), q->get_damage(target));
-                console->print("W %s: %f", target->get_model_cstr(), w->get_damage(target));
-                console->print("E %s: %f", target->get_model_cstr(), e->get_damage(target));
-                console->print("R %s: %f", target->get_model_cstr(), r->get_damage(target));
-            }
-        }
-
         if (r->is_ready() && combo::use_r->get_bool())
         {
             update_range();
