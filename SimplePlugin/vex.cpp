@@ -326,7 +326,7 @@ namespace vex
             if (orbwalker->harass())
             {
                 // Get a target from a given range
-                auto target = target_selector->get_target(e->range(), damage_type::magical);
+                auto target = target_selector->get_target(q->range(), damage_type::magical);
 
                 // Always check an object is not a nullptr!
                 if (target != nullptr)
