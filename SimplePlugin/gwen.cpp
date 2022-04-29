@@ -257,7 +257,6 @@ namespace gwen
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
 
-
                 auto draw_damage = draw_settings->add_tab(myhero->get_model() + ".draw.damage", "Draw Damage");
                 {
                     draw_settings::draw_damage_settings::draw_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.enabled", "Draw Combo Damage", true);
@@ -310,11 +309,12 @@ namespace gwen
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
+            //console->print("[ShadowAIO] [DEBUG] Buff list:");
             //for (auto&& buff : myhero->get_bufflist())
             //{
             //    if (buff->is_valid() && buff->is_alive())
             //    {
-            //        console->print("[ShadowAIO] [DEBUG] Buff name %s", buff->get_name_cstr());
+            //        console->print("[ShadowAIO] [DEBUG] Buff name %s, count: %d", buff->get_name_cstr(), buff->get_count());
             //    }
             //}
 
@@ -790,7 +790,7 @@ namespace gwen
                         damage += q->get_damage(enemy);
 
                     if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
-                        damage += r->get_damage(enemy) * 3.0f;
+                        damage += r->get_damage(enemy);
                     
                     for (int i = 0; i < draw_settings::draw_damage_settings::aa_damage->get_int(); i++)
                         damage += myhero->get_auto_attack_damage(enemy);
