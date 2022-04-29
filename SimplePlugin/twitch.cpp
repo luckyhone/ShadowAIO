@@ -31,6 +31,7 @@ namespace twitch
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_dont_use_on_q = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_use_before_death = nullptr;
         TreeEntry* e_before_death_use_on_x_stacks = nullptr;
@@ -134,6 +135,10 @@ namespace twitch
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                auto w_config = combo->add_tab(myhero->get_model() + "combo.w.config", "W Config");
+                {
+                    combo::w_dont_use_on_q = w_config->add_checkbox(myhero->get_model() + ".combo.w.w_dont_use_on_q", "Dont use W on Q", true);
+                }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E on Killable", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + "combo.e.config", "E Config");
@@ -285,6 +290,15 @@ namespace twitch
         {
             return;
         }
+
+        //console->print("[ShadowAIO] [DEBUG] Buff list:");
+        //for (auto&& buff : myhero->get_bufflist())
+        //{
+        //    if (buff->is_valid() && buff->is_alive())
+        //    {
+        //        console->print("[ShadowAIO] [DEBUG] Buff name %s, count: %d", buff->get_name_cstr(), buff->get_count());
+        //    }
+        //}
 
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
@@ -442,7 +456,10 @@ namespace twitch
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            w->cast(target, get_hitchance(hitchance::w_hitchance));
+            if (!combo::w_dont_use_on_q->get_bool() || !myhero->has_buff(buff_hash("TwitchHideInShadows")))
+            {
+                w->cast(target, get_hitchance(hitchance::w_hitchance));
+            }
         }
     }
 #pragma endregion
