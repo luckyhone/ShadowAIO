@@ -42,6 +42,7 @@ namespace malzahar
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
+        TreeEntry* r_dont_waste_if_target_hp_below = nullptr;
         TreeEntry* r_auto_under_my_turret = nullptr;
         TreeEntry* r_dont_use_target_under_turret = nullptr;
         TreeEntry* r_use_only_voidlings_more_than = nullptr;
@@ -140,6 +141,7 @@ namespace malzahar
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 50, 0, 100);
+                    combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
                     combo::r_auto_under_my_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_under_my_turret", "Auto R if target under my turret", true);
                     combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_if_target_is_under_turret", "Dont use if target is under turret", true);
                     combo::r_use_only_voidlings_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.use_only_voidlings_more_than", "Use only if alive Voidlings more than", 2, 0, 3);
@@ -345,7 +347,7 @@ namespace malzahar
             if (orbwalker->harass())
             {
                 // Get a target from a given range
-                auto target = target_selector->get_target(e->range(), damage_type::magical);
+                auto target = target_selector->get_target(q->range(), damage_type::magical);
 
                 // Always check an object is not a nullptr!
                 if (target != nullptr)
@@ -500,7 +502,7 @@ namespace malzahar
         {
             if (can_use_r_on(target))
             {
-                if ((target->get_health_percent() < combo::r_target_hp_under->get_int()))
+                if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
                 {
                     if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
                     {
@@ -539,7 +541,7 @@ namespace malzahar
         {
             if (can_use_r_on(target))
             {
-                if ((target->get_health_percent() < combo::r_target_hp_under->get_int()))
+                if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
                 {
                     if (combo::r_auto_under_my_turret->get_bool() && target->is_under_enemy_turret())
                     {
@@ -579,7 +581,7 @@ namespace malzahar
             case 3:
                 return hit_chance::very_high;
                 break;
-            }
+        }
         return hit_chance::medium;
     }
 #pragma endregion
