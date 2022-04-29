@@ -584,8 +584,8 @@ namespace gwen
                     x.radius = r->radius;
                     x.speed = r->speed;
                     x.collision_objects = r->get_collision_flags();
-                    x.range = r->range();
-                    x.type = skillshot_type::skillshot_cone;
+                    x.range = combo::r_max_range->get_int();
+                    x.type = skillshot_type::skillshot_line;
                     x.spell_slot = r->get_slot();
                     x.use_bounding_radius = true;
 
@@ -626,8 +626,8 @@ namespace gwen
             x.radius = r->radius;
             x.speed = r->speed;
             x.collision_objects = r->get_collision_flags();
-            x.range = r->range();
-            x.type = skillshot_type::skillshot_cone;
+            x.range = combo::r_max_range->get_int();
+            x.type = skillshot_type::skillshot_line;
             x.spell_slot = r->get_slot();
             x.use_bounding_radius = true;
 
