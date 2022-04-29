@@ -18,8 +18,6 @@ namespace malzahar
     {
         TreeEntry* draw_range_q = nullptr;
         TreeEntry* q_color = nullptr;
-        TreeEntry* draw_range_w = nullptr;
-        TreeEntry* w_color = nullptr;
         TreeEntry* draw_range_e = nullptr;
         TreeEntry* e_color = nullptr;
         TreeEntry* draw_range_r = nullptr;
@@ -29,7 +27,6 @@ namespace malzahar
         {
             TreeEntry* draw_damage = nullptr;
             TreeEntry* q_damage = nullptr;
-            TreeEntry* w_damage = nullptr;
             TreeEntry* e_damage = nullptr;
             TreeEntry* r_damage = nullptr;
         }
@@ -44,7 +41,7 @@ namespace malzahar
         TreeEntry* r_target_hp_under = nullptr;
         TreeEntry* r_dont_waste_if_target_hp_below = nullptr;
         TreeEntry* r_auto_under_my_turret = nullptr;
-        TreeEntry* r_dont_use_target_under_turret = nullptr;
+        TreeEntry* r_dont_use_myhero_under_enemy_turret = nullptr;
         TreeEntry* r_use_only_voidlings_more_than = nullptr;
         TreeEntry* r_ignore_voidlings_check_if_target_hp_under = nullptr;
         TreeEntry* r_disable_orbwalker_moving = nullptr;
@@ -143,7 +140,7 @@ namespace malzahar
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 50, 0, 100);
                     combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
                     combo::r_auto_under_my_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_under_my_turret", "Auto R if target under my turret", true);
-                    combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_if_target_is_under_turret", "Dont use if target is under turret", true);
+                    combo::r_dont_use_myhero_under_enemy_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_myhero_under_enemy_turret", "Dont use if myhero is under enemy turret", true);
                     combo::r_use_only_voidlings_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.use_only_voidlings_more_than", "Use only if alive Voidlings more than", 2, 0, 3);
                     combo::r_ignore_voidlings_check_if_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.ignore_voidlings_check_if_target_hp_under", "Ignore Voidlings check if target hp under (in %)", 25, 0, 100);
                     combo::r_disable_orbwalker_moving = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_orbwalker_moving", "Disable Orbwalker Moving on R", true);
@@ -214,9 +211,6 @@ namespace malzahar
                 draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", true);
                 draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 draw_settings::q_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.color", "Q Color", color);
-                draw_settings::draw_range_w = draw_settings->add_checkbox(myhero->get_model() + ".draw.w", "Draw W range", true);
-                draw_settings::draw_range_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                draw_settings::w_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.w.color", "W Color", color);
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::e_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.color", "E Color", color);
@@ -229,8 +223,6 @@ namespace malzahar
                     draw_settings::draw_damage_settings::draw_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.enabled", "Draw Combo Damage", true);
                     draw_settings::draw_damage_settings::q_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.q", "Draw Q Damage", true);
                     draw_settings::draw_damage_settings::q_damage->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                    draw_settings::draw_damage_settings::w_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.w", "Draw W Damage", true);
-                    draw_settings::draw_damage_settings::w_damage->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                     draw_settings::draw_damage_settings::e_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.e", "Draw E Damage", true);
                     draw_settings::draw_damage_settings::e_damage->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                     draw_settings::draw_damage_settings::r_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.r", "Draw R Damage", true);
@@ -498,7 +490,7 @@ namespace malzahar
         {
             if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
-                if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
+                if (!combo::r_dont_use_myhero_under_enemy_turret->get_bool() || !myhero->is_under_enemy_turret())
                 {
                     if (get_active_voidlings() >= combo::r_use_only_voidlings_more_than->get_int() || target->get_health_percent() < combo::r_ignore_voidlings_check_if_target_hp_under->get_int())
                     {
@@ -644,10 +636,6 @@ namespace malzahar
         if (q->is_ready() && draw_settings::draw_range_q->get_bool())
             draw_manager->add_circle(myhero->get_position(), q->range(), draw_settings::q_color->get_color());
 
-        // Draw W range
-        if (w->is_ready() && draw_settings::draw_range_w->get_bool())
-            draw_manager->add_circle(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
-
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
             draw_manager->add_circle(myhero->get_position(), e->range(), draw_settings::e_color->get_color());
@@ -667,13 +655,10 @@ namespace malzahar
             {
                 if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
                 {
-                    int damage = 0;
+                    float damage = 0.0f;
 
                     if (q->is_ready() && draw_settings::draw_damage_settings::q_damage->get_bool())
                         damage += q->get_damage(enemy);
-
-                    if (w->is_ready() && draw_settings::draw_damage_settings::w_damage->get_bool())
-                        damage += w->get_damage(enemy);
 
                     if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
                         damage += e->get_damage(enemy);
@@ -681,7 +666,7 @@ namespace malzahar
                     if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
                         damage += r->get_damage(enemy);
 
-                    if (damage != 0)
+                    if (damage != 0.0f)
                         draw_dmg_rl(enemy, damage, 0x8000ff00);
                 }
             }
