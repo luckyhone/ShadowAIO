@@ -113,7 +113,7 @@ namespace malzahar
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, 900);
-        q->set_skillshot(0.50f, 200.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+        q->set_skillshot(0.65f, 200.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         w = plugin_sdk->register_spell(spellslot::w, 800);
         e = plugin_sdk->register_spell(spellslot::e, 650);
         r = plugin_sdk->register_spell(spellslot::r, 700);
@@ -454,11 +454,7 @@ namespace malzahar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            auto pred = prediction->get_prediction(target, q->get_speed(), q->get_radius());
-            if (pred.hitchance >= get_hitchance(hitchance::q_hitchance))
-            {
-                q->cast(pred.get_cast_position());
-            }
+            q->cast(target, get_hitchance(hitchance::q_hitchance));
         }
     }
 #pragma endregion
@@ -498,29 +494,26 @@ namespace malzahar
         auto target = target_selector->get_target(r->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && can_use_r_on(target))
         {
-            if (can_use_r_on(target))
+            if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
-                if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
+                if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
                 {
-                    if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
+                    if (get_active_voidlings() >= combo::r_use_only_voidlings_more_than->get_int() || target->get_health_percent() < combo::r_ignore_voidlings_check_if_target_hp_under->get_int())
                     {
-                        if (get_active_voidlings() >= combo::r_use_only_voidlings_more_than->get_int() || target->get_health_percent() < combo::r_ignore_voidlings_check_if_target_hp_under->get_int())
+                        if (r->cast(target))
                         {
-                            if (r->cast(target))
+                            if (combo::r_disable_orbwalker_moving->get_bool())
                             {
-                                if (combo::r_disable_orbwalker_moving->get_bool())
-                                {
-                                    orbwalker->set_attack(false);
-                                    orbwalker->set_movement(false);
-                                    combo::previous_orbwalker_state = true;
-                                }
-                                if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
-                                {
-                                    evade->disable_evade();
-                                    combo::previous_evade_state = true;
-                                }
+                                orbwalker->set_attack(false);
+                                orbwalker->set_movement(false);
+                                combo::previous_orbwalker_state = true;
+                            }
+                            if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
+                            {
+                                evade->disable_evade();
+                                combo::previous_evade_state = true;
                             }
                         }
                     }
@@ -537,16 +530,13 @@ namespace malzahar
         auto target = target_selector->get_target(r->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && can_use_r_on(target))
         {
-            if (can_use_r_on(target))
+            if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
-                if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
+                if (combo::r_auto_under_my_turret->get_bool() && target->is_under_enemy_turret())
                 {
-                    if (combo::r_auto_under_my_turret->get_bool() && target->is_under_enemy_turret())
-                    {
-                        r->cast(target);
-                    }
+                    r->cast(target);
                 }
             }
         }
@@ -592,7 +582,7 @@ namespace malzahar
         int voidlings = 0;
         for (auto& object : entitylist->get_other_minion_objects())
         {
-            if (object->is_valid() && strcmp(object->get_name_cstr(), "MalzaharVoidling") == 0)
+            if (object->is_valid() && object->get_name().compare("MalzaharVoidling") == 0)
             {
                 voidlings++;
             }
