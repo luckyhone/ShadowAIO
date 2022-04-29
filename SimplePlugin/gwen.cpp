@@ -29,6 +29,7 @@ namespace gwen
             TreeEntry* draw_damage = nullptr;
             TreeEntry* q_damage = nullptr;
             TreeEntry* r_damage = nullptr;
+            TreeEntry* aa_damage = nullptr;
         }
     }
 
@@ -158,7 +159,7 @@ namespace gwen
                 {
                     combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Cursor Position", nullptr},{"Enemy Position", nullptr } }, 1);
                     combo::e_only_above_aa_range = e_config->add_checkbox(myhero->get_model() + ".combo.e.only_above_aa_range", "Use only above AA range", true);
-                    combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".combo.e.dont_use_under_enemy_turret", "Dont use under enemy turret", false);
+                    combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".combo.e.dont_use_under_enemy_turret", "Dont use if target is under enemy turret", false);
                 }
 
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
@@ -264,6 +265,7 @@ namespace gwen
                     draw_settings::draw_damage_settings::q_damage->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                     draw_settings::draw_damage_settings::r_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.r", "Draw R Damage", true);
                     draw_settings::draw_damage_settings::r_damage->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+                    draw_settings::draw_damage_settings::aa_damage = draw_damage->add_slider(myhero->get_model() + ".draw.damage.aa", "Draw x AA Damage", 4, 0, 8);
                 }
             }
         }
@@ -782,17 +784,18 @@ namespace gwen
             {
                 if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
                 {
-                    int damage = 0;
+                    float damage = 0.0f;
 
                     if (q->is_ready() && draw_settings::draw_damage_settings::q_damage->get_bool())
                         damage += q->get_damage(enemy);
 
                     if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
                         damage += r->get_damage(enemy) * 3.0f;
+                    
+                    for (int i = 0; i < draw_settings::draw_damage_settings::aa_damage->get_int(); i++)
+                        damage += myhero->get_auto_attack_damage(enemy);
 
-                    damage += myhero->get_auto_attack_damage(enemy);
-
-                    if (damage != 0)
+                    if (damage != 0.0f)
                         draw_dmg_rl(enemy, damage, 0x8000ff00);
                 }
             }
