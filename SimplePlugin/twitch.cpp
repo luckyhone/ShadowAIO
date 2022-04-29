@@ -502,7 +502,7 @@ namespace twitch
         {
             for (auto& enemy : enemies)
             {
-                if (e->get_damage(enemy) > enemy->get_health())
+                if (e->get_damage(enemy) > enemy->get_real_health())
                 {
                     e->cast();
                 }

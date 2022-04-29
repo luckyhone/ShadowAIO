@@ -480,7 +480,7 @@ namespace gwen
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (get_gwen_q_stacks() >= combo::q_only_on_stacks->get_int() || (combo::q_ignore_stacks_if_killable->get_bool() && q->get_damage(target) > target->get_health()))
+            if (get_gwen_q_stacks() >= combo::q_only_on_stacks->get_int() || (combo::q_ignore_stacks_if_killable->get_bool() && q->get_damage(target) > target->get_real_health()))
             {
                 q->cast(target);
             }

@@ -492,7 +492,7 @@ namespace vex
                 if (!target->has_buff(buff_hash("vexr2timer")))
                 {
                     //bool is_recast_after_kill = myhero->has_buff(buff_hash("vexrresettimer"));
-                    if ( (target->get_health_percent() < combo::r_target_hp_under->get_int()) || (get_damage(target) > target->get_health() && combo::r_killable_by_combo->get_bool()) )
+                    if ( (target->get_health_percent() < combo::r_target_hp_under->get_int()) || (get_damage(target) > target->get_real_health() && combo::r_killable_by_combo->get_bool()) )
                     {
                         if (target->get_distance(myhero) > combo::r_target_above_range->get_int())
                         {
