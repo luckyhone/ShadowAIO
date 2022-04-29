@@ -30,6 +30,7 @@ namespace trundle
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
+        TreeEntry* r_dont_waste_if_target_hp_below = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
@@ -121,6 +122,7 @@ namespace trundle
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 50, 0, 100);
+                    combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
@@ -455,7 +457,7 @@ namespace trundle
         // Always check an object is not a nullptr!
         if (target != nullptr && can_use_r_on(target))
         {
-            if (target->get_health_percent() < combo::r_target_hp_under->get_int())
+            if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
                 r->cast(target);
             }
