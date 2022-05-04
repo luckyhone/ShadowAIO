@@ -511,7 +511,6 @@ namespace gwen
         if (!myhero->has_buff(buff_hash("gwenwuntargetabilitymanager")) && (health_prediction->get_incoming_damage(myhero, combo::w_damage_time->get_int() / 1000.f, true) * 100.f) /
             myhero->get_max_health() > myhero->get_health_percent() * (combo::w_over_my_hp_in_percent->get_int() / 100.f))
         {
-
             auto enemies = entitylist->get_enemy_heroes();
 
             enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
