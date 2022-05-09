@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "jax.h"
+#include "permashow.hpp"
 
 namespace jax
 {
@@ -233,6 +234,13 @@ namespace jax
             }
         }
 
+        // Permashow initialization
+        //
+	    {
+	        Permashow::Instance.Init(main_tab);
+	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+        }
+
         // To add a new event you need to define a function and call add_calback
         //
         event_handler<events::on_update>::add_callback(on_update);
@@ -253,6 +261,10 @@ namespace jax
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove permashow
+        //
+        Permashow::Instance.Destroy();
 
         // VERY important to remove always ALL events
         //
@@ -701,11 +713,6 @@ namespace jax
         // Draw Ward range
         if (ward->is_ready() && draw_settings::draw_range_ward->get_bool())
             draw_manager->add_circle(myhero->get_position(), ward->range(), draw_settings::ward_color->get_color());
-
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }
 
 #pragma region can_use_q_on

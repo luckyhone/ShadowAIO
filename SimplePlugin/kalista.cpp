@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "kalista.h"
+#include "permashow.hpp"
 
 namespace kalista
 {
@@ -89,7 +90,7 @@ namespace kalista
     // Event handler functions
     void on_update();
     void on_draw();
-    void on_after_attack_orbwalker(game_object_script target);
+    //void on_after_attack_orbwalker(game_object_script target);
 
     // Declaring functions responsible for spell-logic
     //
@@ -234,11 +235,18 @@ namespace kalista
             }
         }
 
+        // Permashow initialization
+        //
+        {
+	        Permashow::Instance.Init(main_tab);
+	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+        }
+
         // To add a new event you need to define a function and call add_calback
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
-        event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
+        //event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
     }
 
     void unload()
@@ -254,11 +262,15 @@ namespace kalista
         //
         menu->delete_tab(main_tab);
 
+        // Remove permashow
+        //
+        Permashow::Instance.Destroy();
+
         // VERY important to remove always ALL events
         //
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
-        event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack_orbwalker);
+        //event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack_orbwalker);
     }
 
     // Main update script function
@@ -279,36 +291,6 @@ namespace kalista
             r_logic();
         }
 
-        //console->print("X: %f, Y: %f", myhero->get_position().x, myhero->get_position().y);
-
-        if (orbwalker->combo_mode())
-        {
-            //console->print("AA range: %d | In E range: %d | In 1200 range: %d | Target: %s", myhero->count_enemies_in_range(myhero->get_attack_range()), myhero->count_enemies_in_range(e->range()), myhero->count_enemies_in_range(1200), orbwalker->get_target() == nullptr ? "null" : orbwalker->get_target()->get_name_cstr());
-
-            if (misc::jump_on_minions_when_chasing_enemy->get_bool() && orbwalker->get_target() == nullptr && myhero->count_enemies_in_range(myhero->get_attack_range() + 50) == 0 && myhero->count_enemies_in_range(e->range()) != 0 && myhero->can_attack())
-            {
-                // Gets enemy minions from the entitylist
-                auto lane_minions = entitylist->get_enemy_minions();
-
-                // You can use this function to delete minions that aren't in the specified range
-                lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(myhero->get_attack_range());
-                    }), lane_minions.end());
-
-                //std::sort -> sort lane minions by distance
-                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-                    });
-
-                if (!lane_minions.empty())
-                {
-                    orbwalker->set_orbwalking_target(lane_minions.front());
-                }
-            }
-        }
-
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
         // Too small time can interrupt the attack
@@ -320,6 +302,32 @@ namespace kalista
                 if (q->is_ready() && combo::use_q->get_bool())
                 {
                     q_logic();
+                }
+
+                //console->print("AA range: %d | In E range: %d | In 1200 range: %d | Target: %s", myhero->count_enemies_in_range(myhero->get_attack_range()), myhero->count_enemies_in_range(e->range()), myhero->count_enemies_in_range(1200), orbwalker->get_target() == nullptr ? "null" : orbwalker->get_target()->get_name_cstr());
+
+                if (misc::jump_on_minions_when_chasing_enemy->get_bool() && orbwalker->get_target() == nullptr && myhero->count_enemies_in_range(myhero->get_attack_range() + 50) == 0 && myhero->count_enemies_in_range(e->range()) != 0 && myhero->can_attack())
+                {
+                    // Gets enemy minions from the entitylist
+                    auto lane_minions = entitylist->get_enemy_minions();
+
+                    // You can use this function to delete minions that aren't in the specified range
+                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                        {
+                            return !x->is_valid_target(myhero->get_attack_range());
+                        }), lane_minions.end());
+
+                    //std::sort -> sort lane minions by distance
+                    std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                        {
+                            return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                        });
+
+                    if (!lane_minions.empty())
+                    {
+                        //orbwalker->set_orbwalking_target(lane_minions.front());
+                        myhero->issue_order(lane_minions.front(), true, true);
+                    }
                 }
             }
 
@@ -689,11 +697,6 @@ namespace kalista
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
 
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
-
         if (e->is_ready() && draw_settings::draw_damage_e->get_bool())
         {
             for (auto& enemy : entitylist->get_enemy_heroes())
@@ -706,13 +709,13 @@ namespace kalista
         }
     }
 
-    void on_after_attack_orbwalker(game_object_script target)
-    {
-        if (orbwalker->combo_mode() && misc::jump_on_minions_when_chasing_enemy->get_bool() && target->is_valid() && target->is_ai_minion())
-        {
-            orbwalker->set_orbwalking_target(nullptr);
-        }
-    }
+    //void on_after_attack_orbwalker(game_object_script target)
+    //{
+        //if (orbwalker->combo_mode() && misc::jump_on_minions_when_chasing_enemy->get_bool() && target->is_valid() && target->is_ai_minion())
+        //{
+        //    orbwalker->set_orbwalking_target(nullptr);
+        //}
+    //}
 
     int get_kalista_e_stacks(game_object_script target)
     {

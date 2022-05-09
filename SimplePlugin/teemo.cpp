@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "teemo.h"
+#include "permashow.hpp"
 
 namespace teemo
 {
@@ -260,6 +261,14 @@ namespace teemo
             }
         }
 
+        // Permashow initialization
+        //
+	    {
+	        Permashow::Instance.Init(main_tab);
+	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+	        Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
+        }
+
         // Add anti gapcloser handler
         //
         antigapcloser::add_event_handler(on_gapcloser);
@@ -282,6 +291,10 @@ namespace teemo
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove permashow
+        //
+        Permashow::Instance.Destroy();
 
         // Remove anti gapcloser handler
         //
@@ -359,11 +372,14 @@ namespace teemo
                         {
                             for (auto&& minion : lane_minions)
                             {
-                                if (q->get_damage(minion) > minion->get_health())
+                                if (minion->get_health() > myhero->get_auto_attack_damage(minion) || !orbwalker->can_attack())
                                 {
-                                    if (q->cast(minion))
+                                    if (q->get_damage(minion) > minion->get_health())
                                     {
-                                        return;
+                                        if (q->cast(minion))
+                                        {
+                                            return;
+                                        }
                                     }
                                 }
                             }
@@ -656,13 +672,6 @@ namespace teemo
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
-
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        auto lasthit = lasthit::lasthit->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 24), (lasthit ? 0xFF00FF00 : 0xFF0000FF), 14, "LASTHIT % s", (lasthit ? "ON" : "OFF"));
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
 
         if (q->is_ready() && draw_settings::draw_damage_q->get_bool())
         {

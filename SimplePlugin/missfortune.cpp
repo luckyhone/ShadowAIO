@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "missfortune.h"
+#include "permashow.hpp"
 
 namespace missfortune
 {
@@ -253,6 +254,15 @@ namespace missfortune
             }
         }
 
+        // Permashow initialization
+        //
+        {
+	        Permashow::Instance.Init(main_tab);
+	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+	        Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
+	        Permashow::Instance.AddElement("Semi Auto R", combo::r_semi_manual_cast);
+        }
+
         // Add anti gapcloser handler
         //
         antigapcloser::add_event_handler(on_gapcloser);
@@ -276,6 +286,10 @@ namespace missfortune
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove permashow
+        //
+        Permashow::Instance.Destroy();
 
         // Remove anti gapcloser handler
         //
@@ -824,18 +838,6 @@ namespace missfortune
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), combo::r_max_range->get_int(), draw_settings::r_color->get_color());
-
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        if (combo::use_r->get_bool())
-        {
-            auto semi = combo::r_semi_manual_cast->get_bool();
-            draw_manager->add_text_on_screen(pos + vector(0, 8), (semi ? 0xFF00FF00 : 0xFF0000FF), 14, "SEMI R %s", (semi ? "ON" : "OFF"));
-        }
-        auto lasthit = lasthit::lasthit->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 24), (lasthit ? 0xFF00FF00 : 0xFF0000FF), 14, "LASTHIT % s", (lasthit ? "ON" : "OFF"));
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
 
         if (r->is_ready() && draw_settings::draw_damage_r->get_bool())
         {

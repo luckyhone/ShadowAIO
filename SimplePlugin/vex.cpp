@@ -1,6 +1,7 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "vex.h"
 #include "farm.h"
+#include "permashow.hpp"
 
 namespace vex
 {
@@ -246,6 +247,14 @@ namespace vex
             }
         }
 
+        // Permashow initialization
+        //
+	    {
+	        Permashow::Instance.Init(main_tab);
+	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+	        Permashow::Instance.AddElement("Semi Manual R", combo::r_semi_manual_cast);
+        }
+
         // Add anti gapcloser handler
         //
         antigapcloser::add_event_handler(on_gapcloser);
@@ -268,6 +277,10 @@ namespace vex
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove permashow
+        //
+        Permashow::Instance.Destroy();
 
         // Remove anti gapcloser handler
         //
@@ -674,16 +687,6 @@ namespace vex
         // Draw R range on minimap
         if (r->is_ready() && draw_settings::draw_range_r_minimap->get_bool())
             draw_manager->draw_circle_on_minimap(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
-
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        if (combo::use_r->get_bool())
-        {
-            auto semi = combo::r_semi_manual_cast->get_bool();
-            draw_manager->add_text_on_screen(pos + vector(0, 24), (semi ? 0xFF00FF00 : 0xFF0000FF), 14, "SEMI R %s", (semi ? "ON" : "OFF"));
-        }
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
 
         if (draw_settings::draw_damage_settings::draw_damage->get_bool())
         {

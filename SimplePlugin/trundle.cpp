@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "trundle.h"
+#include "permashow.hpp"
 
 namespace trundle
 {
@@ -121,7 +122,7 @@ namespace trundle
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
-                    combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 50, 0, 100);
+                    combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 65, 0, 100);
                     combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
@@ -204,6 +205,13 @@ namespace trundle
             }
         }
 
+        // Permashow initialization
+        //
+        {
+            Permashow::Instance.Init(main_tab);
+            Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+        }
+
         // Add anti gapcloser handler
         //
         antigapcloser::add_event_handler(on_gapcloser);
@@ -227,6 +235,10 @@ namespace trundle
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove permashow
+        //
+        Permashow::Instance.Destroy();
 
         // Remove anti gapcloser handler
         //
@@ -551,10 +563,5 @@ namespace trundle
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
-
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }
 };

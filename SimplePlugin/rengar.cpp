@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "rengar.h"
+#include "permashow.hpp"
 
 namespace rengar
 {
@@ -45,6 +46,7 @@ namespace rengar
     namespace laneclear
     {
         TreeEntry* spell_farm = nullptr;
+        TreeEntry* save_empowered_spell_if_enemy_nearby = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* q_use_empowered = nullptr;
         TreeEntry* q_use_on_turret = nullptr;
@@ -150,11 +152,12 @@ namespace rengar
             auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
             {
                 laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclear.enabled", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 0x04, true);
+                laneclear::save_empowered_spell_if_enemy_nearby = laneclear->add_hotkey(myhero->get_model() + ".laneclear.save_empowered_spell_if_enemy_nearby", "Save empowered spell if enemy nearby", TreeHotkeyMode::Toggle, 'H', true);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 auto q_config = laneclear->add_tab(myhero->get_model() + ".laneclear.q.config", "Q Config");
                 {
-                    laneclear::q_use_empowered = q_config->add_checkbox(myhero->get_model() + ".laneclear.q.use_empowered", "Use Empowered Q", true);
+                    laneclear::q_use_empowered = q_config->add_hotkey(myhero->get_model() + ".laneclear.q.empowered", "Use Empowered Q", TreeHotkeyMode::Toggle, 'J', true);
                     laneclear::q_use_on_turret = q_config->add_checkbox(myhero->get_model() + ".laneclear.q.use_on_turret", "Use Q on turret", true);
                 }
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", false);
@@ -208,6 +211,15 @@ namespace rengar
             }
         }
 
+        // Permashow initialization
+        //
+        {
+            Permashow::Instance.Init(main_tab);
+            Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+            Permashow::Instance.AddElement("Save empowered if enemy nearby", laneclear::save_empowered_spell_if_enemy_nearby);
+            Permashow::Instance.AddElement("Empowered Q farm", laneclear::q_use_empowered);
+        }
+
         // Add anti gapcloser handler
         //
         antigapcloser::add_event_handler(on_gapcloser);
@@ -231,6 +243,10 @@ namespace rengar
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove permashow
+		//
+        Permashow::Instance.Destroy();
 
         // Remove anti gapcloser handler
         //
@@ -367,11 +383,17 @@ namespace rengar
 
                 if (!lane_minions.empty())
                 {
+                    if (is_empowered() && laneclear::save_empowered_spell_if_enemy_nearby && myhero->count_enemies_in_range(900) != 0)
+                    {
+                        return;
+                    }
+
                     if (q->is_ready() && laneclear::use_q->get_bool() && laneclear::q_use_empowered->get_bool() && is_empowered())
                     {
                         if (q->cast())
                             return;
                     }
+
                     if (!is_empowered())
                     {
                         if (w->is_ready() && laneclear::use_w->get_bool())
@@ -545,6 +567,10 @@ namespace rengar
                 // Using q before autoattack on lane minions
                 if (orbwalker->lane_clear_mode() && laneclear::use_q->get_bool() && target->is_lane_minion())
                 {
+                    if (is_empowered() && laneclear::save_empowered_spell_if_enemy_nearby && myhero->count_enemies_in_range(900) != 0)
+                    {
+                        return;
+                    }
                     if (!is_empowered() || laneclear::q_use_empowered->get_bool())
                     {
                         if (q->cast())
@@ -606,10 +632,5 @@ namespace rengar
         // Draw R tracing range on minimap
         if (r->is_ready() && draw_settings::draw_range_r_tracing->get_bool())
             draw_manager->draw_circle_on_minimap(myhero->get_position(), r_tracking_radius[r->level() - 1], draw_settings::r_tracing_color->get_color());
-
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }
 };

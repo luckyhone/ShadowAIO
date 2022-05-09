@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "gwen.h"
+#include "permashow.hpp"
 
 namespace gwen
 {
@@ -120,8 +121,8 @@ namespace gwen
         q->set_skillshot(0.5f, 250.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
         w = plugin_sdk->register_spell(spellslot::w, 425);
         e = plugin_sdk->register_spell(spellslot::e, 350);
-        r = plugin_sdk->register_spell(spellslot::r, 1200);
-        r->set_skillshot(0.25f, 150.0f, 1800.0f, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line);
+        r = plugin_sdk->register_spell(spellslot::r, 1250);
+        r->set_skillshot(0.25f, 220.0f, 1800.0f, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -238,7 +239,7 @@ namespace gwen
 
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
             {
-                hitchance::r_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.r", "Hitchance R", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 1);
+                hitchance::r_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.r", "Hitchance R", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
             }
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
@@ -269,6 +270,14 @@ namespace gwen
             }
         }
 
+        // Permashow initialization
+		//
+        {
+	        Permashow::Instance.Init(main_tab);
+	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+	        Permashow::Instance.AddElement("Semi Manual R", combo::r_semi_manual_cast);
+        }
+
         // To add a new event you need to define a function and call add_calback
         //
         event_handler<events::on_update>::add_callback(on_update);
@@ -288,6 +297,10 @@ namespace gwen
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove permashow
+        //
+        Permashow::Instance.Destroy();
 
         // VERY important to remove always ALL events
         //
@@ -600,11 +613,14 @@ namespace gwen
 
                     if (output.hitchance >= get_hitchance(hitchance::r_hitchance))
                     {
-                        if (gametime->get_time() - last_r_time > (combo::r_delay_between_recast->get_int() / 100.0f))
+                        if (output.get_unit_position().distance(myhero->get_position()) > 50)
                         {
-                            if (r->cast(output.get_cast_position()))
+                            if (gametime->get_time() - last_r_time > (combo::r_delay_between_recast->get_int() / 100.0f))
                             {
-                                last_r_time = gametime->get_time();
+                                if (r->cast(output.get_unit_position()))
+                                {
+                                    last_r_time = gametime->get_time();
+                                }
                             }
                         }
                     }
@@ -642,11 +658,14 @@ namespace gwen
 
             if (output.hitchance >= get_hitchance(hitchance::r_hitchance))
             {
-                if (gametime->get_time() - last_r_time > (combo::r_delay_between_recast->get_int() / 100.0f))
+                if (output.get_unit_position().distance(myhero->get_position()) > 50)
                 {
-                    if (r->cast(output.get_cast_position()))
+                    if (gametime->get_time() - last_r_time > (combo::r_delay_between_recast->get_int() / 100.0f))
                     {
-                        last_r_time = gametime->get_time();
+                        if (r->cast(output.get_unit_position()))
+                        {
+                            last_r_time = gametime->get_time();
+                        }
                     }
                 }
             }
@@ -766,16 +785,6 @@ namespace gwen
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), combo::r_max_range->get_int(), draw_settings::r_color->get_color());
-
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        if (combo::use_r->get_bool())
-        {
-            auto semi = combo::r_semi_manual_cast->get_bool();
-            draw_manager->add_text_on_screen(pos + vector(0, 24), (semi ? 0xFF00FF00 : 0xFF0000FF), 14, "SEMI R %s", (semi ? "ON" : "OFF"));
-        }
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
 
         if (draw_settings::draw_damage_settings::draw_damage->get_bool())
         {

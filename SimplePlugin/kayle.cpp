@@ -1,6 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "kayle.h"
-#include "farm.h"
+#include "permashow.hpp"
 
 namespace kayle
 {
@@ -236,6 +236,14 @@ namespace kayle
 			}
 		}
 
+		// Permashow initialization
+		//
+		{
+			Permashow::Instance.Init(main_tab);
+			Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+			Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
+		}
+
 		// To add a new event you need to define a function and call add_calback
 		//
 		event_handler<events::on_update>::add_callback(on_update);
@@ -256,6 +264,10 @@ namespace kayle
 		// Remove menu tab
 		//
 		menu->delete_tab(main_tab);
+
+		// Remove permashow
+		//
+		Permashow::Instance.Destroy();
 
 		// VERY important to remove always ALL events
 		//
@@ -323,20 +335,23 @@ namespace kayle
 				{
 					for (auto&& minion : lane_minions)
 					{
-						if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
+						if (minion->get_health() > myhero->get_auto_attack_damage(minion) || !orbwalker->can_attack())
 						{
-							if (q->is_ready() && lasthit::use_q->get_bool() && q->get_damage(minion) > minion->get_health())
+							if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
 							{
-								if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
+								if (q->is_ready() && lasthit::use_q->get_bool() && q->get_damage(minion) > minion->get_health())
 								{
-									return;
+									if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
+									{
+										return;
+									}
 								}
-							}
-							if (e->is_ready() && lasthit::use_e->get_bool() && e->get_damage(minion) + myhero->get_auto_attack_damage(minion) > minion->get_health())
-							{
-								if (e->cast())
+								if (e->is_ready() && lasthit::use_e->get_bool() && e->get_damage(minion) + myhero->get_auto_attack_damage(minion) > minion->get_health())
 								{
-									return;
+									if (e->cast())
+									{
+										return;
+									}
 								}
 							}
 						}
@@ -655,12 +670,5 @@ namespace kayle
 		// Draw R range
 		if (r->is_ready() && draw_settings::draw_range_r->get_bool())
 			draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
-
-		auto pos = myhero->get_position();
-		renderer->world_to_screen(pos, pos);
-		auto lasthit = lasthit::lasthit->get_bool();
-		draw_manager->add_text_on_screen(pos + vector(0, 24), (lasthit ? 0xFF00FF00 : 0xFF0000FF), 14, "LASTHIT % s", (lasthit ? "ON" : "OFF"));
-		auto spellfarm = laneclear::spell_farm->get_bool();
-		draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
 	}
 };

@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "masteryi.h"
+#include "permashow.hpp"
 
 namespace masteryi
 {
@@ -188,6 +189,13 @@ namespace masteryi
             }
         }
 
+        // Permashow initialization
+        //
+        {
+            Permashow::Instance.Init(main_tab);
+            Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+        }
+
         // Add anti gapcloser handler
         //
         antigapcloser::add_event_handler(on_gapcloser);
@@ -212,6 +220,10 @@ namespace masteryi
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+        
+        // Remove permashow
+        //
+        Permashow::Instance.Destroy();
 
         // Remove anti gapcloser handler
         //
@@ -483,13 +495,8 @@ namespace masteryi
             return;
         }
 
-        // Draw q range
+        // Draw Q range
         if (q->is_ready() && draw_settings::draw_range_q->get_bool())
             draw_manager->add_circle(myhero->get_position(), q->range(), draw_settings::q_color->get_color());
-
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
     }
 };

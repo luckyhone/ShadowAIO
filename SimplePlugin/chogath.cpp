@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "chogath.h"
+#include "permashow.hpp"
 
 namespace chogath
 {
@@ -116,6 +117,7 @@ namespace chogath
         q = plugin_sdk->register_spell(spellslot::q, 950);
         q->set_skillshot(1.125f, 250.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         w = plugin_sdk->register_spell(spellslot::w, 650);
+        w->set_skillshot(0.5f, 60.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         e = plugin_sdk->register_spell(spellslot::e, myhero->get_attack_range());
         r = plugin_sdk->register_spell(spellslot::r, 325);
 
@@ -264,6 +266,13 @@ namespace chogath
             }
         }
 
+        // Permashow initialization
+		//
+	    {
+	        Permashow::Instance.Init(main_tab);
+	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+        }
+
         // Add anti gapcloser handler
         //
         antigapcloser::add_event_handler(on_gapcloser);
@@ -287,6 +296,10 @@ namespace chogath
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove permashow
+		//
+        Permashow::Instance.Destroy();
 
         // Remove anti gapcloser handler
         //
@@ -760,12 +773,7 @@ namespace chogath
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
-
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (spellfarm ? "ON" : "OFF"));
-
+        
         if (draw_settings::draw_damage_settings::draw_damage->get_bool())
         {
             for (auto& enemy : entitylist->get_enemy_heroes())

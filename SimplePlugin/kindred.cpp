@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "kindred.h"
+#include "permashow.hpp"
 
 namespace kindred
 {
@@ -190,6 +191,13 @@ namespace kindred
             }
         }
 
+        // Permashow initialization
+        //
+        {
+            Permashow::Instance.Init(main_tab);
+            Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+        }
+
         // To add a new event you need to define a function and call add_calback
         //
         event_handler<events::on_update>::add_callback(on_update);
@@ -208,6 +216,10 @@ namespace kindred
         // Remove menu tab
         //
         menu->delete_tab(main_tab);
+
+        // Remove permashow
+        //
+        Permashow::Instance.Destroy();
 
         // VERY important to remove always ALL events
         //
@@ -557,10 +569,5 @@ namespace kindred
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
-
-        auto pos = myhero->get_position();
-        renderer->world_to_screen(pos, pos);
-        auto spellfarm = laneclear::spell_farm->get_bool();
-        draw_manager->add_text_on_screen(pos + vector(0, 40), (spellfarm ? 0xFF00FF00 : 0xFF0000FF), 14, "FARM %s", (laneclear::spell_farm->get_bool() ? "ON" : "OFF"));
     }
 };
