@@ -252,22 +252,22 @@ void Permashow::Init(TreeTab* main_tab, std::string title)
 	Initialized = true;
 	permashow = main_tab->add_tab("shadowaio.permashow", "Permashow");
 	{
-		permashow_enabled = permashow->add_checkbox("permashow.enabled", "Enabled", true);
-		permashow->set_assigned_active(permashow_enabled);
+		permashow_enabled = permashow->add_checkbox("shadowaio.permashow.enabled", "Enabled", true);
+		//permashow->set_assigned_active(permashow_enabled);
 
-		permashow_pos_x = permashow->add_slider("permashow.posx", "Position X", int(renderer->screen_width() * 0.72f), 0, renderer->screen_width());
-		permashow_pos_y = permashow->add_slider("permashow.posy", "Position Y", int(renderer->screen_height() * 0.74f), 0, renderer->screen_height());
+		permashow_pos_x = permashow->add_slider("shadowaio.permashow.posx", "Position X", int(renderer->screen_width() * 0.72f), 0, renderer->screen_width());
+		permashow_pos_y = permashow->add_slider("shadowaio.permashow.posy", "Position Y", int(renderer->screen_height() * 0.74f), 0, renderer->screen_height());
 
-		permashow_fontsize = permashow->add_slider("permashow.font", "Font size", 14, 9, 25);
+		permashow_fontsize = permashow->add_slider("shadowaio.permashow.font", "Font size", 14, 9, 25);
 		permashow_fontsize->add_property_change_callback(Permashow_FontChange);
-		auto colors = permashow->add_tab("permashow.colors", "Colors");
+		auto colors = permashow->add_tab("shadowaio.permashow.colors", "Colors");
 		{
-			background_color = colors->add_colorpick("permashow.background_color", "Background", { 14.f / 255.f, 22.f / 255.f, 23.f / 255.f, 230.f / 255 });
-			text_color = colors->add_colorpick("permashow.text_color", "Color", { 45.f / 255.f, 101.f / 255.f, 96.f / 255.f, 255.f / 255.f });
-			border_color = colors->add_colorpick("permashow.border_color", "Border", { 124.f / 255.f, 106.f / 255.f, 73.f / 255.f, 255.f / 255.f });
-			separator_color = colors->add_colorpick("permashow.separator_color", "Separator", { 0.f / 255.f, 55.f / 255.f, 49.f / 255.f, 255.f / 255.f });
-			title_color = colors->add_colorpick("permashow.title_color", "Title", { 143.f / 255.f, 122.f / 255.f, 72.f / 255.f, 255.f / 255.f });
-			title_background_color = colors->add_colorpick("permashow.title_background_color", "Title Background", { 19.f / 255.f, 30.f / 255.f, 32.f / 255.f, 230.f / 255.f });
+			background_color = colors->add_colorpick("shadowaio.permashow.background_color", "Background", { 14.f / 255.f, 22.f / 255.f, 23.f / 255.f, 230.f / 255 });
+			text_color = colors->add_colorpick("shadowaio.permashow.text_color", "Color", { 45.f / 255.f, 101.f / 255.f, 96.f / 255.f, 255.f / 255.f });
+			border_color = colors->add_colorpick("shadowaio.permashow.border_color", "Border", { 124.f / 255.f, 106.f / 255.f, 73.f / 255.f, 255.f / 255.f });
+			separator_color = colors->add_colorpick("shadowaio.permashow.separator_color", "Separator", { 0.f / 255.f, 55.f / 255.f, 49.f / 255.f, 255.f / 255.f });
+			title_color = colors->add_colorpick("shadowaio.permashow.title_color", "Title", { 143.f / 255.f, 122.f / 255.f, 72.f / 255.f, 255.f / 255.f });
+			title_background_color = colors->add_colorpick("shadowaio.permashow.title_background_color", "Title Background", { 19.f / 255.f, 30.f / 255.f, 32.f / 255.f, 230.f / 255.f });
 		}
 	}
 

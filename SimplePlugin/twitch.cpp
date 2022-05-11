@@ -33,7 +33,10 @@ namespace twitch
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_dont_use_on_q = nullptr;
+        TreeEntry* w_dont_use_on_r = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_if_target_leaving_range = nullptr;
+        TreeEntry* e_leaving_range_minimum_stacks = nullptr;
         TreeEntry* e_use_before_death = nullptr;
         TreeEntry* e_before_death_use_on_x_stacks = nullptr;
         TreeEntry* e_before_death_myhero_under_hp = nullptr;
@@ -48,7 +51,7 @@ namespace twitch
     {
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
-        TreeEntry* e_only_on_full_stacks = nullptr;
+        TreeEntry* e_use_on_x_stacks = nullptr;
     }
 
     namespace laneclear
@@ -138,13 +141,18 @@ namespace twitch
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 auto w_config = combo->add_tab(myhero->get_model() + "combo.w.config", "W Config");
                 {
-                    combo::w_dont_use_on_q = w_config->add_checkbox(myhero->get_model() + ".combo.w.w_dont_use_on_q", "Dont use W on Q", true);
+                    combo::w_dont_use_on_q = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_on_q", "Dont use W on Q", true);
+                    combo::w_dont_use_on_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                    combo::w_dont_use_on_r = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_on_r", "Dont use W on R", true);
+                    combo::w_dont_use_on_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E on Killable", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + "combo.e.config", "E Config");
                 {
-                    combo::e_use_before_death = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_before_death", "Use before death", true);
+                    combo::e_if_target_leaving_range = e_config->add_checkbox(myhero->get_model() + ".combo.e.target_leaving_range", "Use if target leaving E range", true);
+                    combo::e_leaving_range_minimum_stacks = e_config->add_slider(myhero->get_model() + ".combo.e.leaving_range_minimum_stacks", "Enemy leaving range use on x stacks", 6, 1, 6);
+                	combo::e_use_before_death = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_before_death", "Use before death", true);
                     auto before_death_config = e_config->add_tab(myhero->get_model() + "combo.e.before_death.config", "Use before death Config");
                     {
                         combo::e_before_death_use_on_x_stacks = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_use_on_x_stacks", "Use on x stacks", 6, 1, 6);
@@ -170,8 +178,7 @@ namespace twitch
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = harass->add_tab(myhero->get_model() + ".harass.e.config", "E Config");
                 {
-                    harass::e_only_on_full_stacks = e_config->add_checkbox(myhero->get_model() + ".harass.e.only_on_full_stacks", "Use E only on full stacks", true);
-                    harass::e_only_on_full_stacks->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                    harass::e_use_on_x_stacks = e_config->add_slider(myhero->get_model() + ".harass.e.use_on_x_stacks", "Use on x stacks", 6, 1, 6);
                 }
             }
 
@@ -254,6 +261,7 @@ namespace twitch
         {
 	        Permashow::Instance.Init(main_tab);
 	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+	        Permashow::Instance.AddElement("Stealth Recall", misc::stealth_recall_key);
         }
 
         // Add anti gapcloser handler
@@ -468,7 +476,7 @@ namespace twitch
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!combo::w_dont_use_on_q->get_bool() || !myhero->has_buff(buff_hash("TwitchHideInShadows")))
+            if ((!combo::w_dont_use_on_q->get_bool() || !myhero->has_buff(buff_hash("TwitchHideInShadows"))) && (!combo::w_dont_use_on_r->get_bool() || !myhero->has_buff(buff_hash("TwitchFullAutomatic"))))
             {
                 w->cast(target, get_hitchance(hitchance::w_hitchance));
             }
@@ -500,7 +508,7 @@ namespace twitch
         {
             for (auto& enemy : enemies)
             {
-                if (get_twitch_e_stacks(enemy) >= 6 || !harass::e_only_on_full_stacks->get_bool())
+                if (get_twitch_e_stacks(enemy) >= harass::e_use_on_x_stacks->get_int())
                 {
                     if (e->cast())
                     {
@@ -518,12 +526,21 @@ namespace twitch
                 {
                     e->cast();
                 }
+
                 else if (combo::e_use_before_death->get_bool()
                     && (myhero->get_health_percent() <= combo::e_before_death_myhero_under_hp->get_int()
                         || (combo::e_before_death_calculate_incoming_damage->get_bool() && (health_prediction->get_incoming_damage(myhero, combo::e_before_death_damage_time->get_int() / 1000.f, true) * 100.f) /
                             myhero->get_max_health() > myhero->get_health_percent() * (combo::e_before_death_over_my_hp_in_percent->get_int() / 100.f))) && get_twitch_e_stacks(enemy) >= combo::e_before_death_use_on_x_stacks->get_int())
                 {
                     e->cast();
+                }
+
+                else if (combo::e_if_target_leaving_range->get_bool())
+                {
+                    if (get_twitch_e_stacks(enemy) >= combo::e_leaving_range_minimum_stacks->get_int() && myhero->count_enemies_in_range(e->range() - 50) == 0)
+                    {
+	                    e->cast();
+                    }
                 }
             }
         }
