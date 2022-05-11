@@ -594,18 +594,14 @@ namespace teemo
     {
         switch (entry->get_int())
         {
-            case 0:
-                return hit_chance::low;
-                break;
-            case 1:
-                return hit_chance::medium;
-                break;
-            case 2:
-                return hit_chance::high;
-                break;
-            case 3:
-                return hit_chance::very_high;
-                break;
+	        case 0:
+	            return hit_chance::low;
+	        case 1:
+	            return hit_chance::medium;
+	        case 2:
+	            return hit_chance::high;
+	        case 3:
+	            return hit_chance::very_high;
         }
         return hit_chance::medium;
     }

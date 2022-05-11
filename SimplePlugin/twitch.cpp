@@ -566,16 +566,12 @@ namespace twitch
         {
             case 0:
                 return hit_chance::low;
-                break;
             case 1:
                 return hit_chance::medium;
-                break;
             case 2:
                 return hit_chance::high;
-                break;
             case 3:
                 return hit_chance::very_high;
-                break;
         }
         return hit_chance::medium;
     }
