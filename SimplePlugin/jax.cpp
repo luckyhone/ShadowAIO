@@ -648,7 +648,7 @@ namespace jax
         if (w->is_ready() && combo::w_mode->get_int() == 0)
         {
             // Using w before autoattack on enemies
-            if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_w->get_bool() || orbwalker->harass() && harass::use_w->get_bool()))
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
             {
                 if (w->cast())
                 {
@@ -672,7 +672,7 @@ namespace jax
         if (w->is_ready() && combo::w_mode->get_int() == 1)
         {
             // Using w before autoattack on enemies
-            if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_w->get_bool() || orbwalker->harass() && harass::use_w->get_bool()))
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
             {
                 if (w->cast())
                 {

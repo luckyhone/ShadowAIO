@@ -511,7 +511,7 @@ namespace trundle
         if (q->is_ready())
         {
             // Using q before autoattack on enemies
-            if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_q->get_bool() || orbwalker->harass() && harass::use_q->get_bool()))
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
             {
                 if (q->cast())
                 {

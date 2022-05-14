@@ -416,7 +416,7 @@ namespace masteryi
         if (e->is_ready())
         {
             // Use e before autoattack on enemies
-            if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_e->get_bool() || orbwalker->harass() && harass::use_e->get_bool()))
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
             {
                 if (e->cast())
                 {
@@ -445,7 +445,7 @@ namespace masteryi
             // Use r before autoattack on enemies
             if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_r->get_bool()))
             {
-                if (myhero->count_enemies_in_range(combo::r_chase_search_range->get_int()) >= combo::r_only_when_enemies_more_than->get_int() || !combo::r_check_for_enemies_nearby_before_aa->get_bool())
+                if ((myhero->count_enemies_in_range(combo::r_chase_search_range->get_int()) >= combo::r_only_when_enemies_more_than->get_int()) || !combo::r_check_for_enemies_nearby_before_aa->get_bool())
                 {
                     if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
                     {
@@ -464,7 +464,7 @@ namespace masteryi
         if (w->is_ready())
         {
             // Use w to reset AA
-            if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_w->get_bool() || orbwalker->harass() && harass::use_w->get_bool()))
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
             {
                 if (w->cast())
                 {

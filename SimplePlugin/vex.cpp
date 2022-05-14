@@ -505,7 +505,7 @@ namespace vex
                 if (!target->has_buff(buff_hash("vexr2timer")))
                 {
                     //bool is_recast_after_kill = myhero->has_buff(buff_hash("vexrresettimer"));
-                    if (target->get_health_percent() < combo::r_target_hp_under->get_int() || get_damage(target) > target->get_real_health() && combo::r_killable_by_combo->get_bool())
+                    if ((target->get_health_percent() < combo::r_target_hp_under->get_int()) || (get_damage(target) > target->get_real_health() && combo::r_killable_by_combo->get_bool()))
                     {
                         if (target->get_distance(myhero) > combo::r_target_above_range->get_int())
                         {
@@ -636,13 +636,13 @@ namespace vex
             {
                 const auto health = target->get_health();
 
-                bar_pos = vector(bar_pos.x + 105 * (health / target->get_max_health()), bar_pos.y -= 10);
+                bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
 
-                auto damage_size = 105 * (damage / target->get_max_health());
+                auto damage_size = (105 * (damage / target->get_max_health()));
 
                 if (damage >= health)
                 {
-                    damage_size = 105 * (health / target->get_max_health());
+                    damage_size = (105 * (health / target->get_max_health()));
                 }
 
                 if (damage_size > 105)
@@ -650,7 +650,7 @@ namespace vex
                     damage_size = 105;
                 }
 
-                const auto size = vector(bar_pos.x + damage_size * -1, bar_pos.y + 11);
+                const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
 
                 draw_manager->add_filled_rect(bar_pos, size, color);
             }

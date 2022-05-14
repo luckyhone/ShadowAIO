@@ -75,6 +75,7 @@ namespace twitch
     namespace fleemode
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* use_w = nullptr;
     }
 
     namespace antigapclose
@@ -217,6 +218,8 @@ namespace twitch
             {
                 fleemode::use_q = fleemode->add_checkbox(myhero->get_model() + ".flee.q", "I WAS HIDING HAHAHAHA", true);
                 fleemode::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                fleemode::use_w = fleemode->add_checkbox(myhero->get_model() + ".flee.w", "Use W to slow enemies", true);
+                fleemode::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
             }
 
             auto antigapclose = main_tab->add_tab(myhero->get_model() + ".antigapclose", "Anti Gapclose");
@@ -374,6 +377,10 @@ namespace twitch
                         return;
                     }
                 }
+                if (w->is_ready() && fleemode::use_w->get_bool())
+                {
+                    w_logic();
+                }
             }
 
             // Checking if the user has selected lane_clear_mode() (Default V)
@@ -529,8 +536,8 @@ namespace twitch
 
                 else if (combo::e_use_before_death->get_bool()
                     && (myhero->get_health_percent() <= combo::e_before_death_myhero_under_hp->get_int()
-                        || combo::e_before_death_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(myhero, combo::e_before_death_damage_time->get_int() / 1000.f, true) * 100.f /
-                        myhero->get_max_health() > myhero->get_health_percent() * (combo::e_before_death_over_my_hp_in_percent->get_int() / 100.f)) && get_twitch_e_stacks(enemy) >= combo::e_before_death_use_on_x_stacks->get_int())
+                        || (combo::e_before_death_calculate_incoming_damage->get_bool() && (health_prediction->get_incoming_damage(myhero, combo::e_before_death_damage_time->get_int() / 1000.f, true) * 100.f) /
+                            myhero->get_max_health() > myhero->get_health_percent() * (combo::e_before_death_over_my_hp_in_percent->get_int() / 100.f))) && get_twitch_e_stacks(enemy) >= combo::e_before_death_use_on_x_stacks->get_int())
                 {
                     e->cast();
                 }
@@ -587,13 +594,13 @@ namespace twitch
             {
                 const auto health = target->get_health();
 
-                bar_pos = vector(bar_pos.x + 105 * (health / target->get_max_health()), bar_pos.y -= 10);
+                bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
 
-                auto damage_size = 105 * (damage / target->get_max_health());
+                auto damage_size = (105 * (damage / target->get_max_health()));
 
                 if (damage >= health)
                 {
-                    damage_size = 105 * (health / target->get_max_health());
+                    damage_size = (105 * (health / target->get_max_health()));
                 }
 
                 if (damage_size > 105)
@@ -601,7 +608,7 @@ namespace twitch
                     damage_size = 105;
                 }
 
-                const auto size = vector(bar_pos.x + damage_size * -1, bar_pos.y + 11);
+                const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
 
                 draw_manager->add_filled_rect(bar_pos, size, color);
             }
