@@ -608,28 +608,22 @@ namespace kayle
 					return;
 				}
 			}
-
-			// Using e before autoattack on turrets
-			if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_e_on_turret->get_bool() && target->is_ai_turret())
-			{
-				if (e->cast())
-				{
-					return;
-				}
-			}
 		}
 	}
 
 	void on_after_attack_orbwalker(game_object_script target)
 	{
-		if (e->is_ready() && combo::e_mode->get_int() == 1)
+		if (e->is_ready())
 		{
-			// Using e before autoattack on enemies
-			if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
+			if (combo::e_mode->get_int() == 1)
 			{
-				if (e->cast())
+				// Using e before autoattack on enemies
+				if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
 				{
-					return;
+					if (e->cast())
+					{
+						return;
+					}
 				}
 			}
 
