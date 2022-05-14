@@ -618,7 +618,7 @@ namespace kayle
 			if (combo::e_mode->get_int() == 1)
 			{
 				// Using e before autoattack on enemies
-				if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
+				if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_e->get_bool() || orbwalker->harass() && harass::use_e->get_bool()))
 				{
 					if (e->cast())
 					{
