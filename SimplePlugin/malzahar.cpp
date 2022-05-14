@@ -612,13 +612,13 @@ namespace malzahar
             {
                 const auto health = target->get_health();
 
-                bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
+                bar_pos = vector(bar_pos.x + 105 * (health / target->get_max_health()), bar_pos.y -= 10);
 
-                auto damage_size = (105 * (damage / target->get_max_health()));
+                auto damage_size = 105 * (damage / target->get_max_health());
 
                 if (damage >= health)
                 {
-                    damage_size = (105 * (health / target->get_max_health()));
+                    damage_size = 105 * (health / target->get_max_health());
                 }
 
                 if (damage_size > 105)
@@ -626,7 +626,7 @@ namespace malzahar
                     damage_size = 105;
                 }
 
-                const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
+                const auto size = vector(bar_pos.x + damage_size * -1, bar_pos.y + 11);
 
                 draw_manager->add_filled_rect(bar_pos, size, color);
             }

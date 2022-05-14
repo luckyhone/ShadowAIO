@@ -463,7 +463,7 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 1 || (!myhero->can_move() && combo::w_use_empowered_if_immobile->get_bool()))
+            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 1 || !myhero->can_move() && combo::w_use_empowered_if_immobile->get_bool())
             {
                 return w->cast();
             }
@@ -482,7 +482,7 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 2 || (target->get_distance(myhero) > myhero->get_attack_range() + 275 && target->can_move() && target->is_moving() && combo::e_use_empowered_if_chasing->get_bool()))
+            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 2 || target->get_distance(myhero) > myhero->get_attack_range() + 275 && target->can_move() && target->is_moving() && combo::e_use_empowered_if_chasing->get_bool())
             {
                 return e->cast(target, get_hitchance(hitchance::e_hitchance));
             }
@@ -513,7 +513,7 @@ namespace rengar
     bool is_empowered()
     {
         auto empowered_q = myhero->get_buff(buff_hash("rengarqasbuff"));
-        return myhero->get_mana() == 4.0f || (empowered_q != nullptr && empowered_q->is_valid() && empowered_q->is_alive());
+        return myhero->get_mana() == 4.0f || empowered_q != nullptr && empowered_q->is_valid() && empowered_q->is_alive();
     }
 
     bool is_on_r()
@@ -538,7 +538,7 @@ namespace rengar
         if (q->is_ready())
         {
             // Using q before autoattack on enemies
-            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+            if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_q->get_bool() || orbwalker->harass() && harass::use_q->get_bool()))
             {
                 if (!is_empowered() || combo::empowered_spell_priority->get_int() == 0)
                 {
@@ -593,7 +593,7 @@ namespace rengar
         if (q->is_ready())
         {
             // Using q after autoattack on enemies
-            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+            if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_q->get_bool() || orbwalker->harass() && harass::use_q->get_bool()))
             {
                 if (!is_empowered() || combo::empowered_spell_priority->get_int() == 0)
                 {

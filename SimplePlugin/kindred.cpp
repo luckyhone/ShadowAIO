@@ -456,7 +456,7 @@ namespace kindred
             {
                 if (!myhero->has_buff({buff_hash("UndyingRage"), buff_hash("ChronoShift"), buff_hash("KayleR"), buff_hash("KindredRNoDeathBuff")}))
                 {
-                    if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, 1.0f, true) >= ally->get_health()))
+                    if (ally->get_health_percent() < combo::r_myhero_hp_under->get_int() || combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, 1.0f, true) >= ally->get_health())
                     {
                         if (can_use_r_on(ally))
                         {

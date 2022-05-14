@@ -493,7 +493,7 @@ namespace gwen
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (get_gwen_q_stacks() >= combo::q_only_on_stacks->get_int() || (combo::q_ignore_stacks_if_killable->get_bool() && q->get_damage(target) > target->get_real_health()))
+            if (get_gwen_q_stacks() >= combo::q_only_on_stacks->get_int() || combo::q_ignore_stacks_if_killable->get_bool() && q->get_damage(target) > target->get_real_health())
             {
                 q->cast(target);
             }
@@ -521,7 +521,7 @@ namespace gwen
 #pragma region w_logic
     void w_logic()
     {
-        if (!myhero->has_buff(buff_hash("gwenwuntargetabilitymanager")) && (health_prediction->get_incoming_damage(myhero, combo::w_damage_time->get_int() / 1000.f, true) * 100.f) /
+        if (!myhero->has_buff(buff_hash("gwenwuntargetabilitymanager")) && health_prediction->get_incoming_damage(myhero, combo::w_damage_time->get_int() / 1000.f, true) * 100.f /
             myhero->get_max_health() > myhero->get_health_percent() * (combo::w_over_my_hp_in_percent->get_int() / 100.f))
         {
             auto enemies = entitylist->get_enemy_heroes();
@@ -594,7 +594,7 @@ namespace gwen
         {
             if (!combo::r_dont_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret() || is_recast)
             {
-                if ((target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int()) || is_recast)
+                if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int() || is_recast)
                 {
                     prediction_input x;
 
@@ -615,7 +615,7 @@ namespace gwen
                     {
                         if (output.get_unit_position().distance(myhero->get_position()) > 50)
                         {
-                            if (gametime->get_time() - last_r_time > (combo::r_delay_between_recast->get_int() / 100.0f))
+                            if (gametime->get_time() - last_r_time > combo::r_delay_between_recast->get_int() / 100.0f)
                             {
                                 if (r->cast(output.get_unit_position()))
                                 {
@@ -660,7 +660,7 @@ namespace gwen
             {
                 if (output.get_unit_position().distance(myhero->get_position()) > 50)
                 {
-                    if (gametime->get_time() - last_r_time > (combo::r_delay_between_recast->get_int() / 100.0f))
+                    if (gametime->get_time() - last_r_time > combo::r_delay_between_recast->get_int() / 100.0f)
                     {
                         if (r->cast(output.get_unit_position()))
                         {
@@ -727,13 +727,13 @@ namespace gwen
             {
                 const auto health = target->get_health();
 
-                bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
+                bar_pos = vector(bar_pos.x + 105 * (health / target->get_max_health()), bar_pos.y -= 10);
 
-                auto damage_size = (105 * (damage / target->get_max_health()));
+                auto damage_size = 105 * (damage / target->get_max_health());
 
                 if (damage >= health)
                 {
-                    damage_size = (105 * (health / target->get_max_health()));
+                    damage_size = 105 * (health / target->get_max_health());
                 }
 
                 if (damage_size > 105)
@@ -741,7 +741,7 @@ namespace gwen
                     damage_size = 105;
                 }
 
-                const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
+                const auto size = vector(bar_pos.x + damage_size * -1, bar_pos.y + 11);
 
                 draw_manager->add_filled_rect(bar_pos, size, color);
             }

@@ -161,7 +161,7 @@ void Permashow_OnDraw()
 	draw_manager->add_rect(position, position + Permashow::Instance.TitleBoxSize, border_color->get_color());
 	draw_manager->add_rect(position, position + box_size, border_color->get_color());
 
-	draw_manager->add_text_on_screen(position + (Permashow::Instance.TitleBoxSize / 2.f) - (Permashow::Instance.TitleSize / 2.f), title_color->get_color(), font_size, "%s", Permashow::Instance.Title.c_str());
+	draw_manager->add_text_on_screen(position + Permashow::Instance.TitleBoxSize / 2.f - Permashow::Instance.TitleSize / 2.f, title_color->get_color(), font_size, "%s", Permashow::Instance.Title.c_str());
 
 	for (auto& element : Permashow::Instance.PermashowElements) {
 		draw_manager->add_text_on_screen(
@@ -219,16 +219,16 @@ void Permashow::Update()
 	auto element_height = max_text_height + padding_y;
 	auto current_element_y = element_height;
 
-	box_size.x = max_name_width + max_value_width + (padding_x * 3);
+	box_size.x = max_name_width + max_value_width + padding_x * 3;
 
 	for (auto& element : PermashowElements)
 	{
 		auto name_size = draw_manager->calc_text_size(font_size, "%s", element.AssignedMenuElement ? element.AssignedMenuElement->display_name().c_str() : element.Name.c_str());
 		auto value_size = draw_manager->calc_text_size(font_size, "%s", element.Value.c_str());
 
-		element.NamePos = { padding_x / 2, current_element_y + (element_height / 2) - (name_size.y / 2) };
-		element.SeperatorPos = { (float)((padding_x / 2) + max_name_width + padding_x), current_element_y + 6.f };
-		element.ValuePos = { (float)(padding_x / 2 + max_name_width + (padding_x * 2)), current_element_y + (element_height / 2) - (value_size.y / 2) };
+		element.NamePos = { padding_x / 2, current_element_y + element_height / 2 - name_size.y / 2 };
+		element.SeperatorPos = { (float)(padding_x / 2 + max_name_width + padding_x), current_element_y + 6.f };
+		element.ValuePos = { (float)(padding_x / 2 + max_name_width + padding_x * 2), current_element_y + element_height / 2 - value_size.y / 2 };
 
 		current_element_y += element_height;
 	}

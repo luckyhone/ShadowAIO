@@ -550,7 +550,7 @@ namespace kayle
 				{
 					if (!ally->has_buff({ buff_hash("UndyingRage"), buff_hash("ChronoShift"), buff_hash("KayleR"), buff_hash("KindredRNoDeathBuff") }))
 					{
-						if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
+						if (ally->get_health_percent() < combo::r_myhero_hp_under->get_int() || combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health())
 						{
 							if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0)
 							{
@@ -601,7 +601,7 @@ namespace kayle
 		if (e->is_ready() && combo::e_mode->get_int() == 0)
 		{
 			// Using e before autoattack on enemies
-			if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
+			if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_e->get_bool() || orbwalker->harass() && harass::use_e->get_bool()))
 			{
 				if (e->cast())
 				{
@@ -617,7 +617,7 @@ namespace kayle
 		{
 			if (combo::e_mode->get_int() == 1)
 			{
-				// Using e before autoattack on enemies
+				// Using e after autoattack on enemies
 				if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_e->get_bool() || orbwalker->harass() && harass::use_e->get_bool()))
 				{
 					if (e->cast())
@@ -627,7 +627,7 @@ namespace kayle
 				}
 			}
 
-			// Using e before autoattack on turrets
+			// Using e after autoattack on turrets
 			if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_e_on_turret->get_bool() && target->is_ai_turret())
 			{
 				if (e->cast())

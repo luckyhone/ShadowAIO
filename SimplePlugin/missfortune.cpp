@@ -795,13 +795,13 @@ namespace missfortune
             {
                 const auto health = target->get_health();
 
-                bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
+                bar_pos = vector(bar_pos.x + 105 * (health / target->get_max_health()), bar_pos.y -= 10);
 
-                auto damage_size = (105 * (damage / target->get_max_health()));
+                auto damage_size = 105 * (damage / target->get_max_health());
 
                 if (damage >= health)
                 {
-                    damage_size = (105 * (health / target->get_max_health()));
+                    damage_size = 105 * (health / target->get_max_health());
                 }
 
                 if (damage_size > 105)
@@ -809,7 +809,7 @@ namespace missfortune
                     damage_size = 105;
                 }
 
-                const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
+                const auto size = vector(bar_pos.x + damage_size * -1, bar_pos.y + 11);
 
                 draw_manager->add_filled_rect(bar_pos, size, color);
             }
@@ -889,7 +889,7 @@ namespace missfortune
 
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
     {
-        if ((myhero->get_active_spell() != nullptr && myhero->get_active_spell()->is_channeling()) || gametime->get_time() - last_r_time < 0.3f)
+        if (myhero->get_active_spell() != nullptr && myhero->get_active_spell()->is_channeling() || gametime->get_time() - last_r_time < 0.3f)
         {
             return;
         }

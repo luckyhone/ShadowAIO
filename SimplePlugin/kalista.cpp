@@ -582,8 +582,8 @@ namespace kalista
                 }
                 else if (combo::e_use_before_death->get_bool()
                     && (myhero->get_health_percent() <= combo::e_before_death_myhero_under_hp->get_int()
-                        || (combo::e_before_death_calculate_incoming_damage->get_bool() && (health_prediction->get_incoming_damage(myhero, combo::e_before_death_damage_time->get_int() / 1000.f, true) * 100.f) /
-                            myhero->get_max_health() > myhero->get_health_percent() * (combo::e_before_death_over_my_hp_in_percent->get_int() / 100.f))) && get_kalista_e_stacks(enemy) >= combo::e_before_death_use_on_x_stacks->get_int())
+                        || combo::e_before_death_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(myhero, combo::e_before_death_damage_time->get_int() / 1000.f, true) * 100.f /
+                        myhero->get_max_health() > myhero->get_health_percent() * (combo::e_before_death_over_my_hp_in_percent->get_int() / 100.f)) && get_kalista_e_stacks(enemy) >= combo::e_before_death_use_on_x_stacks->get_int())
                 {
                     e->cast();
                 }
@@ -601,7 +601,7 @@ namespace kalista
             {
                 if (ally->has_buff(buff_hash("kalistacoopstrikeally")))
                 {
-                    if ((ally->get_health_percent() < combo::r_ally_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
+                    if (ally->get_health_percent() < combo::r_ally_hp_under->get_int() || combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health())
                     {
                         if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0)
                         {
@@ -645,13 +645,13 @@ namespace kalista
             {
                 const auto health = target->get_health();
 
-                bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
+                bar_pos = vector(bar_pos.x + 105 * (health / target->get_max_health()), bar_pos.y -= 10);
 
-                auto damage_size = (105 * (damage / target->get_max_health()));
+                auto damage_size = 105 * (damage / target->get_max_health());
 
                 if (damage >= health)
                 {
-                    damage_size = (105 * (health / target->get_max_health()));
+                    damage_size = 105 * (health / target->get_max_health());
                 }
 
                 if (damage_size > 105)
@@ -659,7 +659,7 @@ namespace kalista
                     damage_size = 105;
                 }
 
-                const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
+                const auto size = vector(bar_pos.x + damage_size * -1, bar_pos.y + 11);
 
                 draw_manager->add_filled_rect(bar_pos, size, color);
             }

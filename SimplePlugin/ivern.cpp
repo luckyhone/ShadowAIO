@@ -230,7 +230,7 @@ namespace ivern
             {
                 if (can_use_e_on(ally) && myhero->get_distance(ally) < e->range())
                 {
-                    if ((health_prediction->get_incoming_damage(ally, combo::e_incoming_damage_time->get_int() / 1000.f, true) * 100.f) /
+                    if (health_prediction->get_incoming_damage(ally, combo::e_incoming_damage_time->get_int() / 1000.f, true) * 100.f /
                         ally->get_max_health() > ally->get_health_percent() * (combo::e_over_hp_in_percent->get_int() / 100.f))
                     {
                         e->cast(ally);
