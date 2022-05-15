@@ -581,6 +581,10 @@ namespace rengar
                 // Using q before autoattack on monsters
                 if (orbwalker->lane_clear_mode() && jungleclear::use_q->get_bool() && target->is_monster())
                 {
+                    if (is_empowered() && laneclear::save_empowered_spell_if_enemy_nearby && myhero->count_enemies_in_range(900) != 0)
+                    {
+                        return;
+                    }
                     if (q->cast())
                     {
                         return;
@@ -599,6 +603,38 @@ namespace rengar
             {
                 if (!is_empowered() || combo::empowered_spell_priority->get_int() == 0)
                 {
+                    if (q->cast())
+                    {
+                        return;
+                    }
+                }
+            }
+
+            if (laneclear::spell_farm->get_bool())
+            {
+                // Using q after autoattack on lane minions
+                if (orbwalker->lane_clear_mode() && laneclear::use_q->get_bool() && target->is_lane_minion())
+                {
+                    if (is_empowered() && laneclear::save_empowered_spell_if_enemy_nearby && myhero->count_enemies_in_range(900) != 0)
+                    {
+                        return;
+                    }
+                    if (!is_empowered() || laneclear::q_use_empowered->get_bool())
+                    {
+                        if (q->cast())
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                // Using q after autoattack on monsters
+                if (orbwalker->lane_clear_mode() && jungleclear::use_q->get_bool() && target->is_monster())
+                {
+                    if (is_empowered() && laneclear::save_empowered_spell_if_enemy_nearby && myhero->count_enemies_in_range(900) != 0)
+                    {
+                        return;
+                    }
                     if (q->cast())
                     {
                         return;
