@@ -387,13 +387,11 @@ namespace rengar
                     {
                         return;
                     }
-
                     if (q->is_ready() && laneclear::use_q->get_bool() && laneclear::q_use_empowered->get_bool() && is_empowered())
                     {
                         if (q->cast())
                             return;
                     }
-
                     if (!is_empowered())
                     {
                         if (w->is_ready() && laneclear::use_w->get_bool())
@@ -412,6 +410,10 @@ namespace rengar
                 // Logic responsible for monsters
                 if (!monsters.empty())
                 {
+                    if (is_empowered() && laneclear::save_empowered_spell_if_enemy_nearby && myhero->count_enemies_in_range(900) != 0)
+                    {
+                        return;
+                    }
                     if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
                         if (q->cast())
