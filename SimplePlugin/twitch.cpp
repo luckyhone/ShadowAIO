@@ -421,14 +421,6 @@ namespace twitch
 
                 if (!lane_minions.empty())
                 {
-                    if (w->is_ready() && laneclear::use_w->get_bool())
-                    {
-                        if (w->cast_on_best_farm_position(laneclear::w_minimum_minions->get_int()))
-                        {
-                            return;
-                        }
-                    }
-
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
                         int killable_minions = 0;
@@ -449,20 +441,18 @@ namespace twitch
                             }
                         }
                     }
-                }
-
-
-                if (!monsters.empty())
-                {
-                    if (w->is_ready() && jungleclear::use_w->get_bool())
+                    if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (w->cast_on_best_farm_position(1, true))
+                        if (w->cast_on_best_farm_position(laneclear::w_minimum_minions->get_int()))
                         {
                             return;
                         }
                     }
+                }
 
-                    if (e->is_ready() && laneclear::use_e->get_bool())
+                if (!monsters.empty())
+                {
+                    if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
                         if (e->get_damage(monsters.front()) > monsters.front()->get_health())
                         {
@@ -470,6 +460,13 @@ namespace twitch
                             {
                                 return;
                             }
+                        }
+                    }
+                    if (w->is_ready() && jungleclear::use_w->get_bool())
+                    {
+                        if (w->cast_on_best_farm_position(1, true))
+                        {
+                            return;
                         }
                     }
                 }
@@ -512,6 +509,11 @@ namespace twitch
         enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
             {
                 return !x->is_valid_target(e->range());
+            }), enemies.end());
+
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
+            {
+                return x->has_buff({ buff_hash("UndyingRage"), buff_hash("ChronoShift"), buff_hash("KayleR"), buff_hash("KindredRNoDeathBuff") });
             }), enemies.end());
 
         if ((orbwalker->harass() || orbwalker->lane_clear_mode()) && harass::use_e->get_bool())
