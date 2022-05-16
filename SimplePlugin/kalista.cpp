@@ -531,6 +531,11 @@ namespace kalista
                 return !x->is_valid_target(e->range());
             }), enemies.end());
 
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
+            {
+                return x->has_buff({ buff_hash("UndyingRage"), buff_hash("ChronoShift"), buff_hash("KayleR"), buff_hash("KindredRNoDeathBuff") });
+            }), enemies.end());
+
         if ((orbwalker->harass() || orbwalker->lane_clear_mode()) && harass::use_e->get_bool())
         {
             for (auto& enemy : enemies)
