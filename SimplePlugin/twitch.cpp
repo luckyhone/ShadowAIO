@@ -49,6 +49,7 @@ namespace twitch
 
     namespace harass
     {
+        TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_use_on_x_stacks = nullptr;
@@ -173,6 +174,8 @@ namespace twitch
 
             auto harass = main_tab->add_tab(myhero->get_model() + ".harass", "Harass Settings");
             {
+                harass::use_q = harass->add_checkbox(myhero->get_model() + ".harass.q", "Use Q", false);
+                harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 harass::use_w = harass->add_checkbox(myhero->get_model() + ".harass.w", "Use W", true);
                 harass::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
@@ -652,11 +655,11 @@ namespace twitch
 
     void on_after_attack_orbwalker(game_object_script target)
     {
-        if (target->is_ai_hero())
+        if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_q->get_bool() || orbwalker->harass() && harass::use_q->get_bool()))
         {
-            if (combo::use_q->get_bool())
+            if (q->cast())
             {
-                q->cast();
+                return;
             }
         }
 
