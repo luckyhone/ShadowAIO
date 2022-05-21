@@ -484,7 +484,7 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 2 || (target->get_distance(myhero) > myhero->get_attack_range() + 275 && target->can_move() && target->is_moving() && combo::e_use_empowered_if_chasing->get_bool()))
+            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 2 || (target->get_distance(myhero) > myhero->get_attack_range() + 325 && target->can_move() && target->is_moving() && combo::e_use_empowered_if_chasing->get_bool()))
             {
                 return e->cast(target, get_hitchance(hitchance::e_hitchance));
             }
