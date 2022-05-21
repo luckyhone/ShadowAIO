@@ -127,7 +127,7 @@ namespace jax
                 {
                     combo::q_only_when_e_ready = q_config->add_checkbox(myhero->get_model() + ".combo.q.only_when_e_ready", "Use Q only when E is ready", false);
                     combo::q_dont_use_under_enemy_turret = q_config->add_checkbox(myhero->get_model() + ".combo.q.dont_use_under_enemy_turret", "Dont use under enemy turret", true);
-                    combo::q_target_above_range = q_config->add_slider(myhero->get_model() + ".combo.q.target_above_range", "Only if target is above range", myhero->get_attack_range(), 0, q->range());
+                    combo::q_target_above_range = q_config->add_slider(myhero->get_model() + ".combo.q.target_above_range", "Only if target is above range", myhero->get_attack_range() + 25, 0, q->range());
 
                     auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
                     {
@@ -521,15 +521,8 @@ namespace jax
             {
                 if (target->get_distance(myhero) > combo::q_target_above_range->get_int())
                 {
-                    if (combo::q_only_when_e_ready->get_bool())
+                    if (combo::q_only_when_e_ready->get_bool() && !e->is_ready())
                     {
-                        if (e->is_ready())
-                        {
-                            e->cast();
-                            if (w->is_ready() && combo::use_w->get_bool() && combo::w_mode->get_int() == 0)
-                                w->cast();
-                            q->cast(target);
-                        }
                         return;
                     }
 
