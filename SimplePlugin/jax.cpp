@@ -526,19 +526,19 @@ namespace jax
                         if (e->is_ready())
                         {
                             e->cast();
-                            if (w->is_ready())
+                            if (w->is_ready() && combo::use_w->get_bool() && combo::w_mode->get_int() == 0)
                                 w->cast();
                             q->cast(target);
                         }
                         return;
                     }
 
-                    if (w->is_ready())
+                    if (w->is_ready() && combo::use_w->get_bool() && combo::w_mode->get_int() == 0)
                     {
                         w->cast();
                     }
 
-                    if (e->is_ready())
+                    if (e->is_ready() && combo::use_e->get_bool())
                     {
                         e->cast();
                     }
