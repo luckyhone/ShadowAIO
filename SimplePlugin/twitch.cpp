@@ -119,6 +119,7 @@ namespace twitch
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, 500);
+        q->set_spell_lock(false);
         w = plugin_sdk->register_spell(spellslot::w, 950);
         w->set_skillshot(0.25f, 200.f, 1400.0f, { }, skillshot_type::skillshot_circle);
         e = plugin_sdk->register_spell(spellslot::e, 1200);
