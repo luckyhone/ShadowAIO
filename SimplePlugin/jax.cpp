@@ -300,7 +300,7 @@ namespace jax
             {
                 if (!e_active && misc::e_aa_block->get_bool())
                 {
-                    if (health_prediction->has_agro_on(enemy, myhero) && health_prediction->get_incoming_damage(myhero, 0.35f, false) > 1)
+                    if (health_prediction->has_agro_on(enemy, myhero) && health_prediction->get_incoming_damage(myhero, 0.20f, false) > 10)
                     {
                         e->cast();
                     }
