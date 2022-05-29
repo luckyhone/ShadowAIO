@@ -79,6 +79,8 @@ namespace jax
     {
         TreeEntry* ward_jump = nullptr;
         TreeEntry* ward_jump_key = nullptr;
+        TreeEntry* e_aa_block = nullptr;
+        TreeEntry* e_spell_interrupter = nullptr;
     }
 
     // Event handler functions
@@ -215,6 +217,10 @@ namespace jax
             {
                 misc::ward_jump = misc->add_checkbox(myhero->get_model() + ".misc.ward_jump", "Ward Jump", true);
                 misc::ward_jump_key = misc->add_hotkey(myhero->get_model() + ".misc.stealth_recall.key", "Ward Jump Key", TreeHotkeyMode::Hold, 'T', true);
+                misc::e_aa_block = misc->add_checkbox(myhero->get_model() + ".misc.e_aa_block", "Use E to block AA", true);
+                misc::e_aa_block->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                misc::e_spell_interrupter = misc->add_checkbox(myhero->get_model() + ".misc.e_spell_interrupter", "Use E spell interrupter", true);
+                misc::e_spell_interrupter->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
@@ -285,6 +291,25 @@ namespace jax
         if (r->is_ready() && combo::use_r->get_bool())
         {
             r_logic();
+        }
+
+        if (e->is_ready())
+        {
+            bool e_active = myhero->has_buff(buff_hash("JaxCounterStrike"));
+            for (auto& enemy : entitylist->get_enemy_heroes())
+            {
+                if (!e_active && misc::e_aa_block->get_bool())
+                {
+                    if (health_prediction->has_agro_on(enemy, myhero) && health_prediction->get_incoming_damage(myhero, 0.35f, false) > 1)
+                    {
+                        e->cast();
+                    }
+                }
+                if (misc::e_spell_interrupter->get_bool() && enemy->is_casting_interruptible_spell() && enemy->is_valid_target(e->range()))
+                {
+                    e->cast();
+                }
+            }
         }
 
         if (e->is_ready() && combo::e_auto_recast_if_enemy_leaving_range->get_bool() && myhero->has_buff(buff_hash("JaxCounterStrike")))
