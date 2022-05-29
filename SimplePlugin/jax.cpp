@@ -303,12 +303,14 @@ namespace jax
                 {
                     if (health_prediction->has_agro_on(enemy, myhero) && health_prediction->get_incoming_damage(myhero, 0.20f, false) > 10)
                     {
-                        e->cast();
+                        if (e->cast())
+                            return;
                     }
                 }
                 if (misc::e_spell_interrupter->get_bool() && enemy->is_casting_interruptible_spell() && enemy->is_valid_target(e->range()))
                 {
-                    e->cast();
+                    if (e->cast())
+                        return;
                 }
             }
         }
