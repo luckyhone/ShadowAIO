@@ -73,6 +73,9 @@
     <ClCompile Include="permashow.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="draven.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -136,6 +139,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="permashow.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="draven.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

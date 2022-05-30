@@ -159,6 +159,7 @@
     <ClCompile Include="..\plugin_sdk\plugin_sdk.cpp" />
     <ClCompile Include="chogath.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="draven.cpp" />
     <ClCompile Include="farm.cpp" />
     <ClCompile Include="gwen.cpp" />
     <ClCompile Include="ivern.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="..\plugin_sdk\cpplinq.h" />
     <ClInclude Include="..\plugin_sdk\plugin_sdk.hpp" />
     <ClInclude Include="chogath.h" />
+    <ClInclude Include="draven.h" />
     <ClInclude Include="farm.h" />
     <ClInclude Include="gwen.h" />
     <ClInclude Include="ivern.h" />
