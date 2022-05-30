@@ -364,7 +364,7 @@ namespace draven
                         }
                         if (myhero->get_distance(front.object) > catch_axes_settings::move_to_axe_max_distance->get_int())
                         {
-                            if (!front.object->is_under_enemy_turret() || front.object->count_enemies_in_range(850) == 0 || catch_axes_settings::catch_axes_under_turret->get_bool())
+                            if (!front.object->is_under_enemy_turret() || front.object->count_enemies_in_range(1100) == 0 || catch_axes_settings::catch_axes_under_turret->get_bool())
                             {
                                 orbwalker->set_movement(false);
                                 myhero->issue_order(front.object->get_position());
