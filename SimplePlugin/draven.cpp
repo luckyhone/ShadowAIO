@@ -235,7 +235,7 @@ namespace draven
 
             auto catch_axes_settings = main_tab->add_tab(myhero->get_model() + ".misc", "Catch Axes Settings");
             {
-                catch_axes_settings::catch_axes = catch_axes_settings->add_checkbox(myhero->get_model() + ".misc.catch_axes", "Catch Axes in Combo", true);
+                catch_axes_settings::catch_axes = catch_axes_settings->add_checkbox(myhero->get_model() + ".misc.catch_axes", "Catch Axes", true);
                 catch_axes_settings::catch_axes->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 catch_axes_settings::catch_mode = catch_axes_settings->add_combobox(myhero->get_model() + ".misc.catch_mode", "Catch Axes Mode", { {"Near Myhero", nullptr},{"Near Mouse", nullptr } }, 1);
                 catch_axes_settings::dont_catch_axes = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.dont_catch_axes.key", "Don't catch Axes Key", TreeHotkeyMode::Hold, 'Z', false);
@@ -353,7 +353,7 @@ namespace draven
                 int value = catch_axes_settings::dont_catch_axes_if_killable_by_x_aa->get_int();
                 bool should_catch = true;
 
-                if (value != 0)
+                if (value != 0 && (orbwalker->combo_mode() || orbwalker->harass()))
                 {
                     // Get a target from a given range
                     auto target = target_selector->get_target(myhero->get_attack_range() + 50, damage_type::physical);
