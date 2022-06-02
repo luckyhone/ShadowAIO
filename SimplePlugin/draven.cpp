@@ -162,7 +162,7 @@ namespace draven
                 {
                     combo::q_max_active_axes = q_config->add_slider(myhero->get_model() + ".combo.q.max_active_axes", "Max Active Axes", 2, 1, 2);
                 }
-                combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
+                combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", false);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -789,12 +789,9 @@ namespace draven
         if (e->is_ready() && combo::e_mode->get_int() == 1)
         {
             // Using E after autoattack on enemies
-            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
             {
-                if (get_draven_q_stacks() < combo::q_max_active_axes->get_int())
-                {
-                    e->cast(target, get_hitchance(hitchance::e_hitchance));
-                }
+                e->cast(target, get_hitchance(hitchance::e_hitchance));
             }
         }
     }
