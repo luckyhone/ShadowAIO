@@ -350,8 +350,8 @@ namespace draven
 
             if (catch_axes_settings::catch_axes->get_bool() && !catch_axes_settings::dont_catch_axes->get_bool() && ((!orbwalker->none_mode() && !orbwalker->flee_mode()) || !catch_axes_settings::catch_only_if_orbwalker_active->get_bool()))
             {
-                bool process = true;
                 int value = catch_axes_settings::dont_catch_axes_if_killable_by_x_aa->get_int();
+                bool should_catch = true;
 
                 if (value != 0)
                 {
@@ -359,16 +359,16 @@ namespace draven
                     auto target = target_selector->get_target(myhero->get_attack_range() + 50, damage_type::physical);
 
                     // Always check an object is not a nullptr!
-                    if (target != nullptr)
+                    if (target != nullptr && target->is_valid_target())
                     {
                         if (myhero->get_auto_attack_damage(target) * value > target->get_real_health())
                         {
-                            process = false;
+                            should_catch = false;
                         }
                     }
                 }
 
-                if (process)
+                if (should_catch)
                 {
                     axes.erase(std::remove_if(axes.begin(), axes.end(), [](axe x)
                         {
