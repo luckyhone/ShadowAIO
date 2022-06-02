@@ -635,16 +635,18 @@ namespace draven
                 return;
             }
         }
-
-        for (auto& enemy : entitylist->get_enemy_heroes())
+        else
         {
-            if (can_use_r_on(enemy) && !enemy->is_valid_target(combo::r_min_distance->get_int()) && enemy->is_valid_target(combo::r_max_range->get_int()))
+            for (auto& enemy : entitylist->get_enemy_heroes())
             {
-                if (r->get_damage(enemy) * 2.0f > enemy->get_real_health())
+                if (can_use_r_on(enemy) && !enemy->is_valid_target(combo::r_min_distance->get_int()) && enemy->is_valid_target(combo::r_max_range->get_int()))
                 {
-                    if (r->cast(enemy, get_hitchance(hitchance::r_hitchance)))
+                    if (r->get_damage(enemy) * 2.0f > enemy->get_real_health())
                     {
-                        return;
+                        if (r->cast(enemy, get_hitchance(hitchance::r_hitchance)))
+                        {
+                            return;
+                        }
                     }
                 }
             }
