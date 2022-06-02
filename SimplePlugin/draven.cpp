@@ -38,6 +38,7 @@ namespace draven
         TreeEntry* r_semi_manual_cast = nullptr;
         TreeEntry* r_min_distance = nullptr;
         TreeEntry* r_max_range = nullptr;
+        std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
     namespace harass
@@ -110,6 +111,7 @@ namespace draven
 
     // Utils
     //
+    bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     int get_draven_q_stacks();
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
@@ -179,6 +181,20 @@ namespace draven
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_min_distance = r_config->add_slider(myhero->get_model() + ".combo.r.min_distance", "Minimum R distance to target", 800, 1, 1600);
                     combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R Range", 2200.0f, 1200.0f, 5000.0f);
+
+                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
+                    {
+                        for (auto&& enemy : entitylist->get_enemy_heroes())
+                        {
+                            // In this case you HAVE to set should save to false since key contains network id which is unique per game
+                            //
+                            combo::r_use_on[enemy->get_network_id()] = use_r_on_tab->add_checkbox(std::to_string(enemy->get_network_id()), enemy->get_model(), true, false);
+
+                            // Set texture to enemy square icon
+                            //
+                            combo::r_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
+                        }
+                    }
                 }
             }
 
@@ -622,7 +638,7 @@ namespace draven
 
         for (auto& enemy : entitylist->get_enemy_heroes())
         {
-            if (!enemy->is_valid_target(combo::r_min_distance->get_int()) && enemy->is_valid_target(combo::r_max_range->get_int()))
+            if (can_use_r_on(enemy) && !enemy->is_valid_target(combo::r_min_distance->get_int()) && enemy->is_valid_target(combo::r_max_range->get_int()))
             {
                 if (r->get_damage(enemy) * 2.0f > enemy->get_real_health())
                 {
@@ -643,10 +659,21 @@ namespace draven
         auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && can_use_r_on(target))
         {
             r->cast(target, get_hitchance(hitchance::r_hitchance));
         }
+    }
+#pragma endregion
+
+#pragma region can_use_r_on
+    bool can_use_r_on(game_object_script target)
+    {
+        auto it = combo::r_use_on.find(target->get_network_id());
+        if (it == combo::r_use_on.end())
+            return false;
+
+        return it->second->get_bool();
     }
 #pragma endregion
 
