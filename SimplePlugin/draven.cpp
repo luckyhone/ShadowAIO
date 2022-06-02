@@ -164,7 +164,7 @@ namespace draven
                 {
                     combo::q_max_active_axes = q_config->add_slider(myhero->get_model() + ".combo.q.max_active_axes", "Max Active Axes", 2, 1, 2);
                 }
-                combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", false);
+                combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -202,7 +202,7 @@ namespace draven
             {
                 harass::use_q = harass->add_checkbox(myhero->get_model() + ".harass.q", "Use Q", true);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                harass::use_w = harass->add_checkbox(myhero->get_model() + ".harass.w", "Use W", true);
+                harass::use_w = harass->add_checkbox(myhero->get_model() + ".harass.w", "Use W", false);
                 harass::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
