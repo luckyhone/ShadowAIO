@@ -82,6 +82,7 @@ namespace draven
         TreeEntry* dont_catch_axes = nullptr;
         TreeEntry* catch_axes_under_turret = nullptr;
         TreeEntry* catch_only_if_orbwalker_active = nullptr;
+        TreeEntry* dont_catch_axes_if_killable_by_x_aa = nullptr;
         TreeEntry* move_to_axe_max_distance = nullptr;
     }
 
@@ -240,6 +241,7 @@ namespace draven
                 catch_axes_settings::dont_catch_axes = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.dont_catch_axes.key", "Don't catch Axes Key", TreeHotkeyMode::Hold, 'Z', false);
                 catch_axes_settings::catch_axes_under_turret = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.catch_axes_under_turret.key", "Catch Axes under turret", TreeHotkeyMode::Toggle, 'J', true);
                 catch_axes_settings::catch_only_if_orbwalker_active = catch_axes_settings->add_checkbox(myhero->get_model() + ".misc.catch_only_if_orbwalker_active", "Catch Axes only if Orbwalker active", true);
+                catch_axes_settings::dont_catch_axes_if_killable_by_x_aa = catch_axes_settings->add_slider(myhero->get_model() + ".misc.dont_catch_axes_if_killable_by_x_aa", "Dont catch Axes if target killable by x AA (0 = disabled)", 0, 0, 4);
                 catch_axes_settings::move_to_axe_max_distance = catch_axes_settings->add_slider(myhero->get_model() + ".misc.move_to_axe_max_distance", "Move to Axes max distance", 70, 1, 120);
             }
 
@@ -348,46 +350,67 @@ namespace draven
 
             if (catch_axes_settings::catch_axes->get_bool() && !catch_axes_settings::dont_catch_axes->get_bool() && ((!orbwalker->none_mode() && !orbwalker->flee_mode()) || !catch_axes_settings::catch_only_if_orbwalker_active->get_bool()))
             {
-                axes.erase(std::remove_if(axes.begin(), axes.end(), [](axe x)
-                    {
-                        return !x.object->is_valid() || x.object->is_dead() || gametime->get_time() > x.expire_time;
-                    }), axes.end());
+                bool process = true;
+                int value = catch_axes_settings::dont_catch_axes_if_killable_by_x_aa->get_int();
 
-                std::sort(axes.begin(), axes.end(), [](axe a, axe b)
-                    {
-                        return a.object->get_position().distance(catch_axes_settings::catch_mode->get_int() == 0 ? myhero->get_position() : hud->get_hud_input_logic()->get_game_cursor_position()) < b.object->get_position().distance(myhero->get_position());
-                    });
-
-                if (!axes.empty())
+                if (value != 0)
                 {
-                    axe front = axes.front();
+                    // Get a target from a given range
+                    auto target = target_selector->get_target(myhero->get_attack_range() + 50, damage_type::physical);
 
-                    if (gametime->get_time() > front.start_time)
+                    // Always check an object is not a nullptr!
+                    if (target != nullptr)
                     {
-                        if (myhero->get_distance(front.object) < 175)
+                        if (myhero->get_auto_attack_damage(target) * value > target->get_real_health())
                         {
-                            orbwalker->set_attack(false);
-                        }
-                        if (myhero->get_distance(front.object) > catch_axes_settings::move_to_axe_max_distance->get_int())
-                        {
-                            if (!front.object->is_under_enemy_turret() || front.object->count_enemies_in_range(1100) == 0 || catch_axes_settings::catch_axes_under_turret->get_bool())
-                            {
-                                orbwalker->set_movement(false);
-                                myhero->issue_order(front.object->get_position());
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            orbwalker->set_attack(true);
-                            orbwalker->set_movement(true);
+                            process = false;
                         }
                     }
                 }
-                else
+
+                if (process)
                 {
-                    orbwalker->set_attack(true);
-                    orbwalker->set_movement(true);
+                    axes.erase(std::remove_if(axes.begin(), axes.end(), [](axe x)
+                        {
+                            return !x.object->is_valid() || x.object->is_dead() || gametime->get_time() > x.expire_time;
+                        }), axes.end());
+
+                    std::sort(axes.begin(), axes.end(), [](axe a, axe b)
+                        {
+                            return a.object->get_position().distance(catch_axes_settings::catch_mode->get_int() == 0 ? myhero->get_position() : hud->get_hud_input_logic()->get_game_cursor_position()) < b.object->get_position().distance(myhero->get_position());
+                        });
+
+                    if (!axes.empty())
+                    {
+                        axe front = axes.front();
+
+                        if (gametime->get_time() > front.start_time)
+                        {
+                            if (myhero->get_distance(front.object) < 175)
+                            {
+                                orbwalker->set_attack(false);
+                            }
+                            if (myhero->get_distance(front.object) > catch_axes_settings::move_to_axe_max_distance->get_int())
+                            {
+                                if (!front.object->is_under_enemy_turret() || front.object->count_enemies_in_range(1100) == 0 || catch_axes_settings::catch_axes_under_turret->get_bool())
+                                {
+                                    orbwalker->set_movement(false);
+                                    myhero->issue_order(front.object->get_position());
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                orbwalker->set_attack(true);
+                                orbwalker->set_movement(true);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        orbwalker->set_attack(true);
+                        orbwalker->set_movement(true);
+                    }
                 }
             }
 
