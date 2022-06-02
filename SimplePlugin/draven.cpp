@@ -31,6 +31,7 @@ namespace draven
         TreeEntry* q_max_active_axes = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_mode = nullptr;
         TreeEntry* e_max_range = nullptr;
         TreeEntry* e_spell_interrupter = nullptr;
         TreeEntry* use_r = nullptr;
@@ -77,6 +78,7 @@ namespace draven
     namespace catch_axes_settings
     {
         TreeEntry* catch_axes = nullptr;
+        TreeEntry* catch_mode = nullptr;
         TreeEntry* dont_catch_axes = nullptr;
         TreeEntry* catch_axes_under_turret = nullptr;
         TreeEntry* catch_only_if_orbwalker_active = nullptr;
@@ -94,6 +96,7 @@ namespace draven
     void on_draw();
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
     void on_before_attack(game_object_script target, bool* process);
+    void on_after_attack(game_object_script target);
     void on_create_object(game_object_script sender);
     void on_delete_object(game_object_script sender);
 
@@ -164,6 +167,7 @@ namespace draven
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
+                    combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"In Combo", nullptr},{"After AA", nullptr } }, 1);
                     combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "Maximum R Range", e->range() - 100.0f, 1, e->range());
                     combo::e_spell_interrupter = e_config->add_checkbox(myhero->get_model() + ".combo.e.spell_interrupter", "Auto E spell interrupter", true);
                 }
@@ -232,6 +236,7 @@ namespace draven
             {
                 catch_axes_settings::catch_axes = catch_axes_settings->add_checkbox(myhero->get_model() + ".misc.catch_axes", "Catch Axes in Combo", true);
                 catch_axes_settings::catch_axes->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                catch_axes_settings::catch_mode = catch_axes_settings->add_combobox(myhero->get_model() + ".misc.catch_mode", "Catch Axes Mode", { {"Near Myhero", nullptr},{"Near Mouse", nullptr } }, 1);
                 catch_axes_settings::dont_catch_axes = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.dont_catch_axes.key", "Don't catch Axes Key", TreeHotkeyMode::Hold, 'Z', false);
                 catch_axes_settings::catch_axes_under_turret = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.catch_axes_under_turret.key", "Catch Axes under turret", TreeHotkeyMode::Toggle, 'J', true);
                 catch_axes_settings::catch_only_if_orbwalker_active = catch_axes_settings->add_checkbox(myhero->get_model() + ".misc.catch_only_if_orbwalker_active", "Catch Axes only if Orbwalker active", true);
@@ -279,6 +284,7 @@ namespace draven
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
         event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
+        event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack);
         event_handler<events::on_create_object>::add_callback(on_create_object);
         event_handler<events::on_delete_object>::add_callback(on_delete_object);
     }
@@ -349,7 +355,7 @@ namespace draven
 
                 std::sort(axes.begin(), axes.end(), [](axe a, axe b)
                     {
-                        return a.object->get_position().distance(myhero->get_position()) < b.object->get_position().distance(myhero->get_position());
+                        return a.object->get_position().distance(catch_axes_settings::catch_mode->get_int() == 0 ? myhero->get_position() : hud->get_hud_input_logic()->get_game_cursor_position()) < b.object->get_position().distance(myhero->get_position());
                     });
 
                 if (!axes.empty())
@@ -561,13 +567,16 @@ namespace draven
 #pragma region e_logic
     void e_logic()
     {
-        // Get a target from a given range
-        auto target = target_selector->get_target(combo::e_max_range->get_int(), damage_type::physical);
-
-        // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (combo::e_mode->get_int() == 0)
         {
-            e->cast(target, get_hitchance(hitchance::e_hitchance));
+            // Get a target from a given range
+            auto target = target_selector->get_target(combo::e_max_range->get_int(), damage_type::physical);
+
+            // Always check an object is not a nullptr!
+            if (target != nullptr)
+            {
+                e->cast(target, get_hitchance(hitchance::e_hitchance));
+            }
         }
     }
 #pragma endregion
@@ -746,6 +755,22 @@ namespace draven
                 if (get_draven_q_stacks() < combo::q_max_active_axes->get_int())
                 {
                     q->cast();
+                }
+            }
+        }
+    }
+
+
+    void on_after_attack(game_object_script target)
+    {
+        if (e->is_ready() && combo::e_mode->get_int() == 1)
+        {
+            // Using E after autoattack on enemies
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+            {
+                if (get_draven_q_stacks() < combo::q_max_active_axes->get_int())
+                {
+                    e->cast(target, get_hitchance(hitchance::e_hitchance));
                 }
             }
         }
