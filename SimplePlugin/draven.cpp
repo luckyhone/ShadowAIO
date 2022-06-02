@@ -241,7 +241,7 @@ namespace draven
                 catch_axes_settings::dont_catch_axes = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.dont_catch_axes.key", "Don't catch Axes Key", TreeHotkeyMode::Hold, 'Z', false);
                 catch_axes_settings::catch_axes_under_turret = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.catch_axes_under_turret.key", "Catch Axes under turret", TreeHotkeyMode::Toggle, 'J', true);
                 catch_axes_settings::catch_only_if_orbwalker_active = catch_axes_settings->add_checkbox(myhero->get_model() + ".misc.catch_only_if_orbwalker_active", "Catch Axes only if Orbwalker active", true);
-                catch_axes_settings::dont_catch_axes_if_killable_by_x_aa = catch_axes_settings->add_slider(myhero->get_model() + ".misc.dont_catch_axes_if_killable_by_x_aa", "Dont catch Axes if target killable by x AA (0 = disabled)", 0, 0, 4);
+                catch_axes_settings::dont_catch_axes_if_killable_by_x_aa = catch_axes_settings->add_slider(myhero->get_model() + ".misc.dont_catch_axes_if_killable_by_x_aa", "Don't catch Axes if target killable by x AA (0 = disabled)", 0, 0, 4);
                 catch_axes_settings::move_to_axe_max_distance = catch_axes_settings->add_slider(myhero->get_model() + ".misc.move_to_axe_max_distance", "Move to Axes max distance", 70, 1, 120);
             }
 
@@ -411,6 +411,11 @@ namespace draven
                         orbwalker->set_attack(true);
                         orbwalker->set_movement(true);
                     }
+                }
+                else
+                {
+                    orbwalker->set_attack(true);
+                    orbwalker->set_movement(true);
                 }
             }
 
