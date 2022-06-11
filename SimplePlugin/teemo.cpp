@@ -28,6 +28,7 @@ namespace teemo
     namespace combo
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* q_auto_harass = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_target_is_above_range = nullptr;
         TreeEntry* w_check_if_target_is_not_facing = nullptr;
@@ -166,6 +167,10 @@ namespace teemo
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                auto q_config = combo->add_tab(myhero->get_model() + "combo.q.config", "Q Config");
+                {
+                    combo::q_auto_harass = q_config->add_hotkey(myhero->get_model() + ".combo.q.config", "Auto Q harass", TreeHotkeyMode::Toggle, 'A', true);
+                }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 auto w_config = combo->add_tab(myhero->get_model() + "combo.w.config", "W Config");
@@ -267,6 +272,7 @@ namespace teemo
 	        Permashow::Instance.Init(main_tab);
 	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
 	        Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
+	        Permashow::Instance.AddElement("Auto Q Harass", combo::q_auto_harass);
         }
 
         // Add anti gapcloser handler
@@ -322,6 +328,11 @@ namespace teemo
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
+            if (q->is_ready() && combo::q_auto_harass->get_bool())
+            {
+                q_logic();
+            }
+
             if (r->is_ready() && combo::use_r->get_bool())
             {
                 r_logic_auto();

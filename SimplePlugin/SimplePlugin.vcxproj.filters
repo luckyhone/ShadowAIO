@@ -76,6 +76,9 @@
     <ClCompile Include="draven.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="belveth.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -142,6 +145,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="draven.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="belveth.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
