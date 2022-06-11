@@ -50,6 +50,7 @@ namespace belveth
 		TreeEntry* use_q = nullptr;
 		TreeEntry* use_w = nullptr;
 		TreeEntry* use_e = nullptr;
+		TreeEntry* e_minimum_minions = nullptr;
 	}
 
 	namespace jungleclear
@@ -147,6 +148,10 @@ namespace belveth
 				laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
 				laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", false);
 				laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+				auto e_config = laneclear->add_tab(myhero->get_model() + ".laneclear.e.config", "E Config");
+				{
+					laneclear::e_minimum_minions = e_config->add_slider(myhero->get_model() + ".laneclear.e.minimum_minions", "E minimum minions", 2, 1, 5);
+				}
 			}
 
 			auto jungleclear = main_tab->add_tab(myhero->get_model() + ".jungleclear", "Jungle Clear Settings");
@@ -420,7 +425,7 @@ namespace belveth
 							return;
 					}
 
-					if (e->is_ready() && laneclear::use_e->get_bool())
+					if (e->is_ready() && laneclear::use_e->get_bool() && lane_minions.size() >= laneclear::e_minimum_minions->get_int())
 					{
 						if (e->cast())
 							return;
