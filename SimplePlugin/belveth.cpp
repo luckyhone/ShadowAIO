@@ -150,7 +150,7 @@ namespace belveth
 				laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
 				auto e_config = laneclear->add_tab(myhero->get_model() + ".laneclear.e.config", "E Config");
 				{
-					laneclear::e_minimum_minions = e_config->add_slider(myhero->get_model() + ".laneclear.e.minimum_minions", "E minimum minions", 2, 1, 5);
+					laneclear::e_minimum_minions = e_config->add_slider(myhero->get_model() + ".laneclear.e.minimum_minions", "E minimum minions", 3, 1, 5);
 				}
 			}
 
