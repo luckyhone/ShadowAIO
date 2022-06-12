@@ -37,7 +37,8 @@ namespace jax
         TreeEntry* use_w = nullptr;
         TreeEntry* w_mode = nullptr;
         TreeEntry* use_e = nullptr;
-        TreeEntry* e_auto_recast_if_enemy_leaving_range = nullptr;
+        TreeEntry* use_e2 = nullptr;
+        TreeEntry* e_mode = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
         TreeEntry* r_only_when_enemies_nearby = nullptr;
@@ -128,8 +129,9 @@ namespace jax
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
                     combo::q_only_when_e_ready = q_config->add_checkbox(myhero->get_model() + ".combo.q.only_when_e_ready", "Use Q only when E is ready", false);
-                    combo::q_if_target_is_under_turret = q_config->add_hotkey(myhero->get_model() + ".combo.q.if_target_is_under_turret", "Use Q if target is under turret", TreeHotkeyMode::Toggle, 'J', false);
-                    combo::q_target_above_range = q_config->add_slider(myhero->get_model() + ".combo.q.target_above_range", "Only if target is above range", myhero->get_attack_range() + 25, 0, q->range());
+                    combo::q_only_when_e_ready->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                    combo::q_if_target_is_under_turret = q_config->add_hotkey(myhero->get_model() + ".combo.q.if_target_is_under_turret", "Use Q if target is under turret", TreeHotkeyMode::Toggle, 'A', false);
+                    combo::q_target_above_range = q_config->add_slider(myhero->get_model() + ".combo.q.target_above_range", "Only if target is above range", myhero->get_attack_range() + 50, 0, q->range());
 
                     auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
                     {
@@ -155,7 +157,9 @@ namespace jax
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
-                    combo::e_auto_recast_if_enemy_leaving_range = e_config->add_checkbox(myhero->get_model() + ".combo.e.auto_recast_if_enemy_leaving_range", "Auto E2 if enemy leaving E range", true);
+                    combo::use_e2 = e_config->add_checkbox(myhero->get_model() + ".combo.e2", "Use E2", true);
+                    combo::use_e2->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                    combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e2.mode", "E2 Mode", { {"Recast if will stun", nullptr},{"Recast if enemy leaving E range", nullptr },{"Hold E for as long as possible", nullptr } }, 1);
                 }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
@@ -315,7 +319,7 @@ namespace jax
             }
         }
 
-        if (e->is_ready() && combo::e_auto_recast_if_enemy_leaving_range->get_bool() && myhero->has_buff(buff_hash("JaxCounterStrike")))
+        if (e->is_ready() && combo::use_e2->get_bool() && myhero->has_buff(buff_hash("JaxCounterStrike")))
         {
             // Get a target from a given range
             auto target = target_selector->get_target(e->range() + 25, damage_type::physical);
@@ -323,11 +327,26 @@ namespace jax
             // Always check an object is not a nullptr!
             if (target != nullptr && target->is_attack_allowed_on_target())
             {
-                if (myhero->get_distance(target) >= e->range() - 30)
+                auto e_mode = combo::e_mode->get_int();
+
+                if (e_mode == 0)
                 {
-                    if (e->cast())
+                    if (myhero->count_enemies_in_range(e->range()) != 0)
                     {
-                        return;
+                        if (e->cast())
+                        {
+                            return;
+                        }
+                    }
+                }
+                else if (e_mode == 1)
+                {
+                    if (myhero->get_distance(target) >= e->range() - 30)
+                    {
+                        if (e->cast())
+                        {
+                            return;
+                        }
                     }
                 }
             }
@@ -488,12 +507,6 @@ namespace jax
                             return;
                     }
 
-                    if (w->is_ready() && laneclear::use_w->get_bool())
-                    {
-                        if (w->cast())
-                            return;
-                    }
-
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
                         if (lane_minions.front()->is_under_ally_turret())
@@ -517,12 +530,6 @@ namespace jax
                     if (q->is_ready() && jungleclear::use_q->get_bool())
                     {
                         if (q->cast(monsters.front()))
-                            return;
-                    }
-
-                    if (w->is_ready() && jungleclear::use_w->get_bool())
-                    {
-                        if (w->cast())
                             return;
                     }
 
@@ -685,6 +692,24 @@ namespace jax
                     return;
                 }
             }
+
+            // Using w before autoattack on minions
+            if (orbwalker->lane_clear_mode() && laneclear::use_w->get_bool() && target->is_ai_minion())
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Using w before autoattack on monsters
+            if (orbwalker->lane_clear_mode() && jungleclear::use_w->get_bool() && target->is_monster())
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
         }
     }
 
@@ -692,7 +717,7 @@ namespace jax
     {
         if (w->is_ready() && combo::w_mode->get_int() == 1)
         {
-            // Using w before autoattack on enemies
+            // Using w after autoattack on enemies
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
             {
                 if (w->cast())
@@ -701,8 +726,26 @@ namespace jax
                 }
             }
 
-            // Using w before autoattack on turrets
+            // Using w after autoattack on turrets
             if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_w_on_turret->get_bool() && target->is_ai_turret())
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Using w after autoattack on minions
+            if (orbwalker->lane_clear_mode() && laneclear::use_w->get_bool() && target->is_ai_minion())
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Using w after autoattack on monsters
+            if (orbwalker->lane_clear_mode() && jungleclear::use_w->get_bool() && target->is_monster())
             {
                 if (w->cast())
                 {
