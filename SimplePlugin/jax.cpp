@@ -684,15 +684,6 @@ namespace jax
                 }
             }
 
-            // Using w before autoattack on turrets
-            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_w_on_turret->get_bool() && target->is_ai_turret())
-            {
-                if (w->cast())
-                {
-                    return;
-                }
-            }
-
             // Using w before autoattack on minions
             if (orbwalker->lane_clear_mode() && laneclear::use_w->get_bool() && target->is_ai_minion())
             {
@@ -715,19 +706,22 @@ namespace jax
 
     void on_after_attack_orbwalker(game_object_script target)
     {
-        if (w->is_ready() && combo::w_mode->get_int() == 1)
+        if (w->is_ready())
         {
-            // Using w after autoattack on enemies
-            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
+            // Using w after autoattack on turrets
+            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_w_on_turret->get_bool() && target->is_ai_turret())
             {
                 if (w->cast())
                 {
                     return;
                 }
             }
+        }
 
-            // Using w after autoattack on turrets
-            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_w_on_turret->get_bool() && target->is_ai_turret())
+        if (w->is_ready() && combo::w_mode->get_int() == 1)
+        {
+            // Using w after autoattack on enemies
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
             {
                 if (w->cast())
                 {
