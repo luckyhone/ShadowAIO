@@ -552,7 +552,7 @@ namespace belveth
 		{
 			if (object->is_valid() && !object->is_dead() && object->get_model().compare("BelvethSpore") == 0)
 			{
-				if (!object->is_under_enemy_turret() || combo::allow_tower_dive->get_bool() == 0)
+				if (!object->is_under_enemy_turret() || combo::allow_tower_dive->get_bool())
 				{
 					if (myhero->get_distance(object) < r->range())
 					{
