@@ -273,7 +273,7 @@ namespace belveth
 			q->set_speed(q_speeds[q->level() - 1] + myhero->get_move_speed());
 		}
 
-		if (r->is_ready() && combo::use_r->get_bool())
+		if (r->is_ready() && combo::use_r->get_bool() && !orbwalker->flee_mode())
 		{
 			r_logic();
 		}
@@ -299,7 +299,7 @@ namespace belveth
 
 					// Gets jugnle mobs from the entitylist
 					auto monsters = entitylist->get_jugnle_mobs_minions();
-
+						
 					// You can use this function to delete minions that aren't in the specified range
 					lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
 						{
@@ -405,13 +405,13 @@ namespace belveth
 				// You can use this function to delete minions that aren't in the specified range
 				lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
 					{
-						return !x->is_valid_target(e->range());
+						return !x->is_valid_target(q->range());
 					}), lane_minions.end());
 
 				// You can use this function to delete monsters that aren't in the specified range
 				monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
 					{
-						return !x->is_valid_target(e->range());
+						return !x->is_valid_target(q->range());
 					}), monsters.end());
 
 				//std::sort -> sort lane minions by distance
