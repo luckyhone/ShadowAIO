@@ -131,7 +131,7 @@ namespace belveth
 				auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
 				{
 					combo::e_cancel_if_nobody_inside = e_config->add_checkbox(myhero->get_model() + ".combo.e.cancel_if_nobody_inside", "Cancel E if nobody inside", true);
-					combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "E maximum range", 400, 1, e->range());
+					combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "E maximum range", 350, 1, e->range());
 				}
 				combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
 				combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
@@ -554,7 +554,7 @@ namespace belveth
 			{
 				if (!object->is_under_enemy_turret() || combo::allow_tower_dive->get_bool())
 				{
-					if (myhero->get_distance(object) < r->range())
+					if (myhero->get_distance(object) < r->range() - 100)
 					{
 						if (r->cast(object))
 						{
