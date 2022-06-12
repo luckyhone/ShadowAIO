@@ -18,3 +18,5 @@ Plugin for BGX.gg
 - Gwen
 - Ivern
 - Rengar
+- Draven
+- Bel'Veth
