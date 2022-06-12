@@ -28,6 +28,7 @@ namespace belveth
 
 	namespace combo
 	{
+		TreeEntry* allow_tower_dive = nullptr;
 		TreeEntry* use_q = nullptr;
 		TreeEntry* q_mode = nullptr;
 		TreeEntry* use_w = nullptr;
@@ -68,6 +69,7 @@ namespace belveth
 
 	namespace hitchance
 	{
+		TreeEntry* q_hitchance = nullptr;
 		TreeEntry* w_hitchance = nullptr;
 	}
 
@@ -88,13 +90,18 @@ namespace belveth
 	//
 	hit_chance get_hitchance(TreeEntry* entry);
 
+	// Champion data
+	//
+	float q_speeds[] = { 800.0f, 850.0f, 900.0f, 950.0f, 1000.0f };
+
 	void load()
 	{
 		// Registering a spells
 		//
 		q = plugin_sdk->register_spell(spellslot::q, 400);
+		q->set_skillshot(0.0f, 100.f, 800.0f, { collisionable_objects::walls }, skillshot_type::skillshot_line);
 		w = plugin_sdk->register_spell(spellslot::w, 660);
-		w->set_skillshot(0.50f, 200.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
+		w->set_skillshot(0.75f, 200.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
 		e = plugin_sdk->register_spell(spellslot::e, 500);
 		r = plugin_sdk->register_spell(spellslot::r, 500);
 
@@ -110,6 +117,7 @@ namespace belveth
 
 			auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
 			{
+				combo::allow_tower_dive = combo->add_hotkey(myhero->get_model() + ".combo.allow_tower_dive", "Allow Tower Dive", TreeHotkeyMode::Toggle, 'A', true);
 				combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
 				combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
 				auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
@@ -174,6 +182,7 @@ namespace belveth
 
 			auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
 			{
+				hitchance::q_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.q", "Hitchance Q", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 1);
 				hitchance::w_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.w", "Hitchance W", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
 			}
 
@@ -200,6 +209,7 @@ namespace belveth
 		{
 			Permashow::Instance.Init(main_tab);
 			Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+			Permashow::Instance.AddElement("Allow Tower Dive", combo::allow_tower_dive);
 		}
 
 		// To add a new event you need to define a function and call add_calback
@@ -257,6 +267,11 @@ namespace belveth
 				console->print("[ShadowAIO] [DEBUG] Object name %s", object->get_model_cstr());
 			}
 		}*/
+		
+		if (q->is_ready())
+		{
+			q->set_speed(q_speeds[q->level() - 1] + myhero->get_move_speed());
+		}
 
 		if (r->is_ready() && combo::use_r->get_bool())
 		{
@@ -415,8 +430,23 @@ namespace belveth
 				{
 					if (q->is_ready() && laneclear::use_q->get_bool())
 					{
-						if (q->cast_on_best_farm_position(1))
-							return;
+						if (lane_minions.front()->is_under_ally_turret())
+						{
+							if (myhero->count_enemies_in_range(900) == 0)
+							{
+								if (q->cast_on_best_farm_position(1))
+								{
+									return;
+								}
+							}
+						}
+						else
+						{
+							if (q->cast_on_best_farm_position(1))
+							{
+								return;
+							}
+						}
 					}
 
 					if (w->is_ready() && laneclear::use_w->get_bool())
@@ -469,9 +499,17 @@ namespace belveth
 		{
 			if (target->get_distance(myhero) > myhero->get_attack_range() || combo::q_mode->get_int() == 0)
 			{
-				if (!evade->is_dangerous(target->get_position()))
+				if (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool())
 				{
-					q->cast(target->get_position());
+					auto pred = q->get_prediction(target);
+					if (pred.hitchance >= get_hitchance(hitchance::q_hitchance))
+					{
+						auto pos = pred.get_cast_position();
+						if (!evade->is_dangerous(pos))
+						{
+							q->cast(pos);
+						}
+					}
 				}
 			}
 		}
@@ -514,11 +552,14 @@ namespace belveth
 		{
 			if (object->is_valid() && !object->is_dead() && object->get_model().compare("BelvethSpore") == 0)
 			{
-				if (!object->is_under_enemy_turret() || object->count_enemies_in_range(900) == 0)
+				if (!object->is_under_enemy_turret() || combo::allow_tower_dive->get_bool() == 0)
 				{
-					if (myhero->get_distance(object) < r->range() && r->cast(object))
+					if (myhero->get_distance(object) < r->range())
 					{
-						return;
+						if (r->cast(object))
+						{
+							return;
+						}
 					}
 				}
 			}
@@ -554,9 +595,17 @@ namespace belveth
 			{
 				if (!evade->is_dangerous(target->get_position()))
 				{
-					if (q->cast(target->get_position()))
+					if (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool())
 					{
-						return;
+						auto pred = q->get_prediction(target);
+						if (pred.hitchance >= get_hitchance(hitchance::q_hitchance))
+						{
+							auto pos = pred.get_cast_position();
+							if (!evade->is_dangerous(pos))
+							{
+								q->cast(pos);
+							}
+						}
 					}
 				}
 			}
