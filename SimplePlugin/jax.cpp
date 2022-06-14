@@ -213,8 +213,8 @@ namespace jax
             auto lasthit = main_tab->add_tab(myhero->get_model() + ".lasthit", "Last Hit Settings");
             {
                 lasthit::lasthit = lasthit->add_hotkey(myhero->get_model() + ".lasthit.enabled", "Toggle Last Hit", TreeHotkeyMode::Toggle, 'J', true);
-                lasthit::use_w = lasthit->add_checkbox(myhero->get_model() + ".lasthit.e", "Use E", true);
-                lasthit::use_w->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                lasthit::use_w = lasthit->add_checkbox(myhero->get_model() + ".lasthit.w", "Use W", true);
+                lasthit::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
             }
 
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
