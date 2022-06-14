@@ -311,7 +311,7 @@ namespace jax
                             return;
                     }
                 }
-                if (misc::e_spell_interrupter->get_bool() && enemy->is_casting_interruptible_spell() && enemy->is_valid_target(e->range()))
+                if (e_active && misc::e_spell_interrupter->get_bool() && enemy->is_casting_interruptible_spell() && enemy->is_valid_target(e->range()))
                 {
                     if (e->cast())
                         return;
