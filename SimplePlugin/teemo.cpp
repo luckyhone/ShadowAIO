@@ -358,7 +358,7 @@ namespace teemo
                 }
             }
 
-            if (orbwalker->last_hit_mode() || orbwalker->mixed_mode() || orbwalker->lane_clear_mode())
+            if (orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode())
             {
                 if (lasthit::lasthit->get_bool())
                 {

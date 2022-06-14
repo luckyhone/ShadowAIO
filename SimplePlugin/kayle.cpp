@@ -314,7 +314,7 @@ namespace kayle
 				}
 			}
 
-			if ((orbwalker->last_hit_mode() || orbwalker->mixed_mode() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
+			if ((orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
 			{
 				// Gets enemy minions from the entitylist
 				auto lane_minions = entitylist->get_enemy_minions();

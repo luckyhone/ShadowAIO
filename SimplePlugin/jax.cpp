@@ -68,6 +68,12 @@ namespace jax
         TreeEntry* use_e = nullptr;
     }
 
+    namespace lasthit
+    {
+        TreeEntry* lasthit = nullptr;
+        TreeEntry* use_w = nullptr;
+    }
+
     namespace fleemode
     {
         TreeEntry* use_q = nullptr;
@@ -204,6 +210,12 @@ namespace jax
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
+            auto lasthit = main_tab->add_tab(myhero->get_model() + ".lasthit", "Last Hit Settings");
+            {
+                lasthit::lasthit = lasthit->add_hotkey(myhero->get_model() + ".lasthit.enabled", "Toggle Last Hit", TreeHotkeyMode::Toggle, 'J', true);
+                lasthit::use_w = lasthit->add_checkbox(myhero->get_model() + ".lasthit.e", "Use E", true);
+                lasthit::use_w->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+            }
 
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".fleemode", "Flee Mode");
             {
@@ -249,6 +261,7 @@ namespace jax
 	    {
 	        Permashow::Instance.Init(main_tab);
 	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+            Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
 	        Permashow::Instance.AddElement("Q under turret", combo::q_if_target_is_under_turret);
         }
 
@@ -311,7 +324,7 @@ namespace jax
                             return;
                     }
                 }
-                if (e_active && misc::e_spell_interrupter->get_bool() && enemy->is_casting_interruptible_spell() && enemy->is_valid_target(e->range()))
+                if (misc::e_spell_interrupter->get_bool() && enemy->is_casting_interruptible_spell() && enemy->is_valid_target(e->range()))
                 {
                     if (e->cast())
                         return;
@@ -378,6 +391,41 @@ namespace jax
                 if (e->is_ready() && combo::use_e->get_bool())
                 {
                     e_logic();
+                }
+            }
+
+            if ((orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
+            {
+                // Gets enemy minions from the entitylist
+                auto lane_minions = entitylist->get_enemy_minions();
+
+                // You can use this function to delete minions that aren't in the specified range
+                lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                    {
+                        return !x->is_valid_target(q->range());
+                    }), lane_minions.end());
+
+                //std::sort -> sort lane minions by distance
+                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                    {
+                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                    });
+
+                if (!lane_minions.empty())
+                {
+                    for (auto&& minion : lane_minions)
+                    {
+                        if (minion->get_health() > myhero->get_auto_attack_damage(minion) || !orbwalker->can_attack())
+                        {
+                            if (w->is_ready() && lasthit::use_w->get_bool() && w->get_damage(minion) + myhero->get_auto_attack_damage(minion) > minion->get_health())
+                            {
+                                if (w->cast())
+                                {
+                                    return;
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -685,7 +733,7 @@ namespace jax
             }
 
             // Using w before autoattack on minions
-            if (orbwalker->lane_clear_mode() && laneclear::use_w->get_bool() && target->is_ai_minion())
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_w->get_bool() && target->is_ai_minion())
             {
                 if (w->cast())
                 {
@@ -694,7 +742,7 @@ namespace jax
             }
 
             // Using w before autoattack on monsters
-            if (orbwalker->lane_clear_mode() && jungleclear::use_w->get_bool() && target->is_monster())
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_w->get_bool() && target->is_monster())
             {
                 if (w->cast())
                 {
@@ -730,7 +778,7 @@ namespace jax
             }
 
             // Using w after autoattack on minions
-            if (orbwalker->lane_clear_mode() && laneclear::use_w->get_bool() && target->is_ai_minion())
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_w->get_bool() && target->is_ai_minion())
             {
                 if (w->cast())
                 {
@@ -739,7 +787,7 @@ namespace jax
             }
 
             // Using w after autoattack on monsters
-            if (orbwalker->lane_clear_mode() && jungleclear::use_w->get_bool() && target->is_monster())
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_w->get_bool() && target->is_monster())
             {
                 if (w->cast())
                 {
