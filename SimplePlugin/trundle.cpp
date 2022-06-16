@@ -27,6 +27,7 @@ namespace trundle
     namespace combo
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* q_mode = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
@@ -78,6 +79,7 @@ namespace trundle
     void on_draw();
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
     void on_before_attack(game_object_script target, bool* process);
+    void on_after_attack(game_object_script target);
 
     // Declaring functions responsible for spell-logic
     //
@@ -114,6 +116,10 @@ namespace trundle
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
+                {
+                    combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "Q Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 0);
+                }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
@@ -221,6 +227,7 @@ namespace trundle
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
         event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
+        event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack);
     }
 
     void unload()
@@ -249,6 +256,7 @@ namespace trundle
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
         event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
+        event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack);
     }
 
     // Main update script function
@@ -508,7 +516,7 @@ namespace trundle
 
     void on_before_attack(game_object_script target, bool* process)
     {
-        if (q->is_ready())
+        if (q->is_ready() && combo::q_mode->get_int() == 0)
         {
             // Using q before autoattack on enemies
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
@@ -518,8 +526,23 @@ namespace trundle
                     return;
                 }
             }
+        }
+    }
 
-            // Using q before autoattack on turrets
+    void on_after_attack(game_object_script target)
+    {
+        if (q->is_ready())
+        {
+            // Using q after autoattack on enemies
+            if (combo::q_mode->get_int() == 1 && target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+            {
+                if (q->cast())
+                {
+                    return;
+                }
+            }
+
+            // Using q after autoattack on turrets
             if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_q_on_turret->get_bool() && target->is_ai_turret())
             {
                 if (q->cast())

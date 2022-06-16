@@ -500,7 +500,10 @@ namespace jax
                         }
                     }
 
-                    ward_jump_logic();
+                    if (fleemode::q_ward_jump->get_bool())
+                    {
+                        ward_jump_logic();
+                    }
                 }
             }
 
@@ -704,7 +707,7 @@ namespace jax
 
         if (near_ward == nullptr)
         {
-            if (ward->is_ready() && fleemode::q_ward_jump->get_bool())
+            if (ward->is_ready())
             {
                 if (ward->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
                 {
