@@ -23,16 +23,15 @@ namespace masteryi
     namespace combo
     {
         TreeEntry* use_q = nullptr;
-        TreeEntry* q_dont_use_target_under_turret = nullptr;
+        TreeEntry* q_use_under_turret = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr; 
         TreeEntry* r_use_before_aa = nullptr;
+        TreeEntry* r_only_when_enemies_more_than = nullptr;
         TreeEntry* r_use_to_chase = nullptr;
         TreeEntry* r_chase_search_range = nullptr;
         TreeEntry* r_dont_use_target_under_turret = nullptr;
-        TreeEntry* r_check_for_enemies_nearby_before_aa = nullptr;
-        TreeEntry* r_only_when_enemies_more_than = nullptr;
     }
 
     namespace harass
@@ -108,7 +107,7 @@ namespace masteryi
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
-                    combo::q_dont_use_target_under_turret = q_config->add_checkbox(myhero->get_model() + ".combo.q.dont_use_under_enemy_turret", "Dont use under enemy turret", true);
+                    combo::q_use_under_turret = q_config->add_hotkey(myhero->get_model() + ".combo.q.use_under_turret", "Use Q if target is under turret", TreeHotkeyMode::Toggle, 'A', false);
                 }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W to reset AA", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
@@ -119,11 +118,10 @@ namespace masteryi
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
                     combo::r_use_before_aa = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_before_aa", "Use before AA", true);
+                    combo::r_only_when_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.use_only_when_enemies_more_than", "Use before AA only when enemies more than", 2, 0, 4);
                     combo::r_use_to_chase = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_to_chase", "Use to chase enemies", true);
                     combo::r_chase_search_range = r_config->add_slider(myhero->get_model() + ".combo.r.chase_search_range", "Chase enemies search range", 1200, 300, 1600);
                     combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_target_under_turret", "Dont use if target is under turret", true);
-                    combo::r_check_for_enemies_nearby_before_aa = r_config->add_checkbox(myhero->get_model() + ".combo.r.check_for_enemies_nearby_before_aa", "Check for number of enemies before AA", true);
-                    combo::r_only_when_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.use_only_when_enemies_more_than", "Use only when enemies more than", 2, 0, 4);
                 }
             }
 
@@ -154,7 +152,7 @@ namespace masteryi
             {
                 jungleclear::use_q = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.q", "Use Q", true);
                 jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", false);
+                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", true);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -194,6 +192,7 @@ namespace masteryi
         {
             Permashow::Instance.Init(main_tab);
             Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+            Permashow::Instance.AddElement("Allow Turret Dive", combo::q_use_under_turret);
         }
 
         // Add anti gapcloser handler
@@ -378,7 +377,7 @@ namespace masteryi
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!combo::q_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
+            if (combo::q_use_under_turret->get_bool() || !target->is_under_ally_turret())
             {
                 if (e->is_ready() && combo::use_e->get_bool())
                     e->cast();
@@ -445,7 +444,7 @@ namespace masteryi
             // Use r before autoattack on enemies
             if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_r->get_bool()))
             {
-                if ((myhero->count_enemies_in_range(combo::r_chase_search_range->get_int()) >= combo::r_only_when_enemies_more_than->get_int()) || !combo::r_check_for_enemies_nearby_before_aa->get_bool())
+                if (myhero->count_enemies_in_range(combo::r_chase_search_range->get_int()) >= combo::r_only_when_enemies_more_than->get_int())
                 {
                     if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
                     {
