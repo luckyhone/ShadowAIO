@@ -367,12 +367,6 @@ namespace trundle
 
                 if (!lane_minions.empty())
                 {
-                    if (q->is_ready() && laneclear::use_q->get_bool())
-                    {
-                        if (q->cast())
-                            return;
-                    }
-
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
                         if (w->cast(myhero))
@@ -400,12 +394,6 @@ namespace trundle
                 if (!monsters.empty())
                 {
                     // Logic responsible for monsters
-                    if (q->is_ready() && jungleclear::use_q->get_bool())
-                    {
-                        if (q->cast())
-                            return;
-                    }
-
                     if (w->is_ready() && jungleclear::use_w->get_bool())
                     {
                         if (w->cast(myhero))
@@ -526,6 +514,24 @@ namespace trundle
                     return;
                 }
             }
+
+            // Using q before autoattack on minions
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_q->get_bool() && target->is_ai_minion())
+            {
+                if (q->cast())
+                {
+                    return;
+                }
+            }
+
+            // Using q before autoattack on monsters
+            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_q->get_bool() && target->is_monster())
+            {
+                if (q->cast())
+                {
+                    return;
+                }
+            }
         }
     }
 
@@ -534,11 +540,32 @@ namespace trundle
         if (q->is_ready())
         {
             // Using q after autoattack on enemies
-            if (combo::q_mode->get_int() == 1 && target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+            if (combo::q_mode->get_int() == 1)
             {
-                if (q->cast())
+                if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
                 {
-                    return;
+                    if (q->cast())
+                    {
+                        return;
+                    }
+                }
+
+                // Using q after autoattack on minions
+                if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_q->get_bool() && target->is_ai_minion())
+                {
+                    if (q->cast())
+                    {
+                        return;
+                    }
+                }
+
+                // Using q after autoattack on monsters
+                if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_q->get_bool() && target->is_monster())
+                {
+                    if (q->cast())
+                    {
+                        return;
+                    }
                 }
             }
 
@@ -550,6 +577,8 @@ namespace trundle
                     return;
                 }
             }
+
+
         }
     }
 
