@@ -100,7 +100,7 @@ namespace trundle
         q = plugin_sdk->register_spell(spellslot::q, myhero->get_attack_range());
         w = plugin_sdk->register_spell(spellslot::w, 750);
         e = plugin_sdk->register_spell(spellslot::e, 1000);
-        e->set_skillshot(0.5f, 225.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+        e->set_skillshot(0.75f, 225.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         r = plugin_sdk->register_spell(spellslot::r, 650);
 
 
@@ -345,13 +345,13 @@ namespace trundle
                 // You can use this function to delete minions that aren't in the specified range
                 lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(e->range());
+                        return !x->is_valid_target(q->range() + 300);
                     }), lane_minions.end());
 
                 // You can use this function to delete monsters that aren't in the specified range
                 monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(e->range());
+                        return !x->is_valid_target(q->range() + 300);
                     }), monsters.end());
 
                 //std::sort -> sort lane minions by distance
@@ -447,7 +447,7 @@ namespace trundle
     void e_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(e->range(), damage_type::physical);
+        auto target = target_selector->get_target(e->range() - 100, damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
@@ -578,8 +578,6 @@ namespace trundle
                     return;
                 }
             }
-
-
         }
     }
 
