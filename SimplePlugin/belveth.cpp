@@ -131,7 +131,7 @@ namespace belveth
 				auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
 				{
 					combo::e_cancel_if_nobody_inside = e_config->add_checkbox(myhero->get_model() + ".combo.e.cancel_if_nobody_inside", "Cancel E if nobody inside", true);
-					combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "E maximum range", 350, 1, e->range());
+					combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "E maximum range", 300, 1, e->range());
 				}
 				combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
 				combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
@@ -492,7 +492,7 @@ namespace belveth
 	void q_logic()
 	{
 		// Get a target from a given range
-		auto target = target_selector->get_target(q->range(), damage_type::physical);
+		auto target = target_selector->get_target(q->range() + myhero->get_attack_range() - 50, damage_type::physical);
 
 		// Always check an object is not a nullptr!
 		if (target != nullptr)
