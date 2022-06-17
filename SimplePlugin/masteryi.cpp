@@ -46,12 +46,14 @@ namespace masteryi
         TreeEntry* spell_farm = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* q_only_when_minions_more_than = nullptr;
+        TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
     namespace jungleclear
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
     }
 
@@ -144,6 +146,8 @@ namespace masteryi
                 {
                     laneclear::q_only_when_minions_more_than = q_config->add_slider(myhero->get_model() + ".laneclear.q.use_only_when_minions_more_than", "Use only when minions more than", 3, 0, 5);
                 }
+                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W to reset AA", false);
+                laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
@@ -152,6 +156,8 @@ namespace masteryi
             {
                 jungleclear::use_q = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.q", "Use Q", true);
                 jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                jungleclear::use_w = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.w", "Use W to reset AA", true);
+                jungleclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", true);
                 jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
@@ -233,6 +239,7 @@ namespace masteryi
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
         event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
+        event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack);
     }
 
     // Main update script function
@@ -462,8 +469,26 @@ namespace masteryi
     {
         if (w->is_ready())
         {
-            // Use w to reset AA
+            // Use W on enemies to reset AA
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Use W on minions to reset AA
+            if (target->is_ai_minion() && orbwalker->lane_clear_mode() && laneclear::spell_farm->get_int() && laneclear::use_w->get_bool())
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Use W on monsters to reset AA
+            if (target->is_monster() && orbwalker->lane_clear_mode() && laneclear::spell_farm->get_int() && jungleclear::use_w->get_bool())
             {
                 if (w->cast())
                 {
