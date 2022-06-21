@@ -35,7 +35,9 @@ namespace belveth
 		TreeEntry* use_e = nullptr;
 		TreeEntry* e_cancel_if_nobody_inside = nullptr;
 		TreeEntry* e_max_range = nullptr;
+		TreeEntry* e_disable_evade = nullptr;
 		TreeEntry* use_r = nullptr;
+		bool previous_evade_state = false;
 	}
 
 	namespace harass
@@ -132,6 +134,7 @@ namespace belveth
 				{
 					combo::e_cancel_if_nobody_inside = e_config->add_checkbox(myhero->get_model() + ".combo.e.cancel_if_nobody_inside", "Cancel E if nobody inside", true);
 					combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "E maximum range", 300, 1, e->range());
+					combo::e_disable_evade = e_config->add_checkbox(myhero->get_model() + ".combo.e.disable_evade", "Disable evade on E", true);
 				}
 				combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
 				combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
@@ -250,23 +253,6 @@ namespace belveth
 		{
 			return;
 		}
-
-		//console->print("[ShadowAIO] [DEBUG] Buff list:");
-		//for (auto&& buff : myhero->get_bufflist())
-		//{
-		//    if (buff->is_valid() && buff->is_alive())
-		//    {
-		//        console->print("[ShadowAIO] [DEBUG] Buff name %s, count: %d", buff->get_name_cstr(), buff->get_count());
-		//    }
-		//}
-
-		/*for (auto& object : entitylist->get_other_minion_objects())
-		{
-			if (object->is_valid() && !object->is_dead())
-			{
-				console->print("[ShadowAIO] [DEBUG] Object name %s", object->get_model_cstr());
-			}
-		}*/
 		
 		if (q->is_ready())
 		{
@@ -284,6 +270,23 @@ namespace belveth
 		if (orbwalker->can_move(0.05f))
 		{
 			bool e_active = myhero->has_buff(buff_hash("BelvethE"));
+
+			if (combo::e_disable_evade->get_bool())
+			{
+				if (e_active)
+				{
+					if (!evade->is_evade_disabled() && !combo::previous_evade_state)
+					{
+						evade->disable_evade();
+						combo::previous_evade_state = true;
+					}
+				}
+				else if (combo::previous_evade_state)
+				{
+					evade->enable_evade();
+					combo::previous_evade_state = false;
+				}
+			}
 
 			if (e->is_ready() && e_active && combo::e_cancel_if_nobody_inside->get_bool())
 			{
