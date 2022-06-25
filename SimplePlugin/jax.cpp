@@ -31,8 +31,8 @@ namespace jax
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* q_only_when_e_ready = nullptr;
-        TreeEntry* q_if_target_is_under_turret = nullptr;
         TreeEntry* q_target_above_range = nullptr;
+        TreeEntry* q_if_target_is_under_turret = nullptr;
         std::map<std::uint32_t, TreeEntry*> q_use_on;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_mode = nullptr;
@@ -136,9 +136,9 @@ namespace jax
                 {
                     combo::q_only_when_e_ready = q_config->add_checkbox(myhero->get_model() + ".combo.q.only_when_e_ready", "Use Q only when E is ready", false);
                     combo::q_only_when_e_ready->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                    combo::q_if_target_is_under_turret = q_config->add_hotkey(myhero->get_model() + ".combo.q.if_target_is_under_turret", "Use Q if target is under turret", TreeHotkeyMode::Toggle, 'A', false);
                     combo::q_target_above_range = q_config->add_slider(myhero->get_model() + ".combo.q.target_above_range", "Only if target is above range", myhero->get_attack_range() + 50, 0, q->range());
-
+                    combo::q_if_target_is_under_turret = q_config->add_hotkey(myhero->get_model() + ".combo.q.if_target_is_under_turret", "Use Q if target is under turret", TreeHotkeyMode::Toggle, 'A', false);
+     
                     auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
                     {
                         for (auto&& enemy : entitylist->get_enemy_heroes())
@@ -311,9 +311,10 @@ namespace jax
             r_logic();
         }
 
+        bool e_active = myhero->has_buff(buff_hash("JaxCounterStrike"));
+
         if (e->is_ready())
         {
-            bool e_active = myhero->has_buff(buff_hash("JaxCounterStrike"));
             for (auto& enemy : entitylist->get_enemy_heroes())
             {
                 if (!e_active && misc::e_aa_block->get_bool())
@@ -332,7 +333,7 @@ namespace jax
             }
         }
 
-        if (e->is_ready() && combo::use_e2->get_bool() && myhero->has_buff(buff_hash("JaxCounterStrike")))
+        if (e->is_ready() && combo::use_e2->get_bool() && e_active)
         {
             // Get a target from a given range
             auto target = target_selector->get_target(e->range() + 25, damage_type::physical);
