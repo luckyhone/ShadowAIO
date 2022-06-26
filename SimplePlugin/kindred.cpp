@@ -29,6 +29,8 @@ namespace kindred
     namespace combo
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* q_mode = nullptr;
+        TreeEntry* q_use_under_enemy_turret = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
@@ -70,6 +72,7 @@ namespace kindred
     // Event handler functions
     void on_update();
     void on_draw();
+    void on_after_attack(game_object_script target);
 
     // Declaring functions responsible for spell-logic
     //
@@ -107,6 +110,13 @@ namespace kindred
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+
+                auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
+                {
+                    combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Usage Mode", { {"In Combo", nullptr},{"After AA or if enemy above AA range", nullptr } }, 0);
+                    combo::q_use_under_enemy_turret = q_config->add_hotkey(myhero->get_model() + ".combo.q.use_under_enemy_turret", "Use if target is under enemy turret", TreeHotkeyMode::Toggle, 'A', true);
+                }
+
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
@@ -196,12 +206,14 @@ namespace kindred
         {
             Permashow::Instance.Init(main_tab);
             Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+            Permashow::Instance.AddElement("Q under turret", combo::q_use_under_enemy_turret);
         }
 
         // To add a new event you need to define a function and call add_calback
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
+        event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack);
     }
 
     void unload()
@@ -225,6 +237,7 @@ namespace kindred
         //
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
+        event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack);
     }
 
     // Main update script function
@@ -409,12 +422,25 @@ namespace kindred
     void q_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(myhero->get_attack_range(), damage_type::physical);
+        auto target = target_selector->get_target(q->range() + myhero->get_attack_range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            q->cast(hud->get_hud_input_logic()->get_game_cursor_position());
+            if (combo::q_mode->get_int() == 0 || myhero->get_distance(target) > myhero->get_attack_range())
+            {
+                auto pos = hud->get_hud_input_logic()->get_game_cursor_position();
+                if (pos.distance(target) < myhero->get_attack_range())
+                {
+                    if (!evade->is_dangerous(pos))
+                    {
+                        if (combo::q_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
+                        {
+                            q->cast(pos);
+                        }
+                    }
+                }
+            }
         }
     }
 #pragma endregion
@@ -452,13 +478,13 @@ namespace kindred
     {
         for (auto&& ally : entitylist->get_ally_heroes())
         {
-            if (ally->get_distance(myhero->get_position()) <= r->range())
+            if (can_use_r_on(ally))
             {
-                if (!myhero->has_buff({buff_hash("UndyingRage"), buff_hash("ChronoShift"), buff_hash("KayleR"), buff_hash("KindredRNoDeathBuff")}))
+                if (ally->get_distance(myhero->get_position()) <= r->range())
                 {
-                    if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, 1.0f, true) >= ally->get_health()))
+                    if (!myhero->has_buff({ buff_hash("UndyingRage"), buff_hash("ChronoShift"), buff_hash("KayleR"), buff_hash("KindredRNoDeathBuff") }))
                     {
-                        if (can_use_r_on(ally))
+                        if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, 1.0f, true) >= ally->get_health()))
                         {
                             if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0)
                             {
@@ -542,6 +568,28 @@ namespace kindred
                 {
                     e->set_range(750);
                     break;
+                }
+            }
+        }
+    }
+
+    void on_after_attack(game_object_script target)
+    {
+        if (q->is_ready() && combo::q_mode->get_int() == 1)
+        {
+            // Using e after autoattack on enemies
+            if (((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())) && target->is_ai_hero())
+            {
+                auto pos = hud->get_hud_input_logic()->get_game_cursor_position();
+                if (pos.distance(target) < myhero->get_attack_range())
+                {
+                    if (!evade->is_dangerous(pos))
+                    {
+                        if (combo::q_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
+                        {
+                            q->cast(pos);
+                        }
+                    }
                 }
             }
         }
