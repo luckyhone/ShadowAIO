@@ -495,7 +495,7 @@ namespace belveth
 	void q_logic()
 	{
 		// Get a target from a given range
-		auto target = target_selector->get_target(q->range() + myhero->get_attack_range() - 50, damage_type::physical);
+		auto target = target_selector->get_target(q->range() + myhero->get_attack_range(), damage_type::physical);
 
 		// Always check an object is not a nullptr!
 		if (target != nullptr)

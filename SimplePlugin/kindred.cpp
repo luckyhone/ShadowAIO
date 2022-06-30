@@ -577,7 +577,7 @@ namespace kindred
     {
         if (q->is_ready() && combo::q_mode->get_int() == 1)
         {
-            // Using e after autoattack on enemies
+            // Using Q after autoattack on enemies
             if (((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())) && target->is_ai_hero())
             {
                 auto pos = hud->get_hud_input_logic()->get_game_cursor_position();
