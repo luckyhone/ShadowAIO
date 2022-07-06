@@ -134,6 +134,7 @@ namespace teemo
     // Declaring functions responsible for spell-logic
     //
     void q_logic();
+    void q_logic_auto();
     void w_logic();
     void r_logic();
     void r_logic_auto();
@@ -332,7 +333,7 @@ namespace teemo
         {
             if (q->is_ready() && combo::q_auto_harass->get_bool())
             {
-                q_logic();
+                q_logic_auto();
             }
 
             if (r->is_ready() && combo::use_r->get_bool())
