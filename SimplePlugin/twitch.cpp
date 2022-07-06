@@ -26,6 +26,14 @@ namespace twitch
         TreeEntry* draw_range_r = nullptr;
         TreeEntry* r_color = nullptr;
         TreeEntry* draw_damage_e = nullptr;
+        TreeEntry* draw_q_timeleft = nullptr;
+        TreeEntry* draw_r_timeleft = nullptr;
+        TreeEntry* draw_e_stacks = nullptr;
+        TreeEntry* q_timeleft_color = nullptr;
+        TreeEntry* r_timeleft_color = nullptr;
+        TreeEntry* e_stacks_color = nullptr;
+        TreeEntry* draw_e_stacks_time = nullptr;
+        TreeEntry* e_stacks_time_color = nullptr;
     }
 
     namespace combo
@@ -247,6 +255,7 @@ namespace twitch
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
                 float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
+
                 draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", true);
                 draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 draw_settings::q_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.color", "Q Color", color);
@@ -259,7 +268,30 @@ namespace twitch
                 draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".draw.r", "Draw R range", true);
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
+
+                draw_settings->add_separator(myhero->get_model() + ".draw.separator1", "");
+                draw_settings::draw_e_stacks = draw_settings->add_checkbox(myhero->get_model() + ".draw.e.stacks", "Draw E Stacks", true);
+                draw_settings::draw_e_stacks->set_texture(myhero->get_passive_icon_texture());
                 draw_settings::draw_damage_e = draw_settings->add_checkbox(myhero->get_model() + "draw.e.damage", "Draw E Damage", true);
+                draw_settings::draw_damage_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+
+                draw_settings->add_separator(myhero->get_model() + ".draw.separator2", "");
+                draw_settings::draw_q_timeleft = draw_settings->add_checkbox(myhero->get_model() + "draw.q.time", "Draw Q Time Left", true);
+                draw_settings::draw_q_timeleft->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+
+                draw_settings::draw_r_timeleft = draw_settings->add_checkbox(myhero->get_model() + "draw.r.time", "Draw R Time Left", true);
+                draw_settings::draw_r_timeleft->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+
+                draw_settings::draw_e_stacks_time = draw_settings->add_checkbox(myhero->get_model() + ".draw.e.stacks.time", "Draw E Stacks Time Left", true);
+                draw_settings::draw_e_stacks_time->set_texture(myhero->get_passive_icon_texture());
+
+
+                draw_settings->add_separator(myhero->get_model() + ".draw.separator3", "");
+                float color1[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+                draw_settings::q_timeleft_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.time.color", "Q Time Left Color", color1);
+                draw_settings::r_timeleft_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.time.color", "R Time Left Color", color1);
+                draw_settings::e_stacks_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.stacks.color", "E Stacks Color", color1);
+                draw_settings::e_stacks_time_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.stacks.time.color", "E Stacks Time Left Color", color1);
             }
         }
 
@@ -656,6 +688,56 @@ namespace twitch
                 if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
                 {
                     draw_dmg_rl(enemy, e->get_damage(enemy), 0x8000ff00);
+                }
+            }
+        }
+
+        if (draw_settings::draw_q_timeleft->get_bool())
+        {
+            auto q_buff = myhero->get_buff(buff_hash("TwitchHideInShadows"));
+
+            if (q_buff != nullptr && q_buff->is_valid() && q_buff->is_alive())
+            {
+                auto pos = myhero->get_position() + vector(100, 100);
+                renderer->world_to_screen(pos, pos);
+                draw_manager->add_text_on_screen(pos, draw_settings::q_timeleft_color->get_color(), 18, "Q Time: [%.1fs]", q_buff->get_remaining_time());
+            }
+        }
+
+        if (draw_settings::draw_r_timeleft->get_bool())
+        {
+            auto r_buff = myhero->get_buff(buff_hash("TwitchFullAutomatic"));
+
+            if (r_buff != nullptr && r_buff->is_valid() && r_buff->is_alive())
+            {
+                auto pos = myhero->get_position() + vector(100, 70);
+                renderer->world_to_screen(pos, pos);
+                draw_manager->add_text_on_screen(pos, draw_settings::r_timeleft_color->get_color(), 18, "R Time: [%.1fs]", r_buff->get_remaining_time());
+            }
+        }
+
+        if (draw_settings::draw_e_stacks->get_bool())
+        {
+            for (auto& enemy : entitylist->get_enemy_heroes())
+            {
+                if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
+                {
+                    int stacks = get_twitch_e_stacks(enemy);
+
+                    if (stacks != 0)
+                    {
+                        auto pos = enemy->get_position() + vector(-60, 20);
+                        renderer->world_to_screen(pos, pos);
+
+                        if (draw_settings::draw_e_stacks_time->get_bool())
+                        {
+                            draw_manager->add_text_on_screen(pos, draw_settings::e_stacks_color->get_color(), 16, "Stacks: %d [%.1fs]", stacks, enemy->get_buff_time_left(buff_hash("TwitchDeadlyVenom")));
+                        }
+                        else
+                        {
+                            draw_manager->add_text_on_screen(pos, draw_settings::e_stacks_color->get_color(), 16, "Stacks: %d", stacks);
+                        }
+                    }
                 }
             }
         }

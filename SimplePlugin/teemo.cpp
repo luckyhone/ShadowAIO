@@ -271,11 +271,11 @@ namespace teemo
 
         // Permashow initialization
         //
-	    {
-	        Permashow::Instance.Init(main_tab);
-	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
-	        Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
-	        Permashow::Instance.AddElement("Auto Q Harass", combo::q_auto_harass);
+        {
+            Permashow::Instance.Init(main_tab);
+            Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+            Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
+            Permashow::Instance.AddElement("Auto Q Harass", combo::q_auto_harass);
         }
 
         // Add anti gapcloser handler
@@ -495,7 +495,7 @@ namespace teemo
         if (target != nullptr)
         {
             auto q_mode = combo::q_mode->get_int();
-            if ((q_mode == 0 && myhero->get_distance(target) > myhero->get_attack_range()) || q_mode == 1)
+            if ((q_mode == 0 && myhero->get_distance(target) > myhero->get_attack_range()) || q_mode == 1 || q->get_damage(target) > target->get_real_health())
             {
                 q->cast(target);
             }
@@ -577,7 +577,7 @@ namespace teemo
                 r->cast(target, hit_chance::immobile);
             }
         }
-        else if (combo::r_auto_on_best_locations->get_bool() && !orbwalker->flee_mode() && !myhero->is_recalling()  && gametime->get_time() > last_r_time)
+        else if (combo::r_auto_on_best_locations->get_bool() && !orbwalker->flee_mode() && !myhero->is_recalling() && gametime->get_time() > last_r_time)
         {
             for (auto& loc : r_best_locations)
             {
@@ -623,14 +623,14 @@ namespace teemo
     {
         switch (entry->get_int())
         {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
+            case 0:
+                return hit_chance::low;
+            case 1:
+                return hit_chance::medium;
+            case 2:
+                return hit_chance::high;
+            case 3:
+                return hit_chance::very_high;
         }
         return hit_chance::medium;
     }
