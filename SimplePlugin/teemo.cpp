@@ -749,7 +749,7 @@ namespace teemo
     {
         if (q->is_ready() && combo::q_mode->get_int() != 1)
         {
-            // Use q to after AA
+            // Use Q after AA
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
             {
                 q->cast(target);
