@@ -731,11 +731,11 @@ namespace twitch
 
                         if (draw_settings::draw_e_stacks_time->get_bool())
                         {
-                            draw_manager->add_text_on_screen(pos, draw_settings::e_stacks_color->get_color(), 16, "Stacks: %d [%.1fs]", stacks, enemy->get_buff_time_left(buff_hash("TwitchDeadlyVenom")));
+                            draw_manager->add_text_on_screen(pos, draw_settings::e_stacks_color->get_color(), 18, "Stacks: %d [%.1fs]", stacks, enemy->get_buff_time_left(buff_hash("TwitchDeadlyVenom")));
                         }
                         else
                         {
-                            draw_manager->add_text_on_screen(pos, draw_settings::e_stacks_color->get_color(), 16, "Stacks: %d", stacks);
+                            draw_manager->add_text_on_screen(pos, draw_settings::e_stacks_color->get_color(), 18, "Stacks: %d", stacks);
                         }
                     }
                 }
