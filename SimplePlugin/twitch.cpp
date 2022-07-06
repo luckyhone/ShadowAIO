@@ -270,7 +270,7 @@ namespace twitch
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
 
                 draw_settings->add_separator(myhero->get_model() + ".draw.separator1", "");
-                draw_settings::draw_e_stacks = draw_settings->add_checkbox(myhero->get_model() + ".draw.e.stacks", "Draw E Stacks", true);
+                draw_settings::draw_e_stacks = draw_settings->add_checkbox(myhero->get_model() + ".draw.e.stacks", "Draw Passive Stacks", true);
                 draw_settings::draw_e_stacks->set_texture(myhero->get_passive_icon_texture());
                 draw_settings::draw_damage_e = draw_settings->add_checkbox(myhero->get_model() + "draw.e.damage", "Draw E Damage", true);
                 draw_settings::draw_damage_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -282,7 +282,7 @@ namespace twitch
                 draw_settings::draw_r_timeleft = draw_settings->add_checkbox(myhero->get_model() + "draw.r.time", "Draw R Time Left", true);
                 draw_settings::draw_r_timeleft->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
 
-                draw_settings::draw_e_stacks_time = draw_settings->add_checkbox(myhero->get_model() + ".draw.e.stacks.time", "Draw E Stacks Time Left", true);
+                draw_settings::draw_e_stacks_time = draw_settings->add_checkbox(myhero->get_model() + ".draw.e.stacks.time", "Draw Passive Stacks Time Left", true);
                 draw_settings::draw_e_stacks_time->set_texture(myhero->get_passive_icon_texture());
 
 
@@ -290,8 +290,8 @@ namespace twitch
                 float color1[] = { 1.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::q_timeleft_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.time.color", "Q Time Left Color", color1);
                 draw_settings::r_timeleft_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.time.color", "R Time Left Color", color1);
-                draw_settings::e_stacks_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.stacks.color", "E Stacks Color", color1);
-                draw_settings::e_stacks_time_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.stacks.time.color", "E Stacks Time Left Color", color1);
+                draw_settings::e_stacks_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.stacks.color", "Passive Stacks Color", color1);
+                draw_settings::e_stacks_time_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.stacks.time.color", "Passive Stacks Time Left Color", color1);
             }
         }
 
