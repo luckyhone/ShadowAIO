@@ -894,7 +894,7 @@ namespace missfortune
             return;
         }
 
-        if (antigapclose::use_e->get_bool() && e->is_ready())
+        if (antigapclose::use_e->get_bool() && e->is_ready() && !myhero->is_under_enemy_turret())
         {
             if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
             {

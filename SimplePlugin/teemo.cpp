@@ -28,6 +28,7 @@ namespace teemo
     namespace combo
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* q_mode = nullptr;
         TreeEntry* q_auto_harass = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_target_is_above_range = nullptr;
@@ -169,13 +170,14 @@ namespace teemo
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 auto q_config = combo->add_tab(myhero->get_model() + "combo.q.config", "Q Config");
                 {
-                    combo::q_auto_harass = q_config->add_hotkey(myhero->get_model() + ".combo.q.config", "Auto Q harass", TreeHotkeyMode::Toggle, 'A', true);
+                    combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "Q Mode", { {"If enemy above AA range or After AA", nullptr}, {"In Combo", nullptr}, {"After AA", nullptr } }, 0);
+                    combo::q_auto_harass = q_config->add_hotkey(myhero->get_model() + ".combo.q.config", "Auto Q harass", TreeHotkeyMode::Toggle, 'A', false);
                 }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 auto w_config = combo->add_tab(myhero->get_model() + "combo.w.config", "W Config");
                 {
-                    combo::w_target_is_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_is_above_range", "Target is above range", 400, 0, myhero->get_attack_range());
+                    combo::w_target_is_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_is_above_range", "Target is above range", 400, 0, 800);
                     combo::w_check_if_target_is_not_facing = w_config->add_checkbox(myhero->get_model() + ".combo.w.check_if_target_is_not_facing", "Only if target is not facing myhero", true);
                 }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
@@ -491,10 +493,25 @@ namespace teemo
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (myhero->get_distance(target) > myhero->get_attack_range())
+            auto q_mode = combo::q_mode->get_int();
+            if ((q_mode == 0 && myhero->get_distance(target) > myhero->get_attack_range()) || q_mode == 1)
             {
                 q->cast(target);
             }
+        }
+    }
+#pragma endregion
+
+#pragma region q_logic_auto
+    void q_logic_auto()
+    {
+        // Get a target from a given range
+        auto target = target_selector->get_target(q->range(), damage_type::magical);
+
+        // Always check an object is not a nullptr!
+        if (target != nullptr)
+        {
+            q->cast(target);
         }
     }
 #pragma endregion
@@ -503,7 +520,7 @@ namespace teemo
     void w_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(myhero->get_attack_range() + 50, damage_type::magical);
+        auto target = target_selector->get_target(myhero->get_attack_range() + 150, damage_type::magical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
@@ -729,7 +746,7 @@ namespace teemo
 
     void on_after_attack(game_object_script target)
     {
-        if (q->is_ready())
+        if (q->is_ready() && combo::q_mode->get_int() != 1)
         {
             // Use q to after AA
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
