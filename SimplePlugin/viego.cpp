@@ -62,6 +62,7 @@ namespace viego
 
     namespace fleemode
     {
+        TreeEntry* use_w;
         TreeEntry* use_e;
     }
 
@@ -193,6 +194,8 @@ namespace viego
 
             auto fleemode = main_tab->add_tab(myhero->get_model() + ".flee", "Flee Mode");
             {
+                fleemode::use_w = fleemode->add_checkbox(myhero->get_model() + ".flee.w", "Use W", true);
+                fleemode::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 fleemode::use_e = fleemode->add_checkbox(myhero->get_model() + ".flee.e", "Use E", true);
                 fleemode::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
@@ -450,11 +453,21 @@ namespace viego
             // Checking if the user has selected flee_mode() (Default Z)
             if (orbwalker->flee_mode())
             {
+                if (w->is_ready() && fleemode::use_w->get_bool())
+                {
+                    if (w->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
+                    {
+                        return;
+                    }
+                }
                 if (!w->is_charging())
                 {
                     if (e->is_ready() && fleemode::use_e->get_bool())
                     {
-                        e->cast();
+                        if (e->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
+                        {
+                            return;
+                        }
                     }
                 }
             }
@@ -738,28 +751,22 @@ namespace viego
 
     int get_viego_r_damage(game_object_script target)
     {
-        float damage = 0;
-        if (r->level() > 0)
-        {
-            float r_damage[] = { 12.0f, 16.0f, 20.0f };
-            damage_input input;
+        float r_damage[] = { 12.0f, 16.0f, 20.0f };
+        float base_dmg = (1.2f * total_ad) * (1.0f + crit);
 
-            float base_dmg = (1.2f * total_ad) * (1.0f + crit);
+        float base_percent_dmg = r_damage[r->level() - 1];
+        base_percent_dmg += (additional_ad * 0.03);
 
-            float base_percent_dmg = r_damage[r->level() - 1];
-            base_percent_dmg += (additional_ad * 0.03);
+        float health = target->get_health();
+        float max_health = target->get_max_health();
+        float missing_health = max_health - health;
+        float missing_health_damage = (base_percent_dmg / 100) * missing_health;
 
-            float health = target->get_health();
-            float max_health = target->get_max_health();
-            float missing_health = max_health - health;
-            float missing_health_damage = (base_percent_dmg / 100) * missing_health;
+        //if (target->is_visible_on_screen())
+        //    console->print("My Total AD: [%.1f] | My Additional AD: [%.1f] | My Crit: [%.1f] | Base DMG: [%.1f] | Base percent DMG: [%.1f] | Missing Health DMG: [%.1f]", total_ad, additional_ad, crit, base_dmg, base_percent_dmg, missing_health_damage);
 
-            //if (target->is_visible_on_screen())
-            //    console->print("My Total AD: [%.1f] | My Additional AD: [%.1f] | My Crit: [%.1f] | Base DMG: [%.1f] | Base percent DMG: [%.1f] | Missing Health DMG: [%.1f]", total_ad, additional_ad, crit, base_dmg, base_percent_dmg, missing_health_damage);
-
-            input.raw_physical_damage = base_dmg + missing_health_damage;
-            damage = damagelib->calculate_damage_on_unit(myhero, target, &input) + myhero->get_auto_attack_damage(target);
-        }
-        return damage;
+        damage_input input;
+        input.raw_physical_damage = base_dmg + missing_health_damage;
+        return damagelib->calculate_damage_on_unit(myhero, target, &input) + myhero->get_auto_attack_damage(target);
     }
 };
