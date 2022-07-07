@@ -337,13 +337,7 @@ namespace viego
                                 //console->print("Spell %d: %s", i, spell->get_name().c_str());
 
                                 float* castrange = spell->get_spell_data()->CastRange();
-                                float* castradius = spell->get_spell_data()->CastRadius();
-                                float delay = std::max(0.35f, spell->get_spell_data()->mCastTime());
                                 float range = *castrange > 1200.0f ? 1200.0f : *castrange;
-                                float radius = *castradius < 50.0f ? 200.0f : *castradius;
-                                float speed = spell->get_spell_data()->MissileSpeed() < 200.0f ? FLT_MAX : spell->get_spell_data()->MissileSpeed();
-
-                                //console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", delay, range, radius, speed, spell->get_spell_data()->get_targeting_type());
 
                                 // Get a target from a given range
                                 auto target = target_selector->get_target(range, damage_type::physical);
@@ -365,6 +359,14 @@ namespace viego
                                     }
                                     else
                                     {
+                                        float* castradius = spell->get_spell_data()->CastRadius();
+                                        float delay = std::max(0.35f, spell->get_spell_data()->mCastTime());
+                                        float radius = *castradius < 50.0f ? 200.0f : *castradius;
+                                        float speed = spell->get_spell_data()->MissileSpeed() < 200.0f ? FLT_MAX : spell->get_spell_data()->MissileSpeed();
+
+                                        //console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", delay, range, radius, speed, spell->get_spell_data()->get_targeting_type());
+
+
                                         prediction_input x;
 
                                         x._from = myhero->get_position();
@@ -739,19 +741,21 @@ namespace viego
         float damage = 0;
         if (r->level() > 0)
         {
-            int r_damage[] = { 12, 16, 20 };
+            float r_damage[] = { 12.0f, 16.0f, 20.0f };
             damage_input input;
 
-            float base_dmg = (total_ad * 1.20);
-            base_dmg += crit * (1 + 0.20f);
+            float base_dmg = (1.2f * total_ad) * (1.0f + crit);
 
-            int base_percent_dmg = r_damage[std::min(3, r->level() - 1)];
+            float base_percent_dmg = r_damage[r->level() - 1];
             base_percent_dmg += (additional_ad * 0.03);
 
             float health = target->get_health();
             float max_health = target->get_max_health();
             float missing_health = max_health - health;
             float missing_health_damage = (base_percent_dmg / 100) * missing_health;
+
+            //if (target->is_visible_on_screen())
+            //    console->print("My Total AD: [%.1f] | My Additional AD: [%.1f] | My Crit: [%.1f] | Base DMG: [%.1f] | Base percent DMG: [%.1f] | Missing Health DMG: [%.1f]", total_ad, additional_ad, crit, base_dmg, base_percent_dmg, missing_health_damage);
 
             input.raw_physical_damage = base_dmg + missing_health_damage;
             damage = damagelib->calculate_damage_on_unit(myhero, target, &input) + myhero->get_auto_attack_damage(target);
