@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "viego.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace viego
@@ -367,8 +368,7 @@ namespace viego
                                         float radius = *castradius < 50.0f ? 200.0f : *castradius;
                                         float speed = spell->get_spell_data()->MissileSpeed() < 200.0f ? FLT_MAX : spell->get_spell_data()->MissileSpeed();
 
-                                        //console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", delay, range, radius, speed, spell->get_spell_data()->get_targeting_type());
-
+                                        //console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", delay, range, radius, speed, spell->get_spell_data()->get_targeting_type
 
                                         prediction_input x;
 
@@ -617,7 +617,7 @@ namespace viego
         auto target = target_selector->get_target(r->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && target->is_attack_allowed_on_target() && can_use_r_on(target))
+        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && can_use_r_on(target))
         {
             if (get_viego_r_damage(target) > target->get_real_health())
             {
@@ -634,7 +634,7 @@ namespace viego
         auto target = target_selector->get_target(r->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && target->is_attack_allowed_on_target() && can_use_r_on(target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool() || get_viego_r_damage(target) > target->get_real_health()))
+        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && can_use_r_on(target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool() || get_viego_r_damage(target) > target->get_real_health()))
         {
             r->cast(target, get_hitchance(hitchance::r_hitchance));
         }

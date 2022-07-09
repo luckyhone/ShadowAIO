@@ -82,6 +82,9 @@
     <ClCompile Include="viego.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -154,6 +157,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="viego.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

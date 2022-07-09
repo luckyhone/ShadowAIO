@@ -178,6 +178,7 @@
     <ClCompile Include="trundle.cpp" />
     <ClCompile Include="tryndamere.cpp" />
     <ClCompile Include="twitch.cpp" />
+    <ClCompile Include="utils.cpp" />
     <ClCompile Include="vex.cpp" />
     <ClCompile Include="viego.cpp" />
   </ItemGroup>
@@ -204,6 +205,7 @@
     <ClInclude Include="trundle.h" />
     <ClInclude Include="tryndamere.h" />
     <ClInclude Include="twitch.h" />
+    <ClInclude Include="utils.h" />
     <ClInclude Include="vex.h" />
     <ClInclude Include="viego.h" />
   </ItemGroup>
