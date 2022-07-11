@@ -280,23 +280,28 @@ namespace viego
             return;
         }
 
-        if (combo::auto_catch_soul->get_bool())
-        {
-            for (auto& object : entitylist->get_all_minions())
-            {
-                if (object->is_valid() && !object->is_dead() && object->is_attack_allowed_on_target() && myhero->get_distance(object) < myhero->get_attack_range() - 25 && object->get_model() == "ViegoSoul")
-                {
-                    myhero->issue_order(object);
-                    return;
-                }
-            }
-        }
-
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
+            if (combo::auto_catch_soul->get_bool())
+            {
+                for (auto& object : entitylist->get_all_minions())
+                {
+                    if (object->is_valid() && !object->is_dead() && object->is_attack_allowed_on_target() && myhero->get_distance(object) < myhero->get_attack_range() - 25 && object->get_model() == "ViegoSoul")
+                    {
+                        orbwalker->set_attack(false);
+                        orbwalker->set_movement(false);
+                        myhero->issue_order(object);
+                        return;
+                    }
+                }
+
+                orbwalker->set_attack(true);
+                orbwalker->set_movement(true);
+            }
+
             if (r->is_ready() && combo::r_semi_manual_cast->get_bool())
             {
                 r_logic_semi();
@@ -617,7 +622,7 @@ namespace viego
         auto target = target_selector->get_target(r->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && can_use_r_on(target))
+        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && can_use_r_on(target))
         {
             if (get_viego_r_damage(target) > target->get_real_health())
             {
@@ -634,7 +639,7 @@ namespace viego
         auto target = target_selector->get_target(r->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && can_use_r_on(target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool() || get_viego_r_damage(target) > target->get_real_health()))
+        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && can_use_r_on(target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool() || get_viego_r_damage(target) > target->get_real_health()))
         {
             r->cast(target, get_hitchance(hitchance::r_hitchance));
         }

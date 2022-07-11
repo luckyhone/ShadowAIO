@@ -5,5 +5,6 @@ namespace utils
 {
 
 	bool has_unkillable_buff(game_object_script target);
+	bool has_untargetable_buff(game_object_script target);
 };
 

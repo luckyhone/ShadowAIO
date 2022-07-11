@@ -30,6 +30,9 @@ namespace draven
         TreeEntry* use_q = nullptr;
         TreeEntry* q_max_active_axes = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_cast_while_chasing = nullptr;
+        TreeEntry* w_target_above_range = nullptr;
+        TreeEntry* w_cast_before_catching_axe = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_mode = nullptr;
         TreeEntry* e_max_range = nullptr;
@@ -166,12 +169,18 @@ namespace draven
                 }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
+                {
+                    combo::w_cast_while_chasing = w_config->add_checkbox(myhero->get_model() + ".combo.w.cast_while_chasing", "Cast W while chasing enemy", true);
+                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Cast if target is above range", 300, 0, 800);
+                    combo::w_cast_before_catching_axe = w_config->add_checkbox(myhero->get_model() + ".combo.w.cast_before_catching_axe", "Cast W before catching axe", false);
+                }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
                     combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"In Combo", nullptr},{"After AA", nullptr } }, 1);
-                    combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "Maximum R Range", e->range() - 100.0f, 1, e->range());
+                    combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "Maximum E Range", 800.0f, 1, e->range());
                     combo::e_spell_interrupter = e_config->add_checkbox(myhero->get_model() + ".combo.e.spell_interrupter", "Auto E spell interrupter", true);
                 }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
@@ -405,6 +414,9 @@ namespace draven
                             if (myhero->get_distance(front.object) < 175)
                             {
                                 orbwalker->set_attack(false);
+                                if (w->is_ready() && combo::w_cast_before_catching_axe->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff"))) {
+                                    w->cast();
+                                }
                             }
                             if (myhero->get_distance(front.object) > catch_axes_settings::move_to_axe_max_distance->get_int())
                             {
@@ -595,14 +607,17 @@ namespace draven
     void w_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(1200, damage_type::physical);
+        auto target = target_selector->get_target(1100, damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && combo::w_cast_while_chasing->get_bool())
         {
-            if (!myhero->has_buff(buff_hash("dravenfurybuff")))
+            if (target->get_distance(myhero) > combo::w_target_above_range->get_int())
             {
-                w->cast();
+                if (!myhero->has_buff(buff_hash("dravenfurybuff")))
+                {
+                    w->cast();
+                }
             }
         }
     }
