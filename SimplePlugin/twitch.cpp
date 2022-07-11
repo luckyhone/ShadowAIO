@@ -42,6 +42,7 @@ namespace twitch
         TreeEntry* use_w = nullptr;
         TreeEntry* w_dont_use_on_q = nullptr;
         TreeEntry* w_dont_use_on_r = nullptr;
+        TreeEntry* w_dont_use_if_killable_by_x_aa = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_if_target_leaving_range = nullptr;
         TreeEntry* e_leaving_range_minimum_stacks = nullptr;
@@ -156,6 +157,7 @@ namespace twitch
                     combo::w_dont_use_on_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                     combo::w_dont_use_on_r = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_on_r", "Dont use W on R", true);
                     combo::w_dont_use_on_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+                    combo::w_dont_use_if_killable_by_x_aa = w_config->add_slider(myhero->get_model() + ".combo.w.dont_use_if_killable_by_x_aa", "Dont use W if killable by x AA", 2, 0, 4);
                 }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E on Killable", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -518,7 +520,10 @@ namespace twitch
         {
             if ((!combo::w_dont_use_on_q->get_bool() || !myhero->has_buff(buff_hash("TwitchHideInShadows"))) && (!combo::w_dont_use_on_r->get_bool() || !myhero->has_buff(buff_hash("TwitchFullAutomatic"))))
             {
-                w->cast(target, get_hitchance(hitchance::w_hitchance));
+                int value = combo::w_dont_use_if_killable_by_x_aa->get_int();
+                if (value == 0 || myhero->get_auto_attack_damage(target) * value < target->get_real_health()) {
+                    w->cast(target, get_hitchance(hitchance::w_hitchance));
+                }
             }
         }
     }
