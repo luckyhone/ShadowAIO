@@ -39,6 +39,7 @@ namespace viego
         TreeEntry* r_semi_manual_cast = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
         TreeEntry* auto_catch_soul = nullptr;
+        TreeEntry* max_soul_distance = nullptr;
         TreeEntry* simple_spell_usage_on_soul = nullptr;
     }
 
@@ -112,7 +113,7 @@ namespace viego
         w->set_charged(500.0f, 900.0f, 1.0f);
         e = plugin_sdk->register_spell(spellslot::e, 775);
         r = plugin_sdk->register_spell(spellslot::r, 500);
-        r->set_skillshot(0.50f, 300.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+        r->set_skillshot(0.50f, 275.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -163,6 +164,12 @@ namespace viego
                 {
                     combo::auto_catch_soul = passive_config->add_checkbox(myhero->get_model() + ".combo.passive.auto_soul_catch", "Auto Soul Catch", true);
                     combo::auto_catch_soul->set_texture(myhero->get_passive_icon_texture());
+
+                    auto auto_catch_soul_config = combo->add_tab(myhero->get_model() + "combo.passive.auto_soul_catch.config", "Soul Catch Config");
+                    {
+                        combo::max_soul_distance = auto_catch_soul_config->add_slider("combo.passive.auto_soul_catch.max_distance", "Max distance to soul", 225, 100, 600);
+                    }
+
                     combo::simple_spell_usage_on_soul = passive_config->add_checkbox(myhero->get_model() + ".combo.passive.auto_soul_spell_usage", "Simple Soul Spell Usage", true);
                     combo::simple_spell_usage_on_soul->set_texture(myhero->get_passive_icon_texture());
                 }
@@ -289,16 +296,14 @@ namespace viego
             {
                 for (auto& object : entitylist->get_all_minions())
                 {
-                    if (object->is_valid() && !object->is_dead() && object->is_attack_allowed_on_target() && myhero->get_distance(object) < myhero->get_attack_range() - 25 && object->get_model() == "ViegoSoul")
+                    if (object->is_valid() && !object->is_dead() && object->is_attack_allowed_on_target() && myhero->get_distance(object) <= combo::max_soul_distance->get_int() && object->get_model() == "ViegoSoul")
                     {
-                        orbwalker->set_attack(false);
                         orbwalker->set_movement(false);
                         myhero->issue_order(object);
                         return;
                     }
                 }
 
-                orbwalker->set_attack(true);
                 orbwalker->set_movement(true);
             }
 
@@ -307,8 +312,7 @@ namespace viego
                 r_logic_semi();
             }
 
-            std::string champion_name = myhero->get_character_data()->get_base_skin_name();
-            bool is_viego = champion_name == "Viego";
+            bool is_viego = myhero->get_character_data()->get_base_skin_name() == "Viego";
 
             if (is_viego)
             {
@@ -324,17 +328,16 @@ namespace viego
                 {
                     if (r->is_ready() && combo::use_r->get_bool())
                     {
-                        auto buff = myhero->get_buff(buff_hash("viegopassivetransform"));
-
                         r_logic();
 
+                        auto buff = myhero->get_buff(buff_hash("viegopassivetransform"));
                         if ((!q->is_ready() && !w->is_ready() && !e->is_ready()) || (buff != nullptr && buff->is_valid() && buff->is_alive() && buff->get_remaining_time() < 1.0))
                         {
                             r_logic_semi();
                         }
                     }
 
-                    if (combo::simple_spell_usage_on_soul->get_bool())
+                    if (combo::simple_spell_usage_on_soul->get_bool() && orbwalker->can_move(0.25f))
                     {
                         for (int i = 0; i < 3; i++)
                         {
@@ -343,16 +346,16 @@ namespace viego
 
                             if (spell != nullptr && myhero->get_spell_state(slot) == spell_state::Ready)
                             {
-                                //console->print("Spell %d: %s", i, spell->get_name().c_str());
+                                console->print("Spell %d: %s", i, spell->get_name().c_str());
 
                                 float* castrange = spell->get_spell_data()->CastRange();
-                                float range = *castrange > 1200.0f ? 1200.0f : *castrange;
+                                float range = std::max(200.0f, std::min(900.0f, *castrange));
 
                                 // Get a target from a given range
                                 auto target = target_selector->get_target(range, damage_type::physical);
 
                                 // Always check an object is not a nullptr!
-                                if (target != nullptr && orbwalker->can_move(0.50f))
+                                if (target != nullptr)
                                 {
                                     spell_targeting type = spell->get_spell_data()->get_targeting_type();
 
@@ -369,11 +372,11 @@ namespace viego
                                     else
                                     {
                                         float* castradius = spell->get_spell_data()->CastRadius();
-                                        float delay = std::max(0.35f, spell->get_spell_data()->mCastTime());
-                                        float radius = *castradius < 50.0f ? 200.0f : *castradius;
-                                        float speed = spell->get_spell_data()->MissileSpeed() < 200.0f ? FLT_MAX : spell->get_spell_data()->MissileSpeed();
+                                        float delay = std::max(0.25f, spell->get_spell_data()->mCastTime());
+                                        float radius = *castradius <= 50.0f ? 200.0f : *castradius;
+                                        float speed = spell->get_spell_data()->MissileSpeed() <= 250.0f ? FLT_MAX : spell->get_spell_data()->MissileSpeed();
 
-                                        //console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", delay, range, radius, speed, spell->get_spell_data()->get_targeting_type
+                                        console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", spell->get_spell_data()->mCastTime(), *castrange, spell->get_spell_data()->CastRadius(), spell->get_spell_data()->MissileSpeed(), (unsigned char) spell->get_spell_data()->get_targeting_type());
 
                                         prediction_input x;
 
