@@ -362,12 +362,10 @@ namespace viego
                                     if (type == spell_targeting::target)
                                     {
                                         myhero->cast_spell(slot, target);
-                                        return;
                                     }
                                     else if (type == spell_targeting::self || type == spell_targeting::self_aoe)
                                     {
                                         myhero->cast_spell(slot, myhero);
-                                        return;
                                     }
                                     else
                                     {
@@ -398,8 +396,6 @@ namespace viego
                                         {
                                             myhero->cast_spell(slot, output.get_cast_position());
                                         }
-
-                                        return;
                                     }
                                 }
                             }
