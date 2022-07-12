@@ -346,7 +346,7 @@ namespace viego
 
                             if (spell != nullptr && myhero->get_spell_state(slot) == spell_state::Ready)
                             {
-                                console->print("Spell %d: %s", i, spell->get_name().c_str());
+                                //console->print("Spell %d: %s", i, spell->get_name().c_str());
 
                                 float* castrange = spell->get_spell_data()->CastRange();
                                 float range = std::max(200.0f, std::min(900.0f, *castrange));
@@ -376,7 +376,7 @@ namespace viego
                                         float radius = *castradius <= 50.0f ? 200.0f : *castradius;
                                         float speed = spell->get_spell_data()->MissileSpeed() <= 250.0f ? FLT_MAX : spell->get_spell_data()->MissileSpeed();
 
-                                        console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", spell->get_spell_data()->mCastTime(), *castrange, spell->get_spell_data()->CastRadius(), spell->get_spell_data()->MissileSpeed(), (unsigned char) spell->get_spell_data()->get_targeting_type());
+                                        //console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", spell->get_spell_data()->mCastTime(), *castrange, spell->get_spell_data()->CastRadius(), spell->get_spell_data()->MissileSpeed(), (unsigned char) spell->get_spell_data()->get_targeting_type());
 
                                         prediction_input x;
 
