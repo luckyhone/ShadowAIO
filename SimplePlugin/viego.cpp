@@ -148,7 +148,7 @@ namespace viego
                 {
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_include_aa_in_damage_calculation = r_config->add_slider("combo.r.include_aa_in_damage_calculation", "Include x AA in R damage calculation", 1, 0, 3);
-                    combo::r_use_before_expire = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_before_expire", "Use R before expire", true);
+                    combo::r_use_before_expire = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_before_expire", "Use R before expire on soul", true);
                     
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
