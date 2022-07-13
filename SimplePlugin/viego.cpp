@@ -37,6 +37,8 @@ namespace viego
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
+        TreeEntry* r_include_aa_in_damage_calculation = nullptr;
+        TreeEntry* r_use_before_expire = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
         TreeEntry* auto_catch_soul = nullptr;
         TreeEntry* max_soul_distance = nullptr;
@@ -145,6 +147,9 @@ namespace viego
                 auto r_config = combo->add_tab(myhero->get_model() + "combo.r.config", "R Config");
                 {
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
+                    combo::r_include_aa_in_damage_calculation = r_config->add_slider("combo.r.include_aa_in_damage_calculation", "Include x AA in R damage calculation", 1, 0, 3);
+                    combo::r_use_before_expire = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_before_expire", "Use R before expire", true);
+                    
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
                         for (auto&& enemy : entitylist->get_enemy_heroes())
@@ -331,7 +336,7 @@ namespace viego
                         r_logic();
 
                         auto buff = myhero->get_buff(buff_hash("viegopassivetransform"));
-                        if ((!q->is_ready() && !w->is_ready() && !e->is_ready()) || (buff != nullptr && buff->is_valid() && buff->is_alive() && buff->get_remaining_time() < 1.0))
+                        if ((!q->is_ready() && !w->is_ready() && !e->is_ready()) || (combo::r_use_before_expire->get_bool() && buff != nullptr && buff->is_valid() && buff->is_alive() && buff->get_remaining_time() <= 2.0))
                         {
                             r_logic_semi();
                         }
@@ -346,10 +351,10 @@ namespace viego
 
                             if (spell != nullptr && myhero->get_spell_state(slot) == spell_state::Ready)
                             {
-                                //console->print("Spell %d: %s", i, spell->get_name().c_str());
-
+                                bool channeling = spell->get_spell_data()->mUseChargeChanneling();
                                 float* castrange = spell->get_spell_data()->CastRange();
                                 float range = std::max(200.0f, std::min(900.0f, *castrange));
+                                //console->print("Spell %d: %s  Channeling: [%s]", i, spell->get_name().c_str(), channeling ? "true" : "false");
 
                                 // Get a target from a given range
                                 auto target = target_selector->get_target(range, damage_type::physical);
@@ -361,11 +366,11 @@ namespace viego
 
                                     if (type == spell_targeting::target)
                                     {
-                                        myhero->cast_spell(slot, target);
+                                        myhero->cast_spell(slot, target, true, channeling);
                                     }
                                     else if (type == spell_targeting::self || type == spell_targeting::self_aoe)
                                     {
-                                        myhero->cast_spell(slot, myhero);
+                                        myhero->cast_spell(slot, myhero, true, channeling);
                                     }
                                     else
                                     {
@@ -374,7 +379,7 @@ namespace viego
                                         float radius = *castradius <= 50.0f ? 200.0f : *castradius;
                                         float speed = spell->get_spell_data()->MissileSpeed() <= 250.0f ? FLT_MAX : spell->get_spell_data()->MissileSpeed();
 
-                                        //console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", spell->get_spell_data()->mCastTime(), *castrange, spell->get_spell_data()->CastRadius(), spell->get_spell_data()->MissileSpeed(), (unsigned char) spell->get_spell_data()->get_targeting_type());
+                                        //console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", spell->get_spell_data()->mCastTime(), *castrange, spell->get_spell_data()->CastRadius(), spell->get_spell_data()->MissileSpeed(), (unsigned char)spell->get_spell_data()->get_targeting_type());
 
                                         prediction_input x;
 
@@ -394,7 +399,7 @@ namespace viego
 
                                         if (output.hitchance > hit_chance::high)
                                         {
-                                            myhero->cast_spell(slot, output.get_cast_position());
+                                            myhero->cast_spell(slot, output.get_cast_position(), true, channeling);
                                         }
                                     }
                                 }
@@ -771,6 +776,7 @@ namespace viego
 
         damage_input input;
         input.raw_physical_damage = base_dmg + missing_health_damage;
-        return damagelib->calculate_damage_on_unit(myhero, target, &input) + myhero->get_auto_attack_damage(target);
+
+        return damagelib->calculate_damage_on_unit(myhero, target, &input) + (myhero->get_auto_attack_damage(target) * combo::r_include_aa_in_damage_calculation->get_int());
     }
 };
