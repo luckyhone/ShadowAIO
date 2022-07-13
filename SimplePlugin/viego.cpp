@@ -342,7 +342,7 @@ namespace viego
                         }
                     }
 
-                    if (combo::simple_spell_usage_on_soul->get_bool() && orbwalker->can_move(0.25f))
+                    if (combo::simple_spell_usage_on_soul->get_bool() && orbwalker->can_move(0.15f))
                     {
                         for (int i = 0; i < 3; i++)
                         {
@@ -776,7 +776,6 @@ namespace viego
 
         damage_input input;
         input.raw_physical_damage = base_dmg + missing_health_damage;
-
         return damagelib->calculate_damage_on_unit(myhero, target, &input) + (myhero->get_auto_attack_damage(target) * combo::r_include_aa_in_damage_calculation->get_int());
     }
 };
