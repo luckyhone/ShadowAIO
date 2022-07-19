@@ -41,6 +41,7 @@ namespace viego
         TreeEntry* r_use_before_expire = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
         TreeEntry* auto_catch_soul = nullptr;
+        TreeEntry* force_catch_soul = nullptr;
         TreeEntry* max_soul_distance = nullptr;
         TreeEntry* simple_spell_usage_on_soul = nullptr;
     }
@@ -169,6 +170,7 @@ namespace viego
                 {
                     combo::auto_catch_soul = passive_config->add_checkbox(myhero->get_model() + ".combo.passive.auto_soul_catch", "Auto Soul Catch", true);
                     combo::auto_catch_soul->set_texture(myhero->get_passive_icon_texture());
+                    combo::force_catch_soul = passive_config->add_checkbox(myhero->get_model() + ".combo.passive.force_catch_soul", "Force Soul Catch", true);
 
                     auto auto_catch_soul_config = combo->add_tab(myhero->get_model() + "combo.passive.auto_soul_catch.config", "Soul Catch Config");
                     {
@@ -304,12 +306,16 @@ namespace viego
                     if (object->is_valid() && !object->is_dead() && object->is_attack_allowed_on_target() && myhero->get_distance(object) <= combo::max_soul_distance->get_int() && object->get_model() == "ViegoSoul")
                     {
                         orbwalker->set_movement(false);
+                        if (combo::force_catch_soul->get_bool())
+                            orbwalker->set_attack(false);
                         myhero->issue_order(object);
                         return;
                     }
                 }
 
                 orbwalker->set_movement(true);
+                if (combo::force_catch_soul->get_bool())
+                    orbwalker->set_attack(true);
             }
 
             if (r->is_ready() && combo::r_semi_manual_cast->get_bool())
