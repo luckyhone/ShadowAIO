@@ -348,7 +348,7 @@ namespace viego
                         }
                     }
 
-                    if (combo::simple_spell_usage_on_soul->get_bool() && orbwalker->can_move(0.15f))
+                    if (combo::simple_spell_usage_on_soul->get_bool() && orbwalker->can_move(0.20f))
                     {
                         for (int i = 0; i < 3; i++)
                         {

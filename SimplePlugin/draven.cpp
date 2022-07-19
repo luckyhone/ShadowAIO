@@ -31,6 +31,7 @@ namespace draven
         TreeEntry* q_max_active_axes = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_cast_while_chasing = nullptr;
+        TreeEntry* w_cast_in_fight = nullptr;
         TreeEntry* w_target_above_range = nullptr;
         TreeEntry* w_cast_before_catching_axe = nullptr;
         TreeEntry* use_e = nullptr;
@@ -172,6 +173,7 @@ namespace draven
                 auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
                     combo::w_cast_while_chasing = w_config->add_checkbox(myhero->get_model() + ".combo.w.cast_while_chasing", "Cast W while chasing enemy", true);
+                    combo::w_cast_in_fight = w_config->add_checkbox(myhero->get_model() + ".combo.w.cast_in_fight", "Cast W in fight", true);
                     combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Cast if target is above range", 300, 0, 800);
                     combo::w_cast_before_catching_axe = w_config->add_checkbox(myhero->get_model() + ".combo.w.cast_before_catching_axe", "Cast W before catching axe", false);
                 }
@@ -414,7 +416,7 @@ namespace draven
                             if (myhero->get_distance(front.object) < 175)
                             {
                                 orbwalker->set_attack(false);
-                                if (w->is_ready() && combo::w_cast_before_catching_axe->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff"))) {
+                                if (w->is_ready() && combo::use_w->get_bool() && combo::w_cast_before_catching_axe->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff"))) {
                                     w->cast();
                                 }
                             }
@@ -610,11 +612,21 @@ namespace draven
         auto target = target_selector->get_target(1100, damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && combo::w_cast_while_chasing->get_bool())
+        if (target != nullptr && !myhero->has_buff(buff_hash("dravenfurybuff")))
         {
-            if (target->get_distance(myhero) > combo::w_target_above_range->get_int())
+            if (combo::w_cast_while_chasing->get_bool())
             {
-                if (!myhero->has_buff(buff_hash("dravenfurybuff")))
+                if (target->get_distance(myhero) > combo::w_target_above_range->get_int())
+                {
+                    if (w->cast())
+                    {
+                        return;
+                    }
+                }
+            }
+            if (combo::w_cast_in_fight->get_bool())
+            {
+                if (target->get_distance(myhero) >= myhero->get_attack_range())
                 {
                     w->cast();
                 }
