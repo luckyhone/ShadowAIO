@@ -37,6 +37,7 @@ namespace gwen
 
     namespace combo
     {
+        TreeEntry* allow_tower_dive = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* q_only_on_stacks = nullptr;
         TreeEntry* q_ignore_stacks_if_killable = nullptr;
@@ -46,14 +47,11 @@ namespace gwen
         TreeEntry* use_e = nullptr;
         TreeEntry* e_cast_position_mode = nullptr;
         TreeEntry* e_mode = nullptr;
-        TreeEntry* e_dont_use_under_enemy_turret = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
         TreeEntry* r_max_range = nullptr;
-        TreeEntry* r_delay_between_recast = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
         TreeEntry* r_dont_waste_if_target_hp_below = nullptr;
-        TreeEntry* r_dont_use_under_enemy_turret = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
@@ -90,8 +88,6 @@ namespace gwen
     {
         TreeEntry* r_hitchance = nullptr;
     }
-
-    float last_r_time = 0.0f;
 
     // Event handler functions
     void on_update();
@@ -138,6 +134,7 @@ namespace gwen
 
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
+                combo::allow_tower_dive = combo->add_hotkey(myhero->get_model() + ".combo.allow_tower_dive", "Allow Tower Dive", TreeHotkeyMode::Toggle, 'A', true);
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
 
@@ -163,7 +160,6 @@ namespace gwen
                 {
                     combo::e_cast_position_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.cast_position_mode", "E Cast Position Mode", { {"Cursor Position", nullptr},{"Enemy Position", nullptr } }, 1);
                     combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Usage Mode", { {"If enemy above AA range", nullptr},{"After AA or if enemy above AA range", nullptr } }, 0);
-                    combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".combo.e.dont_use_under_enemy_turret", "Dont use if target is under enemy turret", true);
                 }
 
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
@@ -173,11 +169,9 @@ namespace gwen
                 {
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", 600, 100, r->range());
-                    combo::r_delay_between_recast = r_config->add_slider(myhero->get_model() + ".combo.r.delay_between_recast", "Delay between R recast (in ms)", 750, 0, 3500);
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 50, 0, 100);
                     combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
-                    combo::r_dont_use_under_enemy_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_under_enemy_turret", "Dont use under enemy turret", true);
-
+                    
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
                         for (auto&& enemy : entitylist->get_enemy_heroes())
@@ -279,6 +273,7 @@ namespace gwen
 	        Permashow::Instance.Init(main_tab);
 	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
 	        Permashow::Instance.AddElement("Semi Manual R", combo::r_semi_manual_cast);
+            Permashow::Instance.AddElement("Allow Tower Dive", combo::allow_tower_dive);
         }
 
         // To add a new event you need to define a function and call add_calback
@@ -555,7 +550,7 @@ namespace gwen
         {
             if (myhero->get_distance(target) > myhero->get_attack_range() + 50)
             {
-                if (!combo::e_dont_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
+                if (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool())
                 {
                     if (combo::e_cast_position_mode->get_int() == 0)
                     {
@@ -582,25 +577,22 @@ namespace gwen
         // Always check an object is not a nullptr!
         if (target != nullptr && can_use_r_on(target))
         {
-            if (!combo::r_dont_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret() || is_recast)
+            if (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool() || is_recast)
             {
                 if ((target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int()) || is_recast)
                 {
                     if (myhero->get_distance(target) > 30)
                     {
-                        if (gametime->get_time() - last_r_time > (combo::r_delay_between_recast->get_int() / 1000.0f))
+                        if (is_recast)
                         {
-                            if (is_recast)
+                            if (r2->cast(target, get_hitchance(hitchance::r_hitchance)))
                             {
-                                if (r2->cast(target, get_hitchance(hitchance::r_hitchance)))
-                                {
-                                    last_r_time = gametime->get_time();
-                                }
+                                return;
                             }
-                            else if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
-                            {
-                                last_r_time = gametime->get_time();
-                            }
+                        }
+                        else if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
+                        {
+                            return;
                         }
                     }
                 }
@@ -622,19 +614,16 @@ namespace gwen
         {
             if (myhero->get_distance(target) > 30)
             {
-                if (gametime->get_time() - last_r_time > (combo::r_delay_between_recast->get_int() / 1000.0f))
+                if (is_recast)
                 {
-                    if (is_recast)
+                    if (r2->cast(target, get_hitchance(hitchance::r_hitchance)))
                     {
-                        if (r2->cast(target, get_hitchance(hitchance::r_hitchance)))
-                        {
-                            last_r_time = gametime->get_time();
-                        }
+                        return;
                     }
-                    else if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
-                    {
-                        last_r_time = gametime->get_time();
-                    }
+                }
+                else if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
+                {
+                    return;
                 }
             }
         }
