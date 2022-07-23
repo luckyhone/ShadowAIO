@@ -38,6 +38,7 @@ namespace kayle
 		TreeEntry* e_mode = nullptr;
 		TreeEntry* use_r = nullptr;
 		TreeEntry* r_myhero_hp_under = nullptr;
+		TreeEntry* r_ally_hp_under = nullptr;
 		TreeEntry* r_only_when_enemies_nearby = nullptr;
 		TreeEntry* r_enemies_search_radius = nullptr;
 		TreeEntry* r_calculate_incoming_damage = nullptr;
@@ -147,6 +148,7 @@ namespace kayle
 				auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
 				{
 					combo::r_myhero_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.myhero_hp_under", "Myhero HP is under (in %)", 20, 0, 100);
+					combo::r_ally_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.ally_hp_under", "Ally HP is under (in %)", 15, 0, 100);
 					combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
 					combo::r_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies nearby search radius", 900, 300, 1600);
 					combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
@@ -550,7 +552,7 @@ namespace kayle
 				{
 					if (!ally->has_buff({ buff_hash("UndyingRage"), buff_hash("ChronoShift"), buff_hash("KayleR"), buff_hash("KindredRNoDeathBuff") }))
 					{
-						if ((ally->get_health_percent() < combo::r_myhero_hp_under->get_int()) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
+						if ((ally->get_health_percent() < (ally->is_me() ? combo::r_myhero_hp_under->get_int() : combo::r_ally_hp_under->get_int())) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
 						{
 							if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0)
 							{
