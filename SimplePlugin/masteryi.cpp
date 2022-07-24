@@ -41,6 +41,7 @@ namespace masteryi
 		TreeEntry* r_use_to_chase = nullptr;
 		TreeEntry* r_chase_search_range = nullptr;
 		TreeEntry* r_dont_use_target_under_turret = nullptr;
+		bool previous_evade_state = false;
 	}
 
 	namespace harass
@@ -91,7 +92,6 @@ namespace masteryi
 	void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 	void on_before_attack(game_object_script target, bool* process);
 	void on_after_attack(game_object_script target);
-	void on_buff_gain(game_object_script sender, buff_instance_script buff);
 	void on_buff_lose(game_object_script sender, buff_instance_script buff);
 
 	// Declaring functions responsible for spell-logic
@@ -146,7 +146,7 @@ namespace masteryi
 					combo::w_incoming_damage = w_config->add_checkbox(myhero->get_model() + ".combo.w.incoming_damage", "Use W on Incoming Damage", true);
 					combo::w_incoming_damage_time = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_time", "Set incoming damage time (in ms)", 300, 0, 1000);
 					combo::w_incoming_damage_over_my_hp_in_percent = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_over_my_hp", "Incoming damage is over my HP (in %)", 20, 0, 100);
-					combo::w_incoming_damgae_block_orbwalker_time = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_block_orbwalker_time", "Block orbwalker for (in ms)", 750, 500, 2500);
+					combo::w_incoming_damgae_block_orbwalker_time = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_block_orbwalker_time", "Block orbwalker for (in ms)", 750, 1, 2500);
 				}
 				combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
 				combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -258,7 +258,6 @@ namespace masteryi
 		event_handler<events::on_draw>::add_callback(on_draw);
 		event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
 		event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack);
-		event_handler<events::on_buff_gain>::add_callback(on_buff_gain);
 		event_handler<events::on_buff_lose>::add_callback(on_buff_lose);
 	}
 
@@ -289,7 +288,6 @@ namespace masteryi
 		event_handler<events::on_draw>::remove_handler(on_draw);
 		event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
 		event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack);
-		event_handler<events::on_buff_gain>::remove_handler(on_buff_gain);
 		event_handler<events::on_buff_lose>::remove_handler(on_buff_lose);
 	}
 
@@ -327,7 +325,11 @@ namespace masteryi
 					}
 					orbwalker->set_attack(false);
 					orbwalker->set_movement(false);
-					evade->disable_evade();
+					if (!evade->is_evade_disabled() && !combo::previous_evade_state)
+					{
+						evade->disable_evade();
+						combo::previous_evade_state = true;
+					};
 				}
 			}
 		}
@@ -339,7 +341,11 @@ namespace masteryi
 				block_orbwalker_time = 0.0f;
 				orbwalker->set_attack(true);
 				orbwalker->set_movement(true);
-				evade->enable_evade();
+				if (combo::previous_evade_state)
+				{
+					evade->enable_evade();
+					combo::previous_evade_state = false;
+				}
 			}
 		}
 
@@ -347,7 +353,11 @@ namespace masteryi
 		{
 			orbwalker->set_attack(true);
 			orbwalker->set_movement(true);
-			evade->enable_evade();
+			if (combo::previous_evade_state)
+			{
+				evade->enable_evade();
+				combo::previous_evade_state = false;
+			}
 		}
 
 		// Very important if can_move ( extra_windup ) 
@@ -628,27 +638,6 @@ namespace masteryi
 			}
 		}
 	}
-
-
-	void on_buff_gain(game_object_script sender, buff_instance_script buff)
-	{
-		if (sender->is_me() && buff->get_name() == "Meditate")
-		{
-			is_meditating = true;
-			if (health_prediction->has_turret_aggro(myhero))
-			{
-				block_orbwalker_time = gametime->get_time() + 0.50f;
-			}
-			else
-			{
-				block_orbwalker_time = gametime->get_time() + (combo::w_incoming_damgae_block_orbwalker_time->get_int() / 1000.0f);
-			}
-			orbwalker->set_attack(false);
-			orbwalker->set_movement(false);
-			evade->disable_evade();
-		}
-	}
-
 
 	void on_buff_lose(game_object_script sender, buff_instance_script buff)
 	{
