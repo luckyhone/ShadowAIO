@@ -40,6 +40,7 @@ namespace twitch
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_mode = nullptr;
         TreeEntry* w_dont_use_on_q = nullptr;
         TreeEntry* w_dont_use_on_r = nullptr;
         TreeEntry* w_dont_use_if_killable_by_x_aa = nullptr;
@@ -153,6 +154,7 @@ namespace twitch
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 auto w_config = combo->add_tab(myhero->get_model() + "combo.w.config", "W Config");
                 {
+                    combo::w_mode = w_config->add_combobox(myhero->get_model() + ".combo.w.mode", "W Mode", { {"If enemy above AA range or After AA", nullptr}, {"In Combo", nullptr}, {"After AA", nullptr } }, 0);
                     combo::w_dont_use_on_q = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_on_q", "Dont use W on Q", true);
                     combo::w_dont_use_on_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                     combo::w_dont_use_on_r = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_on_r", "Dont use W on R", true);
@@ -518,11 +520,16 @@ namespace twitch
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if ((!combo::w_dont_use_on_q->get_bool() || !myhero->has_buff(buff_hash("TwitchHideInShadows"))) && (!combo::w_dont_use_on_r->get_bool() || !myhero->has_buff(buff_hash("TwitchFullAutomatic"))))
+            auto w_mode = combo::w_mode->get_int();
+            if ((w_mode == 0 && myhero->get_distance(target) > myhero->get_attack_range()) || w_mode == 1)
             {
-                int value = combo::w_dont_use_if_killable_by_x_aa->get_int();
-                if (value == 0 || myhero->get_auto_attack_damage(target) * value < target->get_real_health()) {
-                    w->cast(target, get_hitchance(hitchance::w_hitchance));
+                if ((!combo::w_dont_use_on_q->get_bool() || !myhero->has_buff(buff_hash("TwitchHideInShadows"))) && (!combo::w_dont_use_on_r->get_bool() || !myhero->has_buff(buff_hash("TwitchFullAutomatic"))))
+                {
+                    int value = combo::w_dont_use_if_killable_by_x_aa->get_int();
+                    if (value == 0 || myhero->get_auto_attack_damage(target) * value < target->get_real_health())
+                    {
+                        w->cast(target, get_hitchance(hitchance::w_hitchance));
+                    }
                 }
             }
         }
@@ -750,7 +757,8 @@ namespace twitch
 
     void on_after_attack_orbwalker(game_object_script target)
     {
-        if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_q->get_bool() || orbwalker->harass() && harass::use_q->get_bool()))
+        // Use q after autoattack on enemies
+        if (q->is_ready() && target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
         {
             if (q->cast())
             {
@@ -758,8 +766,27 @@ namespace twitch
             }
         }
 
+        // Use w after autoattack on enemies
+        if (w->is_ready() && combo::w_mode->get_int() != 1)
+        {
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
+            {
+                if ((!combo::w_dont_use_on_q->get_bool() || !myhero->has_buff(buff_hash("TwitchHideInShadows"))) && (!combo::w_dont_use_on_r->get_bool() || !myhero->has_buff(buff_hash("TwitchFullAutomatic"))))
+                {
+                    int value = combo::w_dont_use_if_killable_by_x_aa->get_int();
+                    if (value == 0 || myhero->get_auto_attack_damage(target) * value < target->get_real_health())
+                    {
+                        if (w->cast(target, get_hitchance(hitchance::w_hitchance)))
+                        {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
         // Use q after autoattack on lane minions
-        if (target->is_minion() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_q->get_bool())) {
+        if (q->is_ready() && target->is_minion() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_q->get_bool())) {
             if (q->cast())
             {
                 return;
@@ -767,7 +794,7 @@ namespace twitch
         }
 
         // Use q after autoattack on monsters
-        if (target->is_monster() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_q->get_bool())) {
+        if (q->is_ready() && target->is_monster() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_q->get_bool())) {
             if (q->cast())
             {
                 return;
@@ -775,7 +802,7 @@ namespace twitch
         }
 
         // Use q after autoattack on turrets
-        if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_q_on_turret->get_bool() && target->is_ai_turret())
+        if (q->is_ready() && orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_q_on_turret->get_bool() && target->is_ai_turret())
         {
             if (q->cast())
             {
