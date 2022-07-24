@@ -33,6 +33,7 @@ namespace masteryi
 		TreeEntry* w_incoming_damage_time = nullptr;
 		TreeEntry* w_incoming_damage_over_my_hp_in_percent = nullptr;
 		TreeEntry* w_incoming_damgae_block_orbwalker_time = nullptr;
+		TreeEntry* w_incoming_damgae_block_orbwalker_turret_damage_time = nullptr;
 		TreeEntry* use_e = nullptr;
 		TreeEntry* e_before_q = nullptr;
 		TreeEntry* use_r = nullptr;
@@ -147,6 +148,7 @@ namespace masteryi
 					combo::w_incoming_damage_time = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_time", "Set incoming damage time (in ms)", 300, 0, 1000);
 					combo::w_incoming_damage_over_my_hp_in_percent = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_over_my_hp", "Incoming damage is over my HP (in %)", 20, 0, 100);
 					combo::w_incoming_damgae_block_orbwalker_time = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_block_orbwalker_time", "Block orbwalker for (in ms)", 750, 1, 2500);
+					combo::w_incoming_damgae_block_orbwalker_turret_damage_time = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_block_orbwalker_turret_damage_time", "Block orbwalker (turret damage) for (in ms)", 350, 1, 1500);
 				}
 				combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
 				combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -318,7 +320,7 @@ namespace masteryi
 					is_meditating = true;
 					if (health_prediction->has_turret_aggro(myhero))
 					{
-						block_orbwalker_time = gametime->get_time() + 0.35f;
+						block_orbwalker_time = gametime->get_time() + (combo::w_incoming_damgae_block_orbwalker_turret_damage_time->get_int() / 1000.0f);
 					}
 					else
 					{
