@@ -315,6 +315,7 @@ namespace masteryi
 			{
 				if (w->cast())
 				{
+					is_meditating = true;
 					if (health_prediction->has_turret_aggro(myhero))
 					{
 						block_orbwalker_time = gametime->get_time() + 0.35f;
@@ -338,6 +339,7 @@ namespace masteryi
 		{
 			if (myhero->count_enemies_in_range(q->range() + 200) != 0 && myhero->count_enemies_in_range(q->range() - 50) == 0)
 			{
+				is_meditating = false;
 				block_orbwalker_time = 0.0f;
 				orbwalker->set_attack(true);
 				orbwalker->set_movement(true);
@@ -351,6 +353,7 @@ namespace masteryi
 
 		if (gametime->get_time() > block_orbwalker_time)
 		{
+			is_meditating = false;
 			orbwalker->set_attack(true);
 			orbwalker->set_movement(true);
 			if (combo::previous_evade_state)
@@ -646,7 +649,11 @@ namespace masteryi
 			is_meditating = false;
 			orbwalker->set_attack(true);
 			orbwalker->set_movement(true);
-			evade->enable_evade();
+			if (combo::previous_evade_state)
+			{
+				evade->enable_evade();
+				combo::previous_evade_state = false;
+			}
 		}
 	}
 
