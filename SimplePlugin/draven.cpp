@@ -399,6 +399,11 @@ namespace draven
                 {
                     axes.erase(std::remove_if(axes.begin(), axes.end(), [](axe x)
                         {
+                            return x.object->is_under_enemy_turret() && !catch_axes_settings::catch_axes_under_turret->get_bool();
+                        }), axes.end());
+
+                    axes.erase(std::remove_if(axes.begin(), axes.end(), [](axe x)
+                        {
                             return !x.object->is_valid() || x.object->is_dead() || gametime->get_time() > x.expire_time;
                         }), axes.end());
 
@@ -422,12 +427,9 @@ namespace draven
                             }
                             if (myhero->get_distance(front.object) > catch_axes_settings::move_to_axe_max_distance->get_int())
                             {
-                                if (!front.object->is_under_enemy_turret() || front.object->count_enemies_in_range(1100) == 0 || catch_axes_settings::catch_axes_under_turret->get_bool())
-                                {
-                                    orbwalker->set_movement(false);
-                                    myhero->issue_order(front.object->get_position());
-                                    return;
-                                }
+                                orbwalker->set_movement(false);
+                                myhero->issue_order(front.object->get_position());
+                                return;
                             }
                             else
                             {
