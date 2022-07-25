@@ -84,8 +84,8 @@ namespace draven
     {
         TreeEntry* catch_axes = nullptr;
         TreeEntry* catch_mode = nullptr;
-        TreeEntry* dont_catch_axes = nullptr;
         TreeEntry* catch_axes_under_turret = nullptr;
+        TreeEntry* dont_catch_axes = nullptr;
         TreeEntry* catch_only_if_orbwalker_active = nullptr;
         TreeEntry* dont_catch_axes_if_killable_by_x_aa = nullptr;
         TreeEntry* move_to_axe_max_distance = nullptr;
@@ -123,12 +123,14 @@ namespace draven
     struct axe
     {
         game_object_script object;
+        int axe_id;
         float start_time;
         float expire_time;
 
-        axe(game_object_script obj)
+        axe(game_object_script obj, int id)
         {
             object = obj;
+            axe_id = id;
             start_time = gametime->get_time() + 0.05f;
             expire_time = gametime->get_time() + 1.2f;
         }
@@ -265,8 +267,8 @@ namespace draven
                 catch_axes_settings::catch_axes = catch_axes_settings->add_checkbox(myhero->get_model() + ".misc.catch_axes", "Catch Axes", true);
                 catch_axes_settings::catch_axes->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 catch_axes_settings::catch_mode = catch_axes_settings->add_combobox(myhero->get_model() + ".misc.catch_mode", "Catch Axes Mode", { {"Near Myhero", nullptr},{"Near Mouse", nullptr } }, 1);
+                catch_axes_settings::catch_axes_under_turret = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.catch_axes_under_turret.key", "Catch Axes under turret", TreeHotkeyMode::Toggle, 'A', true);
                 catch_axes_settings::dont_catch_axes = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.dont_catch_axes.key", "Don't catch Axes Key", TreeHotkeyMode::Hold, 'Z', false);
-                catch_axes_settings::catch_axes_under_turret = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.catch_axes_under_turret.key", "Catch Axes under turret", TreeHotkeyMode::Toggle, 'J', true);
                 catch_axes_settings::catch_only_if_orbwalker_active = catch_axes_settings->add_checkbox(myhero->get_model() + ".misc.catch_only_if_orbwalker_active", "Catch Axes only if Orbwalker active", true);
                 catch_axes_settings::dont_catch_axes_if_killable_by_x_aa = catch_axes_settings->add_slider(myhero->get_model() + ".misc.dont_catch_axes_if_killable_by_x_aa", "Don't catch Axes if target killable by x AA (0 = disabled)", 0, 0, 4);
                 catch_axes_settings::move_to_axe_max_distance = catch_axes_settings->add_slider(myhero->get_model() + ".misc.move_to_axe_max_distance", "Move to Axes max distance", 70, 1, 120);
@@ -299,8 +301,8 @@ namespace draven
         {
             Permashow::Instance.Init(main_tab);
             Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
-            Permashow::Instance.AddElement("Don't Catch Axes", catch_axes_settings::dont_catch_axes);
             Permashow::Instance.AddElement("Catch Under Turret", catch_axes_settings::catch_axes_under_turret);
+            Permashow::Instance.AddElement("Don't Catch Axes", catch_axes_settings::dont_catch_axes);
             Permashow::Instance.AddElement("Semi Auto R", combo::r_semi_manual_cast);
         }
 
@@ -399,7 +401,7 @@ namespace draven
                 {
                     axes.erase(std::remove_if(axes.begin(), axes.end(), [](axe x)
                         {
-                            return x.object->is_under_enemy_turret() && !catch_axes_settings::catch_axes_under_turret->get_bool();
+                            return x.object->get_position().is_under_enemy_turret() && !catch_axes_settings::catch_axes_under_turret->get_bool();
                         }), axes.end());
 
                     axes.erase(std::remove_if(axes.begin(), axes.end(), [](axe x)
@@ -421,7 +423,8 @@ namespace draven
                             if (myhero->get_distance(front.object) < 175)
                             {
                                 orbwalker->set_attack(false);
-                                if (w->is_ready() && combo::use_w->get_bool() && combo::w_cast_before_catching_axe->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff"))) {
+                                if (w->is_ready() && combo::use_w->get_bool() && combo::w_cast_before_catching_axe->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")))
+                                {
                                     w->cast();
                                 }
                             }
@@ -802,6 +805,9 @@ namespace draven
             {
                 if (axe.object->is_valid() && !axe.object->is_dead())
                 {
+                    auto pos = axe.object->get_position() + vector(-20, 40);
+                    renderer->world_to_screen(pos, pos);
+                    draw_manager->add_text_on_screen(pos, MAKE_COLOR(0, 255, 0, 255), 64, "%d", axe.axe_id);
                     draw_manager->add_circle(axe.object->get_position(), 125, draw_settings::axes_color->get_color());
                     draw_manager->add_circle(axe.object->get_position(), catch_axes_settings::move_to_axe_max_distance->get_int(), draw_settings::axes_color->get_color());
                     draw_manager->add_line(myhero->get_position(), axe.object->get_position(), draw_settings::axes_color->get_color(), 1.5f);
@@ -863,7 +869,7 @@ namespace draven
     {
         if (sender->get_name().find("Q_reticle_self") != std::string::npos)
         {
-            axes.push_back(axe(sender));
+            axes.push_back(axe(sender, axes.size() + 1));
         }
     }
 
