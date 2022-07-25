@@ -811,7 +811,7 @@ namespace draven
                     auto pos = axe.object->get_position() + vector(-20, 40);
                     renderer->world_to_screen(pos, pos);
                     draw_manager->add_text_on_screen(pos, draw_settings::axe_number_color->get_color(), 64, "%d", axe.axe_id);
-                    draw_manager->add_circle(axe.object->get_position(), 125, draw_settings::axes_color->get_color());
+                    draw_manager->add_circle(axe.object->get_position(), 125, draw_settings::axes_color->get_color(), 2.0f);
                     draw_manager->add_circle(axe.object->get_position(), catch_axes_settings::move_to_axe_max_distance->get_int(), draw_settings::axes_color->get_color());
                     draw_manager->add_line(myhero->get_position(), axe.object->get_position(), draw_settings::axes_color->get_color(), 1.5f);
                 }
