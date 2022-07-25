@@ -23,6 +23,7 @@ namespace draven
         TreeEntry* draw_damage_r = nullptr;
         TreeEntry* draw_axes = nullptr;
         TreeEntry* axes_color = nullptr;
+        TreeEntry* axe_number_color = nullptr;
     }
 
     namespace combo
@@ -293,6 +294,8 @@ namespace draven
                 draw_settings::draw_axes = draw_settings->add_checkbox(myhero->get_model() + ".draw.axes", "Draw Axes", true);
                 draw_settings::draw_axes->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 draw_settings::axes_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axes.color", "Axes Color", color);
+                float color1[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+                draw_settings::axe_number_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axes.number_color", "Axe Number Color", color1);
             }
         }
 
@@ -807,7 +810,7 @@ namespace draven
                 {
                     auto pos = axe.object->get_position() + vector(-20, 40);
                     renderer->world_to_screen(pos, pos);
-                    draw_manager->add_text_on_screen(pos, MAKE_COLOR(0, 255, 0, 255), 64, "%d", axe.axe_id);
+                    draw_manager->add_text_on_screen(pos, draw_settings::axe_number_color->get_color(), 64, "%d", axe.axe_id);
                     draw_manager->add_circle(axe.object->get_position(), 125, draw_settings::axes_color->get_color());
                     draw_manager->add_circle(axe.object->get_position(), catch_axes_settings::move_to_axe_max_distance->get_int(), draw_settings::axes_color->get_color());
                     draw_manager->add_line(myhero->get_position(), axe.object->get_position(), draw_settings::axes_color->get_color(), 1.5f);
