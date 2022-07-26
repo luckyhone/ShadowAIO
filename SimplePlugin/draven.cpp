@@ -35,6 +35,7 @@ namespace draven
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* q_max_active_axes = nullptr;
+        TreeEntry* q_cast_to_keep_two_axes = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_cast_while_chasing = nullptr;
         TreeEntry* w_target_above_range = nullptr;
@@ -116,6 +117,7 @@ namespace draven
 
     // Declaring functions responsible for spell-logic
     //
+    void q_logic();
     void w_logic();
     void e_logic();
     void r_logic();
@@ -177,6 +179,7 @@ namespace draven
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
                     combo::q_max_active_axes = q_config->add_slider(myhero->get_model() + ".combo.q.max_active_axes", "Max Active Axes", 2, 1, 2);
+                    combo::q_cast_to_keep_two_axes = q_config->add_checkbox(myhero->get_model() + ".combo.q.cast_to_keep_two_axes", "Cast to keep 2 axes if expiring", true);
                 }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
@@ -200,7 +203,7 @@ namespace draven
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
-                    combo::r_min_distance = r_config->add_slider(myhero->get_model() + ".combo.r.min_distance", "Minimum R distance to target", 800, 1, 1600);
+                    combo::r_min_distance = r_config->add_slider(myhero->get_model() + ".combo.r.min_distance", "Minimum distance to target", 800, 1, 1600);
                     combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R Range", 2200.0f, 1200.0f, 5000.0f);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
@@ -507,6 +510,11 @@ namespace draven
             //Checking if the user has combo_mode() (Default SPACE)
             if (orbwalker->combo_mode())
             {
+                if (q->is_ready() && combo::use_q->get_bool())
+                {
+                    q_logic();
+                }
+
                 if (w->is_ready() && combo::use_w->get_bool())
                 {
                     w_logic();
@@ -528,6 +536,11 @@ namespace draven
             {
                 if (!myhero->is_under_enemy_turret())
                 {
+                    if (q->is_ready() && harass::use_q->get_bool())
+                    {
+                        q_logic();
+                    }
+
                     if (w->is_ready() && harass::use_w->get_bool())
                     {
                         w_logic();
@@ -642,6 +655,23 @@ namespace draven
             }
         }
     }
+
+#pragma region q_logic
+    void q_logic()
+    {
+        if (get_draven_q_stacks() >= 2)
+        {
+            auto buff = myhero->get_buff(buff_hash("DravenSpinningAttack"));
+            if (buff != nullptr && buff->is_valid() && buff->is_alive())
+            {
+                if (buff->get_remaining_time() < 0.25)
+                {
+                    q->cast();
+                }
+            }
+        }
+    }
+#pragma endregion
 
 #pragma region w_logic
     void w_logic()
@@ -838,22 +868,25 @@ namespace draven
             {
                 if (axe.object->is_valid() && !axe.object->is_dead())
                 {
-                    if (draw_settings::draw_axe_number->get_bool())
+                    if (draw_settings::draw_axe_radius->get_bool())
                     {
-                        auto pos = axe.object->get_position() + vector(-20, 40);
-                        renderer->world_to_screen(pos, pos);
-                        draw_manager->add_text_on_screen(pos, draw_settings::axe_number_color->get_color(), 64, "%d", axe.axe_id);
                         draw_manager->add_circle(axe.object->get_position(), 125, draw_settings::axe_radius_color->get_color(), 2.0f);
                     }
                     if (draw_settings::draw_axe_move_radius->get_bool())
                     {
                         draw_manager->add_circle(axe.object->get_position(), catch_axes_settings::move_to_axe_if_distance_higher_than->get_int(), draw_settings::axe_move_radius_color->get_color());
                     }
+                    if (draw_settings::draw_axe_number->get_bool())
+                    {
+                        auto pos = axe.object->get_position() + vector(-20, 40);
+                        renderer->world_to_screen(pos, pos);
+                        draw_manager->add_text_on_screen(pos, draw_settings::axe_number_color->get_color(), 64, "%d", axe.axe_id);
+                    }
                     if (draw_settings::draw_axe_expire_time->get_bool())
                     {
-                        auto pos1 = axe.object->get_position() + vector(-80, -80);
-                        renderer->world_to_screen(pos1, pos1);
-                        draw_manager->add_text_on_screen(pos1, draw_settings::axe_expire_time_color->get_color(), 18, "Expire Time: [%.1fs]", axe.expire_time - gametime->get_time());
+                        auto pos = axe.object->get_position() + vector(-80, -80);
+                        renderer->world_to_screen(pos, pos);
+                        draw_manager->add_text_on_screen(pos, draw_settings::axe_expire_time_color->get_color(), 18, "Expire Time: [%.1fs]", axe.expire_time - gametime->get_time());
                     }
                     draw_manager->add_line(myhero->get_position(), axe.object->get_position(), draw_settings::axe_radius_color->get_color(), 1.5f);
                 }
