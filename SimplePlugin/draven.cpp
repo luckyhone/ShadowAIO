@@ -25,6 +25,7 @@ namespace draven
         TreeEntry* draw_axe_move_radius = nullptr;
         TreeEntry* draw_axe_number = nullptr;
         TreeEntry* draw_axe_expire_time = nullptr;
+        TreeEntry* draw_line_to_axe = nullptr;
         TreeEntry* axe_radius_color = nullptr;
         TreeEntry* axe_move_radius_color = nullptr;
         TreeEntry* axe_number_color = nullptr;
@@ -313,6 +314,8 @@ namespace draven
                 draw_settings::draw_axe_number->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 draw_settings::draw_axe_expire_time = draw_settings->add_checkbox(myhero->get_model() + ".draw.axe_expire_time", "Draw Axe Expire Time", true);
                 draw_settings::draw_axe_expire_time->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                draw_settings::draw_line_to_axe = draw_settings->add_checkbox(myhero->get_model() + ".draw.line_to_axe", "Draw Line To Axe", true);
+                draw_settings::draw_line_to_axe->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 draw_settings->add_separator(myhero->get_model() + "draw.separator.2", "");
                 draw_settings::axe_radius_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axe.radius_color", "Axe Radius Color", color);
                 draw_settings::axe_move_radius_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axe.move_radius_color", "Axe Move Radius Color", color);
@@ -662,12 +665,9 @@ namespace draven
         if (get_draven_q_stacks() >= 2)
         {
             auto buff = myhero->get_buff(buff_hash("DravenSpinningAttack"));
-            if (buff != nullptr && buff->is_valid() && buff->is_alive())
+            if (buff != nullptr && buff->is_valid() && buff->is_alive() && buff->get_remaining_time() < 0.25)
             {
-                if (buff->get_remaining_time() < 0.25)
-                {
-                    q->cast();
-                }
+                q->cast();
             }
         }
     }
@@ -888,7 +888,10 @@ namespace draven
                         renderer->world_to_screen(pos, pos);
                         draw_manager->add_text_on_screen(pos, draw_settings::axe_expire_time_color->get_color(), 18, "Expire Time: [%.1fs]", axe.expire_time - gametime->get_time());
                     }
-                    draw_manager->add_line(myhero->get_position(), axe.object->get_position(), draw_settings::axe_radius_color->get_color(), 1.5f);
+                    if (draw_settings::draw_line_to_axe->get_bool())
+                    {
+                        draw_manager->add_line(myhero->get_position(), axe.object->get_position(), draw_settings::axe_radius_color->get_color(), 1.5f);
+                    }
                 }
             }
         }
