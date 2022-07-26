@@ -21,8 +21,10 @@ namespace draven
         TreeEntry* draw_range_r = nullptr;
         TreeEntry* r_color = nullptr;
         TreeEntry* draw_damage_r = nullptr;
-        TreeEntry* draw_axes = nullptr;
-        TreeEntry* axes_color = nullptr;
+        TreeEntry* draw_axe_radius = nullptr;
+        TreeEntry* draw_axe_move_radius = nullptr;
+        TreeEntry* axe_radius_color = nullptr;
+        TreeEntry* axe_move_radius_color = nullptr;
         TreeEntry* axe_number_color = nullptr;
     }
 
@@ -85,11 +87,13 @@ namespace draven
     {
         TreeEntry* catch_axes = nullptr;
         TreeEntry* catch_mode = nullptr;
-        TreeEntry* catch_axes_under_turret = nullptr;
-        TreeEntry* dont_catch_axes = nullptr;
         TreeEntry* catch_only_if_orbwalker_active = nullptr;
+        TreeEntry* catch_axes_under_turret = nullptr;
+        TreeEntry* axe_maximum_distance = nullptr;
+        TreeEntry* move_to_axe_if_distance_higher_than = nullptr;
+        TreeEntry* block_aa_if_distance_to_axe_smaller_than = nullptr;
+        TreeEntry* dont_catch_axes = nullptr;
         TreeEntry* dont_catch_axes_if_killable_by_x_aa = nullptr;
-        TreeEntry* move_to_axe_max_distance = nullptr;
     }
 
     namespace hitchance
@@ -265,15 +269,17 @@ namespace draven
 
             auto catch_axes_settings = main_tab->add_tab(myhero->get_model() + ".misc", "Catch Axes Settings");
             {
-                catch_axes_settings::catch_axes = catch_axes_settings->add_checkbox(myhero->get_model() + ".misc.catch_axes", "Catch Axes", true);
+                catch_axes_settings::catch_axes = catch_axes_settings->add_checkbox(myhero->get_model() + ".axe.catch_axes", "Catch Axes", true);
                 catch_axes_settings::catch_axes->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                catch_axes_settings::catch_mode = catch_axes_settings->add_combobox(myhero->get_model() + ".misc.catch_mode", "Catch Axes Mode", { {"Near Myhero", nullptr},{"Near Mouse", nullptr } }, 1);
-                catch_axes_settings::catch_axes_under_turret = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.catch_axes_under_turret.key", "Catch Axes under turret", TreeHotkeyMode::Toggle, 'A', true);
-                catch_axes_settings::dont_catch_axes = catch_axes_settings->add_hotkey(myhero->get_model() + ".misc.dont_catch_axes.key", "Don't catch Axes Key", TreeHotkeyMode::Hold, 'Z', false);
-                catch_axes_settings::catch_only_if_orbwalker_active = catch_axes_settings->add_checkbox(myhero->get_model() + ".misc.catch_only_if_orbwalker_active", "Catch Axes only if Orbwalker active", true);
-                catch_axes_settings::dont_catch_axes_if_killable_by_x_aa = catch_axes_settings->add_slider(myhero->get_model() + ".misc.dont_catch_axes_if_killable_by_x_aa", "Don't catch Axes if target killable by x AA (0 = disabled)", 0, 0, 4);
-                catch_axes_settings::move_to_axe_max_distance = catch_axes_settings->add_slider(myhero->get_model() + ".misc.move_to_axe_max_distance", "Move to Axes max distance", 70, 1, 120);
-            }
+                catch_axes_settings::catch_mode = catch_axes_settings->add_combobox(myhero->get_model() + ".axe.catch_mode", "Catch Axes Mode", { {"Near Myhero", nullptr},{"Near Mouse", nullptr } }, 1);
+                catch_axes_settings::catch_only_if_orbwalker_active = catch_axes_settings->add_checkbox(myhero->get_model() + ".axe.catch_only_if_orbwalker_active", "Catch Axes only if Orbwalker active", true);
+                catch_axes_settings::catch_axes_under_turret = catch_axes_settings->add_hotkey(myhero->get_model() + ".axe.catch_axes_under_turret", "Catch Axes under turret", TreeHotkeyMode::Toggle, 'A', true);
+                catch_axes_settings::axe_maximum_distance = catch_axes_settings->add_slider(myhero->get_model() + ".axe.maximum_distance", "Maximum Distance to Axe", 1600, 1, 1600);
+                catch_axes_settings::move_to_axe_if_distance_higher_than = catch_axes_settings->add_slider(myhero->get_model() + ".axe.move_to_axe_if_distance_higher_than", "Move to Axe if distance higher than", 70, 1, 120);
+                catch_axes_settings::block_aa_if_distance_to_axe_smaller_than = catch_axes_settings->add_slider(myhero->get_model() + ".axe.block_aa_if_distance_to_axe_smaller_than", "Block AA if distance smaller than", 175, 1, 500);
+                catch_axes_settings::dont_catch_axes = catch_axes_settings->add_hotkey(myhero->get_model() + ".axe.dont_catch_axes.key", "Don't catch Axes Key", TreeHotkeyMode::Hold, 'Z', false);
+                catch_axes_settings::dont_catch_axes_if_killable_by_x_aa = catch_axes_settings->add_slider(myhero->get_model() + ".axe.dont_catch_axes_if_killable_by_x_aa", "Don't catch Axes if target killable by x AA (0 = disabled)", 0, 0, 4);
+             }
 
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
             {
@@ -291,11 +297,15 @@ namespace draven
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
                 draw_settings::draw_damage_r = draw_settings->add_checkbox(myhero->get_model() + "draw.r.damage", "Draw R Damage", true);
-                draw_settings::draw_axes = draw_settings->add_checkbox(myhero->get_model() + ".draw.axes", "Draw Axes", true);
-                draw_settings::draw_axes->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                draw_settings::axes_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axes.color", "Axes Color", color);
+                draw_settings->add_separator(myhero->get_model() + "draw.separator.1", "");
+                draw_settings::draw_axe_radius = draw_settings->add_checkbox(myhero->get_model() + ".draw.axe_radius", "Draw Axe Radius", true);
+                draw_settings::draw_axe_radius->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                draw_settings::draw_axe_move_radius = draw_settings->add_checkbox(myhero->get_model() + ".draw.axe_move_radius", "Draw Axe Move Radius", true);
+                draw_settings::draw_axe_move_radius->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                draw_settings::axe_radius_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axe.radius_color", "Axe Radius Color", color);
+                draw_settings::axe_move_radius_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axe.move_radius_color", "Axe Move Radius Color", color);
                 float color1[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-                draw_settings::axe_number_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axes.number_color", "Axe Number Color", color1);
+                draw_settings::axe_number_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axe.number_color", "Axe Number Color", color1);
             }
         }
 
@@ -404,12 +414,18 @@ namespace draven
                 {
                     axes.erase(std::remove_if(axes.begin(), axes.end(), [](axe x)
                         {
+                            return !x.object->is_valid() || x.object->is_dead() || gametime->get_time() > x.expire_time;
+                        }), axes.end());
+
+                    axes.erase(std::remove_if(axes.begin(), axes.end(), [](axe x)
+                        {
                             return x.object->get_position().is_under_enemy_turret() && !catch_axes_settings::catch_axes_under_turret->get_bool();
                         }), axes.end());
 
                     axes.erase(std::remove_if(axes.begin(), axes.end(), [](axe x)
                         {
-                            return !x.object->is_valid() || x.object->is_dead() || gametime->get_time() > x.expire_time;
+                            vector loc = catch_axes_settings::catch_mode->get_int() == 0 ? myhero->get_position() : hud->get_hud_input_logic()->get_game_cursor_position();
+                            return loc.distance(x.object->get_position()) > catch_axes_settings::axe_maximum_distance->get_int();
                         }), axes.end());
 
                     std::sort(axes.begin(), axes.end(), [](axe a, axe b)
@@ -423,15 +439,19 @@ namespace draven
 
                         if (gametime->get_time() > front.start_time)
                         {
-                            if (myhero->get_distance(front.object) < 175)
+                            float distance_to_axe = myhero->get_distance(front.object);
+                            if (distance_to_axe < catch_axes_settings::block_aa_if_distance_to_axe_smaller_than->get_int())
                             {
                                 orbwalker->set_attack(false);
+                            }
+                            if (distance_to_axe < 175)
+                            {
                                 if (w->is_ready() && combo::use_w->get_bool() && combo::w_cast_before_catching_axe->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")))
                                 {
                                     w->cast();
                                 }
                             }
-                            if (myhero->get_distance(front.object) > catch_axes_settings::move_to_axe_max_distance->get_int())
+                            if (distance_to_axe > catch_axes_settings::move_to_axe_if_distance_higher_than->get_int())
                             {
                                 orbwalker->set_movement(false);
                                 myhero->issue_order(front.object->get_position());
@@ -617,7 +637,7 @@ namespace draven
     void w_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(1100, damage_type::physical);
+        auto target = target_selector->get_target(1200, damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr && !myhero->has_buff(buff_hash("dravenfurybuff")))
@@ -634,7 +654,7 @@ namespace draven
             }
             if (combo::w_cast_in_fight->get_bool())
             {
-                if (target->get_distance(myhero) >= myhero->get_attack_range())
+                if (target->get_distance(myhero) <= myhero->get_attack_range())
                 {
                     w->cast();
                 }
@@ -802,7 +822,7 @@ namespace draven
         }
 
         // Draw Axes
-        if (draw_settings::draw_axes->get_bool() && catch_axes_settings::catch_axes->get_bool())
+        if (draw_settings::draw_axe_radius->get_bool() && catch_axes_settings::catch_axes->get_bool())
         {
             for (axe axe : axes)
             {
@@ -811,9 +831,12 @@ namespace draven
                     auto pos = axe.object->get_position() + vector(-20, 40);
                     renderer->world_to_screen(pos, pos);
                     draw_manager->add_text_on_screen(pos, draw_settings::axe_number_color->get_color(), 64, "%d", axe.axe_id);
-                    draw_manager->add_circle(axe.object->get_position(), 125, draw_settings::axes_color->get_color(), 2.0f);
-                    draw_manager->add_circle(axe.object->get_position(), catch_axes_settings::move_to_axe_max_distance->get_int(), draw_settings::axes_color->get_color());
-                    draw_manager->add_line(myhero->get_position(), axe.object->get_position(), draw_settings::axes_color->get_color(), 1.5f);
+                    draw_manager->add_circle(axe.object->get_position(), 125, draw_settings::axe_radius_color->get_color(), 2.0f);
+                    if (draw_settings::draw_axe_move_radius->get_bool())
+                    {
+                        draw_manager->add_circle(axe.object->get_position(), catch_axes_settings::move_to_axe_if_distance_higher_than->get_int(), draw_settings::axe_move_radius_color->get_color());
+                    }
+                    draw_manager->add_line(myhero->get_position(), axe.object->get_position(), draw_settings::axe_radius_color->get_color(), 1.5f);
                 }
             }
         }
