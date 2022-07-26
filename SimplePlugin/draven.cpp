@@ -462,12 +462,9 @@ namespace draven
                             {
                                 orbwalker->set_attack(false);
                             }
-                            if (distance_to_axe < 175)
+                            if (w->is_ready() && combo::use_w->get_bool() && combo::w_cast_before_catching_axe->get_bool() && orbwalker->combo_mode() && distance_to_axe < 175 && !myhero->has_buff(buff_hash("dravenfurybuff")))
                             {
-                                if (orbwalker->combo_mode() && w->is_ready() && combo::use_w->get_bool() && combo::w_cast_before_catching_axe->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")))
-                                {
-                                    w->cast();
-                                }
+                                w->cast();
                             }
                             if (distance_to_axe > catch_axes_settings::move_to_axe_if_distance_higher_than->get_int())
                             {
@@ -931,7 +928,7 @@ namespace draven
 
     void on_after_attack(game_object_script target)
     {
-        if (w->is_ready() && combo::w_cast_in_fight->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")))
+        if (w->is_ready() && target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())) && combo::w_cast_in_fight->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")))
         {
             if (target->get_distance(myhero) <= myhero->get_attack_range())
             {
