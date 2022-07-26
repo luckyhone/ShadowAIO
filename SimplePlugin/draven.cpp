@@ -694,13 +694,6 @@ namespace draven
                     }
                 }
             }
-            if (combo::w_cast_in_fight->get_bool())
-            {
-                if (target->get_distance(myhero) <= myhero->get_attack_range())
-                {
-                    w->cast();
-                }
-            }
         }
     }
 #pragma endregion
@@ -938,6 +931,13 @@ namespace draven
 
     void on_after_attack(game_object_script target)
     {
+        if (w->is_ready() && combo::w_cast_in_fight->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")))
+        {
+            if (target->get_distance(myhero) <= myhero->get_attack_range())
+            {
+                w->cast();
+            }
+        }
         if (e->is_ready() && combo::e_mode->get_int() == 1)
         {
             // Using E after autoattack on enemies
