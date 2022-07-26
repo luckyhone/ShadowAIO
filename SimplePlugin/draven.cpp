@@ -98,6 +98,7 @@ namespace draven
         TreeEntry* axe_maximum_distance = nullptr;
         TreeEntry* move_to_axe_if_distance_higher_than = nullptr;
         TreeEntry* block_aa_if_distance_to_axe_smaller_than = nullptr;
+        TreeEntry* block_aa_while_staying_in_axe = nullptr;
         TreeEntry* dont_catch_axes = nullptr;
         TreeEntry* dont_catch_axes_if_killable_by_x_aa = nullptr;
     }
@@ -286,6 +287,7 @@ namespace draven
                 catch_axes_settings::axe_maximum_distance = catch_axes_settings->add_slider(myhero->get_model() + ".axe.maximum_distance", "Maximum Distance to Axe", 1600, 1, 1600);
                 catch_axes_settings::move_to_axe_if_distance_higher_than = catch_axes_settings->add_slider(myhero->get_model() + ".axe.move_to_axe_if_distance_higher_than", "Move to Axe if distance higher than", 70, 1, 120);
                 catch_axes_settings::block_aa_if_distance_to_axe_smaller_than = catch_axes_settings->add_slider(myhero->get_model() + ".axe.block_aa_if_distance_to_axe_smaller_than", "Block AA if distance smaller than", 200, 1, 500);
+                catch_axes_settings::block_aa_while_staying_in_axe = catch_axes_settings->add_checkbox(myhero->get_model() + ".axe.block_aa_while_staying_in_axe", "Block AA while staying in axe", false);
                 catch_axes_settings::dont_catch_axes = catch_axes_settings->add_hotkey(myhero->get_model() + ".axe.dont_catch_axes.key", "Don't catch Axes Key", TreeHotkeyMode::Hold, 'Z', false);
                 catch_axes_settings::dont_catch_axes_if_killable_by_x_aa = catch_axes_settings->add_slider(myhero->get_model() + ".axe.dont_catch_axes_if_killable_by_x_aa", "Don't catch Axes if target killable by x AA (0 = disabled)", 0, 0, 4);
              }
@@ -464,7 +466,14 @@ namespace draven
                             }
                             if (w->is_ready() && combo::use_w->get_bool() && combo::w_cast_before_catching_axe->get_bool() && orbwalker->combo_mode() && distance_to_axe < 175 && !myhero->has_buff(buff_hash("dravenfurybuff")))
                             {
-                                w->cast();
+                                // Get a target from a given range
+                                auto target = target_selector->get_target(combo::w_max_range->get_int(), damage_type::physical);
+
+                                // Always check an object is not a nullptr!
+                                if (target != nullptr)
+                                {
+                                    w->cast();
+                                }
                             }
                             if (distance_to_axe > catch_axes_settings::move_to_axe_if_distance_higher_than->get_int())
                             {
@@ -474,7 +483,14 @@ namespace draven
                             }
                             else
                             {
-                                orbwalker->set_attack(true);
+                                if (catch_axes_settings::block_aa_while_staying_in_axe->get_bool() && distance_to_axe < 100)
+                                {
+                                    orbwalker->set_attack(false);
+                                }
+                                else
+                                {
+                                    orbwalker->set_attack(true);
+                                }
                                 orbwalker->set_movement(true);
                             }
                         }
