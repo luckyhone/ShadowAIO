@@ -23,9 +23,12 @@ namespace draven
         TreeEntry* draw_damage_r = nullptr;
         TreeEntry* draw_axe_radius = nullptr;
         TreeEntry* draw_axe_move_radius = nullptr;
+        TreeEntry* draw_axe_number = nullptr;
+        TreeEntry* draw_axe_expire_time = nullptr;
         TreeEntry* axe_radius_color = nullptr;
         TreeEntry* axe_move_radius_color = nullptr;
         TreeEntry* axe_number_color = nullptr;
+        TreeEntry* axe_expire_time_color = nullptr;
     }
 
     namespace combo
@@ -231,9 +234,9 @@ namespace draven
                 laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclear.enabled", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 0x04, true);
                 laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q", "Use Q", true);
                 laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", true);
+                laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", false);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", true);
+                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", false);
                 laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = laneclear->add_tab(myhero->get_model() + ".laneclear.e.config", "E Config");
                 {
@@ -276,7 +279,7 @@ namespace draven
                 catch_axes_settings::catch_axes_under_turret = catch_axes_settings->add_hotkey(myhero->get_model() + ".axe.catch_axes_under_turret", "Catch Axes under turret", TreeHotkeyMode::Toggle, 'A', true);
                 catch_axes_settings::axe_maximum_distance = catch_axes_settings->add_slider(myhero->get_model() + ".axe.maximum_distance", "Maximum Distance to Axe", 1600, 1, 1600);
                 catch_axes_settings::move_to_axe_if_distance_higher_than = catch_axes_settings->add_slider(myhero->get_model() + ".axe.move_to_axe_if_distance_higher_than", "Move to Axe if distance higher than", 70, 1, 120);
-                catch_axes_settings::block_aa_if_distance_to_axe_smaller_than = catch_axes_settings->add_slider(myhero->get_model() + ".axe.block_aa_if_distance_to_axe_smaller_than", "Block AA if distance smaller than", 175, 1, 500);
+                catch_axes_settings::block_aa_if_distance_to_axe_smaller_than = catch_axes_settings->add_slider(myhero->get_model() + ".axe.block_aa_if_distance_to_axe_smaller_than", "Block AA if distance smaller than", 200, 1, 500);
                 catch_axes_settings::dont_catch_axes = catch_axes_settings->add_hotkey(myhero->get_model() + ".axe.dont_catch_axes.key", "Don't catch Axes Key", TreeHotkeyMode::Hold, 'Z', false);
                 catch_axes_settings::dont_catch_axes_if_killable_by_x_aa = catch_axes_settings->add_slider(myhero->get_model() + ".axe.dont_catch_axes_if_killable_by_x_aa", "Don't catch Axes if target killable by x AA (0 = disabled)", 0, 0, 4);
              }
@@ -297,15 +300,22 @@ namespace draven
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
                 draw_settings::draw_damage_r = draw_settings->add_checkbox(myhero->get_model() + "draw.r.damage", "Draw R Damage", true);
+                draw_settings::draw_damage_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 draw_settings->add_separator(myhero->get_model() + "draw.separator.1", "");
                 draw_settings::draw_axe_radius = draw_settings->add_checkbox(myhero->get_model() + ".draw.axe_radius", "Draw Axe Radius", true);
                 draw_settings::draw_axe_radius->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 draw_settings::draw_axe_move_radius = draw_settings->add_checkbox(myhero->get_model() + ".draw.axe_move_radius", "Draw Axe Move Radius", true);
                 draw_settings::draw_axe_move_radius->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                draw_settings::draw_axe_number = draw_settings->add_checkbox(myhero->get_model() + ".draw.axe_number", "Draw Axe Number", true);
+                draw_settings::draw_axe_number->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                draw_settings::draw_axe_expire_time = draw_settings->add_checkbox(myhero->get_model() + ".draw.axe_expire_time", "Draw Axe Expire Time", true);
+                draw_settings::draw_axe_expire_time->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                draw_settings->add_separator(myhero->get_model() + "draw.separator.2", "");
                 draw_settings::axe_radius_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axe.radius_color", "Axe Radius Color", color);
                 draw_settings::axe_move_radius_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axe.move_radius_color", "Axe Move Radius Color", color);
                 float color1[] = { 1.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::axe_number_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axe.number_color", "Axe Number Color", color1);
+                draw_settings::axe_expire_time_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.axe.expire_time_color", "Axe Expire Time Color", color1);
             }
         }
 
@@ -828,13 +838,22 @@ namespace draven
             {
                 if (axe.object->is_valid() && !axe.object->is_dead())
                 {
-                    auto pos = axe.object->get_position() + vector(-20, 40);
-                    renderer->world_to_screen(pos, pos);
-                    draw_manager->add_text_on_screen(pos, draw_settings::axe_number_color->get_color(), 64, "%d", axe.axe_id);
-                    draw_manager->add_circle(axe.object->get_position(), 125, draw_settings::axe_radius_color->get_color(), 2.0f);
+                    if (draw_settings::draw_axe_number->get_bool())
+                    {
+                        auto pos = axe.object->get_position() + vector(-20, 40);
+                        renderer->world_to_screen(pos, pos);
+                        draw_manager->add_text_on_screen(pos, draw_settings::axe_number_color->get_color(), 64, "%d", axe.axe_id);
+                        draw_manager->add_circle(axe.object->get_position(), 125, draw_settings::axe_radius_color->get_color(), 2.0f);
+                    }
                     if (draw_settings::draw_axe_move_radius->get_bool())
                     {
                         draw_manager->add_circle(axe.object->get_position(), catch_axes_settings::move_to_axe_if_distance_higher_than->get_int(), draw_settings::axe_move_radius_color->get_color());
+                    }
+                    if (draw_settings::draw_axe_expire_time->get_bool())
+                    {
+                        auto pos1 = axe.object->get_position() + vector(-80, -80);
+                        renderer->world_to_screen(pos1, pos1);
+                        draw_manager->add_text_on_screen(pos1, draw_settings::axe_expire_time_color->get_color(), 18, "Expire Time: [%.1fs]", axe.expire_time - gametime->get_time());
                     }
                     draw_manager->add_line(myhero->get_position(), axe.object->get_position(), draw_settings::axe_radius_color->get_color(), 1.5f);
                 }

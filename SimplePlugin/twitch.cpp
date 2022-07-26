@@ -289,7 +289,6 @@ namespace twitch
                 draw_settings::draw_e_stacks_time = draw_settings->add_checkbox(myhero->get_model() + ".draw.e.stacks.time", "Draw Passive Stacks Time Left", true);
                 draw_settings::draw_e_stacks_time->set_texture(myhero->get_passive_icon_texture());
 
-
                 draw_settings->add_separator(myhero->get_model() + ".draw.separator3", "");
                 float color1[] = { 1.0f, 1.0f, 1.0f, 1.0f };
                 draw_settings::q_timeleft_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.time.color", "Q Time Left Color", color1);
