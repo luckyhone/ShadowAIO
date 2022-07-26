@@ -483,7 +483,13 @@ namespace draven
                             }
                             else
                             {
-                                if (catch_axes_settings::block_aa_while_staying_in_axe->get_bool() && distance_to_axe < 100)
+                                int stacks = 0;
+                                auto buff = myhero->get_buff(buff_hash("DravenSpinningAttack"));
+                                if (buff != nullptr && buff->is_valid() && buff->is_alive())
+                                {
+                                    stacks = buff->get_count();
+                                }
+                                if (catch_axes_settings::block_aa_while_staying_in_axe->get_bool() && distance_to_axe < 125 && stacks == 0)
                                 {
                                     orbwalker->set_attack(false);
                                 }
