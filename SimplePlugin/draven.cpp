@@ -37,8 +37,8 @@ namespace draven
         TreeEntry* q_max_active_axes = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_cast_while_chasing = nullptr;
-        TreeEntry* w_cast_in_fight = nullptr;
         TreeEntry* w_target_above_range = nullptr;
+        TreeEntry* w_cast_in_fight = nullptr;
         TreeEntry* w_cast_before_catching_axe = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_mode = nullptr;
@@ -183,8 +183,8 @@ namespace draven
                 auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
                     combo::w_cast_while_chasing = w_config->add_checkbox(myhero->get_model() + ".combo.w.cast_while_chasing", "Cast W while chasing enemy", true);
+                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Cast if target is above range", 550, 0, 900);
                     combo::w_cast_in_fight = w_config->add_checkbox(myhero->get_model() + ".combo.w.cast_in_fight", "Cast W in fight", true);
-                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Cast if target is above range", 300, 0, 800);
                     combo::w_cast_before_catching_axe = w_config->add_checkbox(myhero->get_model() + ".combo.w.cast_before_catching_axe", "Cast W before catching axe", false);
                 }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
@@ -456,7 +456,7 @@ namespace draven
                             }
                             if (distance_to_axe < 175)
                             {
-                                if (w->is_ready() && combo::use_w->get_bool() && combo::w_cast_before_catching_axe->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")))
+                                if (orbwalker->combo_mode() && w->is_ready() && combo::use_w->get_bool() && combo::w_cast_before_catching_axe->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")))
                                 {
                                     w->cast();
                                 }
