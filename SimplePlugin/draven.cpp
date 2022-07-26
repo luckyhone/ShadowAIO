@@ -38,6 +38,7 @@ namespace draven
         TreeEntry* q_max_active_axes = nullptr;
         TreeEntry* q_cast_to_keep_two_axes = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_max_range = nullptr;
         TreeEntry* w_cast_while_chasing = nullptr;
         TreeEntry* w_target_above_range = nullptr;
         TreeEntry* w_cast_in_fight = nullptr;
@@ -186,6 +187,7 @@ namespace draven
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
+                    combo::w_max_range = w_config->add_slider(myhero->get_model() + ".combo.w.max_range", "W maximum range", 1100, 1, 1600);
                     combo::w_cast_while_chasing = w_config->add_checkbox(myhero->get_model() + ".combo.w.cast_while_chasing", "Cast W while chasing enemy", true);
                     combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Cast if target is above range", 550, 0, 900);
                     combo::w_cast_in_fight = w_config->add_checkbox(myhero->get_model() + ".combo.w.cast_in_fight", "Cast W in fight", true);
@@ -677,7 +679,7 @@ namespace draven
     void w_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(1200, damage_type::physical);
+        auto target = target_selector->get_target(combo::w_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr && !myhero->has_buff(buff_hash("dravenfurybuff")))
