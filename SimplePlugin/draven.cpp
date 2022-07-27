@@ -413,7 +413,7 @@ namespace draven
             if (catch_axes_settings::catch_axes->get_bool() && !catch_axes_settings::dont_catch_axes->get_bool() && ((!orbwalker->none_mode() && !orbwalker->flee_mode()) || !catch_axes_settings::catch_only_if_orbwalker_active->get_bool()))
             {
                 int value = catch_axes_settings::dont_catch_axes_if_killable_by_x_aa->get_int();
-                bool should_catch = true;
+                bool should_catch = !orbwalker->flee_mode();
 
                 if (value != 0 && (orbwalker->combo_mode() || orbwalker->harass()))
                 {

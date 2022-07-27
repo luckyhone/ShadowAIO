@@ -82,7 +82,7 @@ namespace teemo
     // Champion data
     //
     float last_r_time = 0.0f;
-    float r_ranges[] = { 400.0f, 650.0f, 900.0f };
+    float r_ranges[] = { 600.0f, 750.0f, 900.0f };
     vector r_best_locations[] =
     {
         vector(1170.0f, 12330.0f),
