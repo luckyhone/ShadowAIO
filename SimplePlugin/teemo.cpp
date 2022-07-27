@@ -37,6 +37,7 @@ namespace teemo
         TreeEntry* r_target_hp_under = nullptr;
         TreeEntry* r_auto_on_cc = nullptr;
         TreeEntry* r_auto_on_best_locations = nullptr;
+        std::map<std::uint32_t, TreeEntry*> q_use_on;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
@@ -142,6 +143,7 @@ namespace teemo
 
     // Utils
     //
+    bool can_use_q_on(game_object_script target);
     bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
@@ -173,6 +175,20 @@ namespace teemo
                 {
                     combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "Q Mode", { {"If enemy above AA range or After AA", nullptr}, {"In Combo", nullptr}, {"After AA", nullptr } }, 0);
                     combo::q_auto_harass = q_config->add_hotkey(myhero->get_model() + ".combo.q.config", "Auto Q harass", TreeHotkeyMode::Toggle, 'A', false);
+
+                    auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
+                    {
+                        for (auto&& enemy : entitylist->get_enemy_heroes())
+                        {
+                            // In this case you HAVE to set should save to false since key contains network id which is unique per game
+                            //
+                            combo::q_use_on[enemy->get_network_id()] = use_q_on_tab->add_checkbox(std::to_string(enemy->get_network_id()), enemy->get_model(), true, false);
+
+                            // Set texture to enemy square icon
+                            //
+                            combo::q_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
+                        }
+                    }
                 }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
@@ -492,7 +508,7 @@ namespace teemo
         auto target = target_selector->get_target(q->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && can_use_q_on(target))
         {
             auto q_mode = combo::q_mode->get_int();
             if ((q_mode == 0 && myhero->get_distance(target) > myhero->get_attack_range()) || q_mode == 1 || q->get_damage(target) > target->get_real_health())
@@ -510,7 +526,7 @@ namespace teemo
         auto target = target_selector->get_target(q->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && can_use_q_on(target))
         {
             q->cast(target);
         }
@@ -526,12 +542,9 @@ namespace teemo
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (myhero->get_distance(target) >= combo::w_target_is_above_range->get_int())
+            if (myhero->get_distance(target) >= combo::w_target_is_above_range->get_int() && (!combo::w_check_if_target_is_not_facing->get_bool() || !target->is_facing(myhero)))
             {
-                if (!combo::w_check_if_target_is_not_facing->get_bool() || !target->is_facing(myhero))
-                {
-                    w->cast();
-                }
+                w->cast();
             }
         }
     }
@@ -544,19 +557,13 @@ namespace teemo
         auto target = target_selector->get_target(r->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && can_use_r_on(target))
         {
-            if (can_use_r_on(target))
+            if (target->get_health_percent() < combo::r_target_hp_under->get_int() && gametime->get_time() > last_r_time)
             {
-                if (target->get_health_percent() < combo::r_target_hp_under->get_int())
+                if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
                 {
-                    if (gametime->get_time() > last_r_time)
-                    {
-                        if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
-                        {
-                            last_r_time = gametime->get_time() + 2.0f;
-                        }
-                    }
+                    last_r_time = gametime->get_time() + 2.0f;
                 }
             }
         }
@@ -570,26 +577,20 @@ namespace teemo
         auto target = target_selector->get_target(r->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && can_use_r_on(target))
         {
-            if (can_use_r_on(target))
-            {
-                r->cast(target, hit_chance::immobile);
-            }
+            r->cast(target, hit_chance::immobile);
         }
         else if (combo::r_auto_on_best_locations->get_bool() && !orbwalker->flee_mode() && !myhero->is_recalling() && gametime->get_time() > last_r_time)
         {
             for (auto& loc : r_best_locations)
             {
-                if (!is_trap_placed_in_loc(loc))
+                if (!is_trap_placed_in_loc(loc) && r->is_in_range(loc, r->range()))
                 {
-                    if (r->is_in_range(loc, r->range()))
+                    if (r->cast(loc))
                     {
-                        if (r->cast(loc))
-                        {
-                            last_r_time = gametime->get_time() + 2.0f;
-                            return;
-                        }
+                        last_r_time = gametime->get_time() + 2.0f;
+                        return;
                     }
                 }
             }
@@ -604,6 +605,17 @@ namespace teemo
         {
             r->set_range(r_ranges[r->level() - 1]);
         }
+    }
+#pragma endregion
+
+#pragma region can_use_q_on
+    bool can_use_q_on(game_object_script target)
+    {
+        auto it = combo::q_use_on.find(target->get_network_id());
+        if (it == combo::q_use_on.end())
+            return false;
+
+        return it->second->get_bool();
     }
 #pragma endregion
 
@@ -724,7 +736,7 @@ namespace teemo
         {
             if (q->is_ready() && antigapclose::use_q->get_bool())
             {
-                if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
+                if (can_use_q_on(sender) && sender->is_valid_target(q->range() + sender->get_bounding_radius()))
                 {
                     q->cast(sender);
                 }
@@ -750,7 +762,7 @@ namespace teemo
         if (q->is_ready() && combo::q_mode->get_int() != 1)
         {
             // Use Q after AA
-            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+            if (target->is_ai_hero() && can_use_q_on(target) && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
             {
                 q->cast(target);
             }
