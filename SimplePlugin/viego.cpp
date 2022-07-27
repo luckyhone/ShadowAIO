@@ -455,12 +455,9 @@ namespace viego
                         w_logic();
                     }
 
-                    if (!w->is_charging())
+                    if (!w->is_charging() && q->is_ready() && harass::use_q->get_bool())
                     {
-                        if (q->is_ready() && harass::use_q->get_bool())
-                        {
-                            q_logic();
-                        }
+                        q_logic();
                     }
                 }
             }
@@ -475,14 +472,11 @@ namespace viego
                         return;
                     }
                 }
-                if (!w->is_charging())
+                if (!w->is_charging() && e->is_ready() && fleemode::use_e->get_bool())
                 {
-                    if (e->is_ready() && fleemode::use_e->get_bool())
+                    if (e->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
                     {
-                        if (e->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
-                        {
-                            return;
-                        }
+                        return;
                     }
                 }
             }
@@ -522,12 +516,9 @@ namespace viego
 
                 if (!lane_minions.empty())
                 {
-                    if (!w->is_charging())
+                    if (!w->is_charging() && q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        if (q->is_ready() && laneclear::use_q->get_bool())
-                        {
-                            q->cast_on_best_farm_position(1);
-                        }
+                        q->cast_on_best_farm_position(1);
                     }
                 }
 
@@ -632,12 +623,9 @@ namespace viego
         auto target = target_selector->get_target(r->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && can_use_r_on(target))
+        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && can_use_r_on(target) && get_viego_r_damage(target) > target->get_real_health())
         {
-            if (get_viego_r_damage(target) > target->get_real_health())
-            {
-                r->cast(target, get_hitchance(hitchance::r_hitchance));
-            }
+            r->cast(target, get_hitchance(hitchance::r_hitchance));
         }
     }
 #pragma endregion
@@ -753,13 +741,10 @@ namespace viego
 
     void on_after_attack(game_object_script target)
     {
-        if (q->is_ready() && combo::q_mode->get_int() != 1)
+        // Use q after autoattack on enemies
+        if (q->is_ready() && combo::q_mode->get_int() != 1 && target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
         {
-            // Use Q after AA
-            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
-            {
-                q->cast(target);
-            }
+            q->cast(target);
         }
     }
 

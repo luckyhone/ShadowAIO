@@ -587,7 +587,6 @@ namespace twitch
                 {
                     e->cast();
                 }
-
                 else if (combo::e_use_before_death->get_bool()
                     && (myhero->get_health_percent() <= combo::e_before_death_myhero_under_hp->get_int()
                         || (combo::e_before_death_calculate_incoming_damage->get_bool() && (health_prediction->get_incoming_damage(myhero, combo::e_before_death_damage_time->get_int() / 1000.f, true) * 100.f) /
@@ -595,13 +594,9 @@ namespace twitch
                 {
                     e->cast();
                 }
-
-                else if (combo::e_if_target_leaving_range->get_bool())
+                else if (combo::e_if_target_leaving_range->get_bool() && get_twitch_e_stacks(enemy) >= combo::e_leaving_range_minimum_stacks->get_int() && myhero->count_enemies_in_range(e->range() - 50) == 0)
                 {
-                    if (get_twitch_e_stacks(enemy) >= combo::e_leaving_range_minimum_stacks->get_int() && myhero->count_enemies_in_range(e->range() - 50) == 0)
-                    {
-	                    e->cast();
-                    }
+                    e->cast();
                 }
             }
         }
