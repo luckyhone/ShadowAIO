@@ -421,12 +421,9 @@ namespace draven
                     auto target = target_selector->get_target(myhero->get_attack_range() + 50, damage_type::physical);
 
                     // Always check an object is not a nullptr!
-                    if (target != nullptr && target->is_valid_target())
+                    if (target != nullptr && target->is_valid_target() && myhero->get_auto_attack_damage(target) * value > target->get_real_health())
                     {
-                        if (myhero->get_auto_attack_damage(target) * value > target->get_real_health())
-                        {
-                            should_catch = false;
-                        }
+                        should_catch = false;
                     }
                 }
 
@@ -518,14 +515,11 @@ namespace draven
             {
                 for (auto& enemy : entitylist->get_enemy_heroes())
                 {
-                    if (enemy->is_valid() && enemy->is_valid_target(e->range()))
+                    if (enemy->is_valid() && enemy->is_valid_target(e->range()) && enemy->is_casting_interruptible_spell())
                     {
-                        if (enemy->is_casting_interruptible_spell())
+                        if (e->cast(enemy))
                         {
-                            if (e->cast(enemy))
-                            {
-                                return;
-                            }
+                            return;
                         }
                     }
                 }
@@ -625,55 +619,39 @@ namespace draven
 
                 if (!lane_minions.empty())
                 {
-                    if (q->is_ready() && laneclear::use_q->get_bool())
+                    if (q->is_ready() && laneclear::use_q->get_bool() && get_draven_q_stacks() < combo::q_max_active_axes->get_int())
                     {
-                        if (get_draven_q_stacks() < combo::q_max_active_axes->get_int())
-                        {
-                            if (q->cast())
-                                return;
-                        }
+                        if (q->cast())
+                            return;
                     }
-                    if (w->is_ready() && laneclear::use_w->get_bool())
+                    if (w->is_ready() && laneclear::use_w->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")))
                     {
-                        if (!myhero->has_buff(buff_hash("dravenfurybuff")))
-                        {
-                            if (w->cast())
-                                return;
-                        }
+                        if (w->cast())
+                            return;
                     }
                     if (e->is_ready() && laneclear::use_e->get_bool())
                     {
                         if (e->cast_on_best_farm_position(laneclear::e_minimum_minions->get_int()))
-                        {
                             return;
-                        }
                     }
                 }
 
                 if (!monsters.empty())
                 {
-                    if (q->is_ready() && jungleclear::use_q->get_bool())
+                    if (q->is_ready() && jungleclear::use_q->get_bool() && get_draven_q_stacks() < combo::q_max_active_axes->get_int())
                     {
-                        if (get_draven_q_stacks() < combo::q_max_active_axes->get_int())
-                        {
-                            if (q->cast())
-                                return;
-                        }
+                        if (q->cast())
+                            return;
                     }
-                    if (w->is_ready() && jungleclear::use_w->get_bool())
+                    if (w->is_ready() && jungleclear::use_w->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")))
                     {
-                        if (!myhero->has_buff(buff_hash("dravenfurybuff")))
-                        {
-                            if (w->cast())
-                                return;
-                        }
+                        if (w->cast())
+                            return;
                     }
                     if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
                         if (e->cast_on_best_farm_position(1, true))
-                        {
                             return;
-                        }
                     }
                 }
             }
@@ -701,18 +679,10 @@ namespace draven
         auto target = target_selector->get_target(combo::w_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && !myhero->has_buff(buff_hash("dravenfurybuff")))
+        if (target != nullptr && combo::w_cast_while_chasing->get_bool() && !myhero->has_buff(buff_hash("dravenfurybuff")) 
+            && target->get_distance(myhero) > combo::w_target_above_range->get_int())
         {
-            if (combo::w_cast_while_chasing->get_bool())
-            {
-                if (target->get_distance(myhero) > combo::w_target_above_range->get_int())
-                {
-                    if (w->cast())
-                    {
-                        return;
-                    }
-                }
-            }
+            w->cast();
         }
     }
 #pragma endregion
@@ -739,23 +709,18 @@ namespace draven
     {
         if (myhero->has_buff(buff_hash("DravenRDoublecast")))
         {
-            if (r->cast())
-            {
-                return;
-            }
+            r->cast();
+            return;
         }
-        else
+        for (auto& enemy : entitylist->get_enemy_heroes())
         {
-            for (auto& enemy : entitylist->get_enemy_heroes())
+            if (can_use_r_on(enemy) && !enemy->is_valid_target(combo::r_min_distance->get_int()) && enemy->is_valid_target(combo::r_max_range->get_int()))
             {
-                if (can_use_r_on(enemy) && !enemy->is_valid_target(combo::r_min_distance->get_int()) && enemy->is_valid_target(combo::r_max_range->get_int()))
+                if (r->get_damage(enemy) * 2.0f > enemy->get_real_health())
                 {
-                    if (r->get_damage(enemy) * 2.0f > enemy->get_real_health())
+                    if (r->cast(enemy, get_hitchance(hitchance::r_hitchance)))
                     {
-                        if (r->cast(enemy, get_hitchance(hitchance::r_hitchance)))
-                        {
-                            return;
-                        }
+                        return;
                     }
                 }
             }
@@ -915,12 +880,9 @@ namespace draven
     {
         if (antigapclose::use_w->get_bool() && w->is_ready())
         {
-            if (sender->is_valid_target(myhero->get_attack_range() + sender->get_bounding_radius()))
+            if (sender->is_valid_target(myhero->get_attack_range() + sender->get_bounding_radius()) && !myhero->has_buff(buff_hash("dravenfurybuff")))
             {
-                if (!myhero->has_buff(buff_hash("dravenfurybuff")))
-                {
-                    w->cast();
-                }
+                w->cast();
             }
         }
         if (antigapclose::use_e->get_bool() && e->is_ready())
