@@ -720,7 +720,7 @@ namespace draven
 #pragma region e_logic
     void e_logic()
     {
-        if (combo::e_mode->get_int() == 0)
+        if (combo::e_mode->get_int() == 0 || orbwalker->flee_mode())
         {
             // Get a target from a given range
             auto target = target_selector->get_target(combo::e_max_range->get_int(), damage_type::physical);
