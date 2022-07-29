@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "draven.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace draven
@@ -182,7 +183,7 @@ namespace draven
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
                     combo::q_max_active_axes = q_config->add_slider(myhero->get_model() + ".combo.q.max_active_axes", "Max Active Axes", 2, 1, 2);
-                    combo::q_cast_to_keep_two_axes = q_config->add_checkbox(myhero->get_model() + ".combo.q.cast_to_keep_two_axes", "Cast to keep 2 axes if expiring", true);
+                    combo::q_cast_to_keep_two_axes = q_config->add_slider(myhero->get_model() + ".combo.q.cast_to_keep_two_axes", "Cast to keep X axes if expiring (0 = disabled)", 2, 0, 2);
                 }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
@@ -207,7 +208,7 @@ namespace draven
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
-                    combo::r_min_distance = r_config->add_slider(myhero->get_model() + ".combo.r.min_distance", "Minimum distance to target", 800, 1, 1600);
+                    combo::r_min_distance = r_config->add_slider(myhero->get_model() + ".combo.r.min_distance", "Minimum distance to target", 750, 1, 1600);
                     combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R Range", 2200.0f, 1200.0f, 5000.0f);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
@@ -661,7 +662,9 @@ namespace draven
 #pragma region q_logic
     void q_logic()
     {
-        if (get_draven_q_stacks() >= 2)
+        int value = combo::q_cast_to_keep_two_axes->get_int();
+
+        if (value != 0 && get_draven_q_stacks() >= value)
         {
             auto buff = myhero->get_buff(buff_hash("DravenSpinningAttack"));
             if (buff != nullptr && buff->is_valid() && buff->is_alive() && buff->get_remaining_time() < 0.25)
@@ -714,7 +717,7 @@ namespace draven
         }
         for (auto& enemy : entitylist->get_enemy_heroes())
         {
-            if (can_use_r_on(enemy) && !enemy->is_valid_target(combo::r_min_distance->get_int()) && enemy->is_valid_target(combo::r_max_range->get_int()))
+            if (can_use_r_on(enemy) && !utils::has_unkillable_buff(enemy) && !enemy->is_valid_target(combo::r_min_distance->get_int()) && enemy->is_valid_target(combo::r_max_range->get_int()))
             {
                 if (r->get_damage(enemy) * 2.0f > enemy->get_real_health())
                 {
