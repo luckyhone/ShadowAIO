@@ -664,10 +664,10 @@ namespace draven
     {
         int value = combo::q_cast_to_keep_two_axes->get_int();
 
-        if (value != 0 && get_draven_q_stacks() >= value)
+        if (value != 0)
         {
             auto buff = myhero->get_buff(buff_hash("DravenSpinningAttack"));
-            if (buff != nullptr && buff->is_valid() && buff->is_alive() && buff->get_remaining_time() < 0.25)
+            if (buff != nullptr && buff->is_valid() && buff->is_alive() && buff->get_count() >= value && buff->get_remaining_time() < 0.25)
             {
                 q->cast();
             }
