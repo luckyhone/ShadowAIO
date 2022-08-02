@@ -27,7 +27,7 @@ namespace ivern
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
-        TreeEntry* w_use_on = nullptr;;
+        TreeEntry* w_use_on = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_incoming_damage_time = nullptr;
         TreeEntry* e_over_hp_in_percent = nullptr;

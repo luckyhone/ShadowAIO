@@ -175,6 +175,7 @@
     <ClCompile Include="permashow.cpp" />
     <ClCompile Include="rengar.cpp" />
     <ClCompile Include="teemo.cpp" />
+    <ClCompile Include="thresh.cpp" />
     <ClCompile Include="trundle.cpp" />
     <ClCompile Include="tryndamere.cpp" />
     <ClCompile Include="twitch.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="permashow.hpp" />
     <ClInclude Include="rengar.h" />
     <ClInclude Include="teemo.h" />
+    <ClInclude Include="thresh.h" />
     <ClInclude Include="trundle.h" />
     <ClInclude Include="tryndamere.h" />
     <ClInclude Include="twitch.h" />
