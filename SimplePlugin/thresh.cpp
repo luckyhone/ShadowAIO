@@ -184,20 +184,20 @@ namespace thresh
                     combo::w_incoming_damage_time = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_time", "Incoming damage time (in ms)", 750, 0, 1000);
                     combo::w_over_hp_in_percent = w_config->add_slider(myhero->get_model() + ".combo.w.over_hp_in_percent", "Incoming damage is over HP (in %)", 10, 0, 100);
 
-                    w_config->add_separator(myhero->get_model() + ".combo.w.separator1", "");
+                    w_config->add_separator(myhero->get_model() + ".combo.w.separator1", "W on Q hit Settings");
 
                     combo::w_to_ally_on_q_hit = w_config->add_checkbox(myhero->get_model() + ".combo.w.to_ally_on_q_hit", "Use W to ally on Q hit", true);
                     combo::w_to_ally_on_q_hit->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                     combo::w_to_ally_on_q_hit_ally_is_above_range = w_config->add_slider(myhero->get_model() + " combo.w.to_ally_on_q_hit_ally_is_above_range", "Use if ally distance to target is higher than", 275, 1, w->range());
 
-                    w_config->add_separator(myhero->get_model() + ".combo.w.separator2", "");
+                    w_config->add_separator(myhero->get_model() + ".combo.w.separator2", "W on CC Settings");
 
                     combo::w_to_ally_stunned = w_config->add_checkbox(myhero->get_model() + ".combo.w.to_ally_stunned", "Use W to ally when target is immobile", true);
                     combo::w_to_ally_stunned->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                     combo::w_to_ally_stunned_target_is_below_range = w_config->add_slider(myhero->get_model() + ".combo.w.to_ally_stunned_target_is_below_range", "Use if target is below range to myhero", 450, 1, 900);
                     combo::w_to_ally_stunned_ally_is_above_range = w_config->add_slider(myhero->get_model() + " combo.w.to_ally_stunned_ally_is_above_range", "Use if ally distance to target is more than", 275, 1, w->range());
 
-                    w_config->add_separator(myhero->get_model() + ".combo.w.separator3", "");
+                    w_config->add_separator(myhero->get_model() + ".combo.w.separator3", "Other Settings");
 
                     combo::w_semi_manual_cast = w_config->add_hotkey(myhero->get_model() + ".combo.w.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'G', true);
 

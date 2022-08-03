@@ -28,17 +28,19 @@ namespace missfortune
     namespace combo
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* q_use_on_minion_to_crit_on_enemy = nullptr;
+        TreeEntry* q_use_on_minion_to_crit_on_enemy_use_on_moving = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
+        TreeEntry* r_min_range = nullptr;
         TreeEntry* r_max_range = nullptr;
         TreeEntry* r_use_if_killable_by_x_waves = nullptr;
         TreeEntry* r_dont_waste_if_target_hp_below = nullptr;
         TreeEntry* r_auto_if_enemies_more_than = nullptr;
         TreeEntry* r_auto_on_cc = nullptr;
         TreeEntry* r_cancel_if_nobody_inside = nullptr;
-        TreeEntry* r_disable_orbwalker_moving = nullptr;
         TreeEntry* r_disable_evade = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
         bool previous_evade_state = false;
@@ -138,22 +140,39 @@ namespace missfortune
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+
+                auto q_config = combo->add_tab(myhero->get_model() + "combo.q.config", "Q Config");
+                {
+                    combo::q_use_on_minion_to_crit_on_enemy = q_config->add_checkbox(myhero->get_model() + ".combo.q.use_on_minion_to_crit_on_enemy", "Use Q on minions to crit on enemy", true);
+                    combo::q_use_on_minion_to_crit_on_enemy->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                    combo::q_use_on_minion_to_crit_on_enemy_use_on_moving = q_config->add_checkbox(myhero->get_model() + ".combo.q.use_on_minion_to_crit_on_enemy_use_on_moving", "^ Use on Moving minions", false);
+                }
+
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W before AA", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-                combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R on killable", true);
+                combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+
                 auto r_config = combo->add_tab(myhero->get_model() + "combo.r.config", "R Config");
                 {
-                    combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
+                    r_config->add_separator(myhero->get_model() + ".combo.r.separator1", "Range Settings");
+                    combo::r_min_range = r_config->add_slider(myhero->get_model() + ".combo.r.min_range", "Minimum R range", 400, 1, r->range());
                     combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", 1200, 550, r->range());
-                    combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use if killable by x waves", 6, 1, 14);
+
+
+                    r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "Usage Settings");
                     combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
-                    combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Auto R if hit enemies more than", 2, 1, 5);
-                    combo::r_auto_on_cc = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_cc", "Auto R on CC", false);;
+                    combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use R if target killable by x waves", 6, 1, 14);
+                    combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Use R if hit enemies more than", 2, 1, 5);
+                    combo::r_auto_on_cc = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_cc", "Use R on CC", false);
+                    combo::r_auto_on_cc->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                     combo::r_cancel_if_nobody_inside = r_config->add_checkbox(myhero->get_model() + ".combo.r.cancel_if_nobody_inside", "Cancel R if nobody inside", false);
-                    combo::r_disable_orbwalker_moving = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_orbwalker_moving", "Disable Orbwalker Moving on R", true);
+                    combo::r_cancel_if_nobody_inside->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+
+                    r_config->add_separator(myhero->get_model() + ".combo.r.separator3", "Other Settings");
+                    combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
@@ -241,7 +260,7 @@ namespace missfortune
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
                 float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
-                draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", true);
+                draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", false);
                 draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 draw_settings::q_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.color", "Q Color", color);
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
@@ -312,12 +331,10 @@ namespace missfortune
 
         if (myhero->is_casting_interruptible_spell() || gametime->get_time() - last_r_time < 0.3f)
         {
-            if (combo::r_disable_orbwalker_moving->get_bool())
-            {
-                orbwalker->set_attack(false);
-                orbwalker->set_movement(false);
-                combo::previous_orbwalker_state = true;
-            }
+            orbwalker->set_attack(false);
+            orbwalker->set_movement(false);
+            combo::previous_orbwalker_state = true;
+
             if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
             {
                 evade->disable_evade();
@@ -330,7 +347,7 @@ namespace missfortune
 
                 for (auto& enemy : entitylist->get_enemy_heroes())
                 {
-                    if (enemy->is_valid() && enemy->is_valid_target(r->range()))
+                    if (enemy->is_valid() && !enemy->is_dead() && enemy->is_valid_target(r->range()))
                     {
                         auto pred = prediction->get_prediction(enemy, r->get_delay(), r->get_radius(), r->get_speed());
                         if (pred.hitchance >= hit_chance::impossible)
@@ -570,12 +587,52 @@ namespace missfortune
     void q_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(q->range(), damage_type::physical);
+        auto target = target_selector->get_target(myhero->get_attack_range() , damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
             q->cast(target);
+        }
+        else if (combo::q_use_on_minion_to_crit_on_enemy->get_bool())
+        {
+            // Get a target from a given range
+            auto target = target_selector->get_target(myhero->get_attack_range() + 200, damage_type::physical);
+
+            if (target != nullptr)
+            {
+                // List of enemy minions
+                auto minions = entitylist->get_enemy_minions();
+
+                // Delete minions that aren't in the specified range
+                minions.erase(std::remove_if(minions.begin(), minions.end(), [](game_object_script x)
+                    {
+                        return !x->is_valid_target(q->range());
+                    }), minions.end());
+
+                // Delete moving minions
+                minions.erase(std::remove_if(minions.begin(), minions.end(), [](game_object_script x)
+                    {
+                        return !combo::q_use_on_minion_to_crit_on_enemy_use_on_moving->get_bool() && x->is_moving();
+                    }), minions.end());
+
+                // Delete minions that aren't in the specified range
+                minions.erase(std::remove_if(minions.begin(), minions.end(), [target](game_object_script x)
+                    {
+                        return x->get_distance(target) > 275;
+                    }), minions.end());
+
+                //std::sort -> sort minions by distance to the target
+                std::sort(minions.begin(), minions.end(), [target](game_object_script a, game_object_script b)
+                    {
+                        return a->get_position().distance(target->get_position()) < b->get_position().distance(target->get_position());
+                    });
+
+                if (!minions.empty())
+                {
+                    q->cast(minions.front());
+                }
+            }
         }
     }
 #pragma endregion
@@ -601,7 +658,7 @@ namespace missfortune
         auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && target->is_attack_allowed_on_target() && can_use_r_on(target))
+        if (target != nullptr && target->is_attack_allowed_on_target() && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
         {
             if (target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
@@ -610,18 +667,16 @@ namespace missfortune
                     auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
                     if (pred.hitchance >= get_hitchance(hitchance::e_hitchance))
                     {
-                        if (combo::r_disable_orbwalker_moving->get_bool())
-                        {
-                            orbwalker->set_attack(false);
-                            orbwalker->set_movement(false);
-                            combo::previous_orbwalker_state = true;
-                        }
+                        orbwalker->set_attack(false);
+                        orbwalker->set_movement(false);
+                        combo::previous_orbwalker_state = true;
+
                         if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                         {
                             evade->disable_evade();
                             combo::previous_evade_state = true;
                         }
-                        if (r->cast(pred.get_unit_position()))
+                        if (r->cast(pred.get_cast_position()))
                         {
                             last_r_time = gametime->get_time();
                             return true;
@@ -643,7 +698,7 @@ namespace missfortune
 
         for (auto& enemy : entitylist->get_enemy_heroes())
         {
-            if (enemy->is_valid() && enemy->is_valid_target(combo::r_max_range->get_int()))
+            if (enemy->is_valid() && !enemy->is_dead() && enemy->is_valid_target(combo::r_max_range->get_int()))
             {
                 auto pred = prediction->get_prediction(enemy, r->get_delay(), r->get_radius(), r->get_speed());
                 if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
@@ -658,18 +713,16 @@ namespace missfortune
             auto pred = prediction->get_prediction(hit_by_r.front(), r->get_delay(), r->get_radius(), r->get_speed());
             if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
             {
-                if (combo::r_disable_orbwalker_moving->get_bool())
-                {
-                    orbwalker->set_attack(false);
-                    orbwalker->set_movement(false);
-                    combo::previous_orbwalker_state = true;
-                }
+                orbwalker->set_attack(false);
+                orbwalker->set_movement(false);
+                combo::previous_orbwalker_state = true;
+
                 if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                 {
                     evade->disable_evade();
                     combo::previous_evade_state = true;
                 }
-                if (r->cast(pred.get_unit_position()))
+                if (r->cast(pred.get_cast_position()))
                 {
                     last_r_time = gametime->get_time();
                     return true;
@@ -683,29 +736,24 @@ namespace missfortune
             auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
             // Always check an object is not a nullptr!
-            if (target != nullptr)
+            if (target != nullptr && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
             {
-                if (can_use_r_on(target))
+                auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
+                if (pred.hitchance >= hit_chance::immobile)
                 {
-                    auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
-                    if (pred.hitchance >= hit_chance::immobile)
+                    orbwalker->set_attack(false);
+                    orbwalker->set_movement(false);
+                    combo::previous_orbwalker_state = true;
+
+                    if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                     {
-                        if (combo::r_disable_orbwalker_moving->get_bool())
-                        {
-                            orbwalker->set_attack(false);
-                            orbwalker->set_movement(false);
-                            combo::previous_orbwalker_state = true;
-                        }
-                        if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
-                        {
-                            evade->disable_evade();
-                            combo::previous_evade_state = true;
-                        }
-                        if (r->cast(pred.get_unit_position()))
-                        {
-                            last_r_time = gametime->get_time();
-                            return true;
-                        }
+                        evade->disable_evade();
+                        combo::previous_evade_state = true;
+                    }
+                    if (r->cast(pred.get_cast_position()))
+                    {
+                        last_r_time = gametime->get_time();
+                        return true;
                     }
                 }
             }
@@ -724,29 +772,24 @@ namespace missfortune
             auto target = target_selector->get_target(r->range(), damage_type::physical);
 
             // Always check an object is not a nullptr!
-            if (target != nullptr)
+            if (target != nullptr && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
             {
-                if (can_use_r_on(target))
+                auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
+                if (pred.hitchance >= get_hitchance(hitchance::e_hitchance))
                 {
-                    auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
-                    if (pred.hitchance >= get_hitchance(hitchance::e_hitchance))
+                    orbwalker->set_attack(false);
+                    orbwalker->set_movement(false);
+                    combo::previous_orbwalker_state = true;
+
+                    if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
                     {
-                        if (combo::r_disable_orbwalker_moving->get_bool())
-                        {
-                            orbwalker->set_attack(false);
-                            orbwalker->set_movement(false);
-                            combo::previous_orbwalker_state = true;
-                        }
-                        if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
-                        {
-                            evade->disable_evade();
-                            combo::previous_evade_state = true;
-                        }
-                        if (r->cast(pred.get_unit_position()))
-                        {
-                            last_r_time = gametime->get_time();
-                            return true;
-                        }
+                        evade->disable_evade();
+                        combo::previous_evade_state = true;
+                    }
+                    if (r->cast(pred.get_cast_position()))
+                    {
+                        last_r_time = gametime->get_time();
+                        return true;
                     }
                 }
             }

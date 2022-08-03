@@ -141,7 +141,7 @@ namespace kayle
 				combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
 				auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
 				{
-					combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 0);
+					combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 1);
 				}
 				combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
 				combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());

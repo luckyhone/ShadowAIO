@@ -163,16 +163,19 @@ namespace twitch
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + "combo.e.config", "E Config");
                 {
-                    combo::e_if_target_leaving_range = e_config->add_checkbox(myhero->get_model() + ".combo.e.target_leaving_range", "Use if target leaving E range", true);
-                    combo::e_leaving_range_minimum_stacks = e_config->add_slider(myhero->get_model() + ".combo.e.leaving_range_minimum_stacks", "Enemy leaving range use on x stacks", 6, 1, 6);
-                	combo::e_use_before_death = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_before_death", "Use before death", true);
-                    auto before_death_config = e_config->add_tab(myhero->get_model() + "combo.e.before_death.config", "Use before death Config");
+                    combo::e_if_target_leaving_range = e_config->add_checkbox(myhero->get_model() + ".combo.e.target_leaving_range", "Use E if target leaving E range", true);
+                    combo::e_if_target_leaving_range->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                    combo::e_leaving_range_minimum_stacks = e_config->add_slider(myhero->get_model() + ".combo.e.leaving_range_minimum_stacks", "^ Minimum stacks", 6, 1, 6);
+                    
+                    auto before_death_config = e_config->add_tab(myhero->get_model() + "combo.e.before_death.config", "Use E before death");
                     {
-                        combo::e_before_death_use_on_x_stacks = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_use_on_x_stacks", "Use on x stacks", 6, 1, 6);
+                        combo::e_use_before_death = before_death_config->add_checkbox(myhero->get_model() + ".combo.e.use_before_death", "Use E before death", true);
+                        combo::e_use_before_death->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                        combo::e_before_death_use_on_x_stacks = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_use_on_x_stacks", "Use E on x stacks", 6, 1, 6);
                         combo::e_before_death_myhero_under_hp = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_myhero_under_hp", "Myhero HP is under (in %)", 10, 0, 100);
                         combo::e_before_death_calculate_incoming_damage = before_death_config->add_checkbox(myhero->get_model() + ".combo.e.before_death_calculate_incoming_damage", "Calculate incoming damage", true);
                         combo::e_before_death_damage_time = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_damage_time", "Incoming damage time (in ms)", 600, 0, 1000);
-                        combo::e_before_death_over_my_hp_in_percent = before_death_config->add_slider(myhero->get_model() + ".combo.w.before_death_over_my_hp_in_percent", "Coming damage is over my HP (in %)", 90, 0, 100);
+                        combo::e_before_death_over_my_hp_in_percent = before_death_config->add_slider(myhero->get_model() + ".combo.w.before_death_over_my_hp_in_percent", "Incoming damage is over my HP (in %)", 90, 0, 100);
                     }
                 }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);

@@ -135,18 +135,21 @@ namespace kalista
                 auto w_config = combo->add_tab(myhero->get_model() + "combo.w.config", "W Config");
                 {
                     combo::w_auto_on_dragon_location = w_config->add_checkbox(myhero->get_model() + ".combo.w.auto_on_dragon_location", "Auto W on Dragon Location", true);
+                    combo::w_auto_on_dragon_location->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                     combo::w_auto_on_baron_location  = w_config->add_checkbox(myhero->get_model() + ".combo.w.auto_on_baron_location", "Auto W on Baron Location", true);
-                    combo::w_dont_use_if_enemies_nearby = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_if_enemies_nearby", "Dont use if enemies nearby", true);
+                    combo::w_auto_on_baron_location->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                    combo::w_dont_use_if_enemies_nearby = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_if_enemies_nearby", "Dont use W if enemies nearby", true);
                     combo::w_enemies_search_radius = w_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies nearby search radius", 1200, 300, 1600);
                 }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E on Killable", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + "combo.e.config", "E Config");
                 {
-                    combo::e_use_before_death = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_before_death", "Use before death", true);
-                    auto before_death_config = e_config->add_tab(myhero->get_model() + "combo.e.before_death.config", "Use before death Config");
+                    auto before_death_config = e_config->add_tab(myhero->get_model() + "combo.e.before_death.config", "Use E before death");
                     {
-                        combo::e_before_death_use_on_x_stacks = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_use_on_x_stacks", "Use on x stacks", 6, 1, 16);
+                        combo::e_use_before_death = before_death_config->add_checkbox(myhero->get_model() + ".combo.e.use_before_death", "Use E before death", true);
+                        combo::e_use_before_death->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                        combo::e_before_death_use_on_x_stacks = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_use_on_x_stacks", "Use E on x stacks", 6, 1, 16);
                         combo::e_before_death_myhero_under_hp = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_myhero_under_hp", "Myhero HP is under (in %)", 10, 0, 100);
                         combo::e_before_death_calculate_incoming_damage = before_death_config->add_checkbox(myhero->get_model() + ".combo.e.before_death_calculate_incoming_damage", "Calculate incoming damage", true);
                         combo::e_before_death_damage_time = before_death_config->add_slider(myhero->get_model() + ".combo.e.before_death_damage_time", "Incoming damage time (in ms)", 600, 0, 1000);
