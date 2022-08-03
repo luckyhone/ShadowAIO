@@ -39,6 +39,7 @@ namespace vex
 
     namespace combo
     {
+        TreeEntry* allow_tower_dive = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
@@ -47,7 +48,6 @@ namespace vex
         TreeEntry* r_killable_by_combo = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
         TreeEntry* r_target_above_range = nullptr;
-        TreeEntry* r_dont_use_target_under_turret = nullptr;
         TreeEntry* r_use_only_passive_ready = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
@@ -137,6 +137,7 @@ namespace vex
 
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
+                combo::allow_tower_dive = combo->add_hotkey(myhero->get_model() + ".combo.allow_tower_dive", "Allow Tower Dive", TreeHotkeyMode::Toggle, 'A', true);
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
@@ -151,7 +152,6 @@ namespace vex
                     combo::r_killable_by_combo = r_config->add_checkbox(myhero->get_model() + ".combo.r.killable_by_combo", "Use if target is killable by combo", true);
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 30, 0, 100);
                     combo::r_target_above_range = r_config->add_slider(myhero->get_model() + ".combo.r.target_is_above_range", "Target is above range", 300, 0, 800);
-                    combo::r_dont_use_target_under_turret = r_config->add_checkbox(myhero->get_model() + ".combo.r.dont_use_if_target_is_under_turret", "Dont use if target is under turret", true);
                     combo::r_use_only_passive_ready = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_only_passive_ready", "Use only if passive is ready", false);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
@@ -253,6 +253,7 @@ namespace vex
 	        Permashow::Instance.Init(main_tab);
 	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
 	        Permashow::Instance.AddElement("Semi Manual R", combo::r_semi_manual_cast);
+            Permashow::Instance.AddElement("Allow Tower Dive", combo::allow_tower_dive);
         }
 
         // Add anti gapcloser handler
@@ -479,16 +480,13 @@ namespace vex
     {
         for (auto& enemy : entitylist->get_enemy_heroes())
         {
-            if (can_use_r_on(enemy))
+            if (enemy->is_valid() && !enemy->is_dead() && can_use_r_on(enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
             {
-                if (!combo::r_dont_use_target_under_turret->get_bool() || !enemy->is_under_ally_turret())
+                if (enemy->has_buff(buff_hash("vexr2timer")))
                 {
-                    if (enemy->has_buff(buff_hash("vexr2timer")))
+                    if (r->cast())
                     {
-                        if (r->cast())
-                        {
-                            return;
-                        }
+                        return;
                     }
                 }
             }
@@ -498,24 +496,17 @@ namespace vex
         auto target = target_selector->get_target(r->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_r_on(target))
+        if (target != nullptr && can_use_r_on(target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
         {
-            if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
+            if (target->get_distance(myhero) > combo::r_target_above_range->get_int() && !target->has_buff(buff_hash("vexr2timer")))
             {
-                if (!target->has_buff(buff_hash("vexr2timer")))
+                if ((target->get_health_percent() < combo::r_target_hp_under->get_int()) || (get_damage(target) > target->get_real_health() && combo::r_killable_by_combo->get_bool()))
                 {
-                    //bool is_recast_after_kill = myhero->has_buff(buff_hash("vexrresettimer"));
-                    if ((target->get_health_percent() < combo::r_target_hp_under->get_int()) || (get_damage(target) > target->get_real_health() && combo::r_killable_by_combo->get_bool()))
+                    if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
                     {
-                        if (target->get_distance(myhero) > combo::r_target_above_range->get_int())
-                        {
-                            if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
-                            {
-                                r->cast(target, get_hitchance(hitchance::r_hitchance));
-                            }
-                        }
+                        r->cast(target, get_hitchance(hitchance::r_hitchance));
                     }
-                }        
+                }
             }
         }
     }
@@ -530,23 +521,13 @@ namespace vex
             auto target = target_selector->get_target(r->range(), damage_type::magical);
 
             // Always check an object is not a nullptr!
-            if (target != nullptr && can_use_r_on(target))
+            if (target != nullptr && can_use_r_on(target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
             {
-                if (!combo::r_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
+                if (target->get_distance(myhero) > combo::r_target_above_range->get_int() && !target->has_buff(buff_hash("vexr2timer")))
                 {
-                    if (target->has_buff(buff_hash("vexr2timer")))
+                    if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
                     {
-                        r->cast();
-                    }
-                    else
-                    {
-                        if (target->get_distance(myhero) > combo::r_target_above_range->get_int())
-                        {
-                            if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
-                            {
-                                r->cast(target, get_hitchance(hitchance::r_hitchance));
-                            }
-                        }
+                        r->cast(target, get_hitchance(hitchance::r_hitchance));
                     }
                 }
             }
@@ -622,6 +603,7 @@ namespace vex
         if (r->is_ready() && can_use_r_on(target))
             damage += r->get_damage(target);
 
+        damage += myhero->get_auto_attack_damage(target);
         return damage;
     }
 
