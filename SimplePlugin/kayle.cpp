@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "kayle.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace kayle
@@ -30,6 +31,10 @@ namespace kayle
 	{
 		TreeEntry* use_q = nullptr;
 		TreeEntry* use_w = nullptr;
+		TreeEntry* w_use_on_low_hp = nullptr;
+		TreeEntry* w_only_if_enemies_nearby = nullptr;
+		TreeEntry* w_myhero_hp_under = nullptr;
+		TreeEntry* w_use_while_chasing = nullptr;
 		TreeEntry* w_target_above_range = nullptr;
 		TreeEntry* w_target_hp_under = nullptr;
 		TreeEntry* w_dont_use_target_under_turret = nullptr;
@@ -132,7 +137,17 @@ namespace kayle
 				combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
 				auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
 				{
-					combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Target is above range", 500, 0, 800);
+					w_config->add_separator(myhero->get_model() + ".combo.w.separator1", "W on Low HP Options");
+					combo::w_use_on_low_hp = w_config->add_checkbox(myhero->get_model() + ".combo.w.use_on_low_hp", "Use W on Low HP", true);
+					combo::w_use_on_low_hp->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+					combo::w_only_if_enemies_nearby = w_config->add_checkbox(myhero->get_model() + ".combo.w.only_if_enemies_nearby", "Use W only if enemies nearby", true);
+					combo::w_only_if_enemies_nearby->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+					combo::w_myhero_hp_under = w_config->add_slider(myhero->get_model() + ".combo.w.myhero_hp_under", "Myhero HP is under (in %)", 30, 0, 100);
+
+					w_config->add_separator(myhero->get_model() + ".combo.w.separator2", "W while chasing Options");
+					combo::w_use_while_chasing = w_config->add_checkbox(myhero->get_model() + ".combo.w.use_while_chasing", "Use W while chasing an enemy", true);
+					combo::w_use_while_chasing->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+					combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Target is above range", 525, 0, 800);
 					combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".combo.w.target_hp_under", "Target HP is under (in %)", 50, 0, 100);
 					combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_target_under_turret", "Dont use if target is under turret", true);
 					combo::w_check_if_target_is_not_facing = w_config->add_checkbox(myhero->get_model() + ".combo.w.check_if_target_is_not_facing", "Check if target is not facing myhero", true);
@@ -488,11 +503,7 @@ namespace kayle
 		// Always check an object is not a nullptr!
 		if (target != nullptr)
 		{
-			// Check if the distance between myhero and enemy is smaller than q range
-			if (target->get_distance(myhero) <= q->range())
-			{
-				q->cast(target, get_hitchance(hitchance::q_hitchance));
-			}
+			q->cast(target, get_hitchance(hitchance::q_hitchance));
 		}
 	}
 #pragma endregion
@@ -500,15 +511,26 @@ namespace kayle
 #pragma region w_logic
 	void w_logic()
 	{
-		// Get a target from a given range
-		auto target = target_selector->get_target(w->range(), damage_type::magical);
-
-		// Always check an object is not a nullptr!
-		if (target != nullptr)
+		if (combo::w_use_on_low_hp->get_bool() && !utils::has_unkillable_buff(myhero) && myhero->get_health_percent() < combo::w_myhero_hp_under->get_int())
 		{
-			if (target->get_health_percent() < combo::w_target_hp_under->get_int())
+			if (!combo::w_only_if_enemies_nearby->get_bool() || myhero->count_enemies_in_range(w->range()) != 0)
 			{
-				if (target->get_distance(myhero) > combo::w_target_above_range->get_int())
+				if (w->cast())
+				{
+					return;
+				}
+			}
+		}
+
+		if (combo::w_use_while_chasing->get_bool())
+		{
+			// Get a target from a given range
+			auto target = target_selector->get_target(w->range(), damage_type::magical);
+
+			// Always check an object is not a nullptr!
+			if (target != nullptr)
+			{
+				if (target->get_health_percent() < combo::w_target_hp_under->get_int() && target->get_distance(myhero) > combo::w_target_above_range->get_int())
 				{
 					if (!combo::w_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
 					{
@@ -527,7 +549,7 @@ namespace kayle
 	void e_logic()
 	{
 		// Get a target from a given range
-		auto target = target_selector->get_target(r->level() == 0 ? e->range() : myhero->get_attack_range(), damage_type::magical);
+		auto target = target_selector->get_target((r->level() == 0 ? e->range() : myhero->get_attack_range()) + 50, damage_type::magical);
 
 		// Always check an object is not a nullptr!
 		if (target != nullptr)
@@ -546,21 +568,15 @@ namespace kayle
 	{
 		for (auto&& ally : entitylist->get_ally_heroes())
 		{
-			if (can_use_r_on(ally))
+			if (ally->is_valid() && !ally->is_dead() && can_use_r_on(ally) && ally->get_distance(myhero->get_position()) <= r->range())
 			{
-				if (ally->get_distance(myhero->get_position()) <= r->range())
+				if (!utils::has_unkillable_buff(ally) && (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0))
 				{
-					if (!ally->has_buff({ buff_hash("UndyingRage"), buff_hash("ChronoShift"), buff_hash("KayleR"), buff_hash("KindredRNoDeathBuff") }))
+					if ((ally->get_health_percent() < (ally->is_me() ? combo::r_myhero_hp_under->get_int() : combo::r_ally_hp_under->get_int())) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
 					{
-						if ((ally->get_health_percent() < (ally->is_me() ? combo::r_myhero_hp_under->get_int() : combo::r_ally_hp_under->get_int())) || (combo::r_calculate_incoming_damage->get_bool() && health_prediction->get_incoming_damage(ally, combo::r_coming_damage_time->get_int() / 1000.0f, true) >= ally->get_health()))
+						if (r->cast(ally))
 						{
-							if (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0)
-							{
-								if (r->cast(ally))
-								{
-									return;
-								}
-							}
+							return;
 						}
 					}
 				}
@@ -620,7 +636,7 @@ namespace kayle
 			if (combo::e_mode->get_int() == 1)
 			{
 				// Using e after autoattack on enemies
-				if (target->is_ai_hero() && (orbwalker->combo_mode() && combo::use_e->get_bool() || orbwalker->harass() && harass::use_e->get_bool()))
+				if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
 				{
 					if (e->cast())
 					{
