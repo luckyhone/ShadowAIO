@@ -79,7 +79,7 @@ namespace ivern
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, 1100);
-        q->set_skillshot(0.25f, 160.0f, 1300.0f, { collisionable_objects::minions, collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
+        q->set_skillshot(0.25f, 80.0f, 1300.0f, { collisionable_objects::minions, collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
         w = plugin_sdk->register_spell(spellslot::w, 1000);
         e = plugin_sdk->register_spell(spellslot::e, 750);
 

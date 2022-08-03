@@ -119,9 +119,9 @@ namespace gwen
         w = plugin_sdk->register_spell(spellslot::w, 425);
         e = plugin_sdk->register_spell(spellslot::e, 350);
         r = plugin_sdk->register_spell(spellslot::r, 1350);
-        r->set_skillshot(0.25f, 200.0f, 1800.0f, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line);
+        r->set_skillshot(0.25f, 120.0f, 1800.0f, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line);
         r2 = plugin_sdk->register_spell(spellslot::r, 1350);
-        r2->set_skillshot(0.50f, 200.0f, 1800.0f, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line);
+        r2->set_skillshot(0.50f, 120.0f, 1800.0f, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line);
 
         // Create a menu according to the description in the "Menu Section"
         //

@@ -98,6 +98,7 @@ namespace tryndamere
         q = plugin_sdk->register_spell(spellslot::q, 0);
         w = plugin_sdk->register_spell(spellslot::w, 850);
         e = plugin_sdk->register_spell(spellslot::e, 660);
+        e->set_skillshot(0.0f, 112.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
         r = plugin_sdk->register_spell(spellslot::r, 0);
 
 

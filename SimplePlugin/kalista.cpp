@@ -111,7 +111,7 @@ namespace kalista
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, 1200);
-        q->set_skillshot(0.25f, 80.0f, 2400.0f, { collisionable_objects::yasuo_wall, collisionable_objects::heroes, collisionable_objects::minions }, skillshot_type::skillshot_line);
+        q->set_skillshot(0.25f, 40.0f, 2400.0f, { collisionable_objects::yasuo_wall, collisionable_objects::heroes, collisionable_objects::minions }, skillshot_type::skillshot_line);
         w = plugin_sdk->register_spell(spellslot::w, 5000);
         e = plugin_sdk->register_spell(spellslot::e, 1100);
         r = plugin_sdk->register_spell(spellslot::r, 1200);

@@ -112,7 +112,7 @@ namespace viego
         q = plugin_sdk->register_spell(spellslot::q, 625);
         q->set_skillshot(0.35f, 125.0f, FLT_MAX, { collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line); //cast time is based on attack speed (140% of viego attack windup)
         w = plugin_sdk->register_spell(spellslot::w, 900);
-        w->set_skillshot(0.0f, 120.0f, 1300.0f, { collisionable_objects::heroes, collisionable_objects::minions, collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line);
+        w->set_skillshot(0.0f, 80.0f, 1300.0f, { collisionable_objects::heroes, collisionable_objects::minions, collisionable_objects::yasuo_wall }, skillshot_type::skillshot_line);
         w->set_charged(500.0f, 900.0f, 1.0f);
         e = plugin_sdk->register_spell(spellslot::e, 775);
         r = plugin_sdk->register_spell(spellslot::r, 500);

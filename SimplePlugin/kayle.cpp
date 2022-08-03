@@ -109,7 +109,7 @@ namespace kayle
 		// Registering a spells
 		//
 		q = plugin_sdk->register_spell(spellslot::q, 900);
-		q->set_skillshot(0.25f, 150.0f, 1600.0f, { collisionable_objects::minions, collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
+		q->set_skillshot(0.25f, 75.0f, 1600.0f, { collisionable_objects::minions, collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
 		w = plugin_sdk->register_spell(spellslot::w, 900);
 		e = plugin_sdk->register_spell(spellslot::e, 575);
 		r = plugin_sdk->register_spell(spellslot::r, 900);

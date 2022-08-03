@@ -115,9 +115,9 @@ namespace chogath
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, 950);
-        q->set_skillshot(1.125f, 250.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+        q->set_skillshot(1.125f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         w = plugin_sdk->register_spell(spellslot::w, 650);
-        w->set_skillshot(0.5f, 60.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+        w->set_skillshot(0.5f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
         e = plugin_sdk->register_spell(spellslot::e, myhero->get_attack_range());
         r = plugin_sdk->register_spell(spellslot::r, 325);
 

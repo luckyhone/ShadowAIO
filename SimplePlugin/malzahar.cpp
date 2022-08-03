@@ -111,7 +111,7 @@ namespace malzahar
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, 900);
-        q->set_skillshot(0.65f, 200.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+        q->set_skillshot(0.65f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         w = plugin_sdk->register_spell(spellslot::w, 800);
         e = plugin_sdk->register_spell(spellslot::e, 650);
         r = plugin_sdk->register_spell(spellslot::r, 700);

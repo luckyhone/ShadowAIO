@@ -162,9 +162,9 @@ namespace draven
         q->set_spell_lock(false);
         w = plugin_sdk->register_spell(spellslot::w, 0);
         e = plugin_sdk->register_spell(spellslot::e, 1100);
-        e->set_skillshot(0.25f, 260.0f, 1400.0f, { }, skillshot_type::skillshot_line);
+        e->set_skillshot(0.25f, 130.0f, 1400.0f, { }, skillshot_type::skillshot_line);
         r = plugin_sdk->register_spell(spellslot::r, 15000);
-        r->set_skillshot(0.50f, 320.0f, 2000.0f, { }, skillshot_type::skillshot_line);
+        r->set_skillshot(0.50f, 160.0f, 2000.0f, { }, skillshot_type::skillshot_line);
 
 
         // Create a menu according to the description in the "Menu Section"

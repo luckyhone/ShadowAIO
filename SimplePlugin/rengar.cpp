@@ -108,7 +108,7 @@ namespace rengar
         q = plugin_sdk->register_spell(spellslot::q, 0);
         w = plugin_sdk->register_spell(spellslot::w, 450);
         e = plugin_sdk->register_spell(spellslot::e, 1000);
-        e->set_skillshot(0.25f, 140.0f, 1500.0f, { collisionable_objects::minions, collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
+        e->set_skillshot(0.25f, 80.0f, 1500.0f, { collisionable_objects::minions, collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
         r = plugin_sdk->register_spell(spellslot::r, 745);
 
         // Create a menu according to the description in the "Menu Section"
