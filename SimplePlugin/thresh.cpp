@@ -36,6 +36,7 @@ namespace thresh
         TreeEntry* q_semi_manual_cast = nullptr;
         TreeEntry* q_min_range = nullptr;
         TreeEntry* q_max_range = nullptr;
+        TreeEntry* q_force_use_selected_targe = nullptr;
         TreeEntry* use_q2 = nullptr;
 
         TreeEntry* use_w = nullptr;
@@ -154,6 +155,7 @@ namespace thresh
                     combo::q_semi_manual_cast = q_config->add_hotkey(myhero->get_model() + ".combo.q.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'X', true);
                     combo::q_min_range = q_config->add_slider(myhero->get_model() + ".combo.q.min_range", "Minimum Q distance to target", 125, 1, 1100); 
                     combo::q_max_range = q_config->add_slider(myhero->get_model() + ".combo.q.max_range", "Maximum Q distance to target", 1050, 1, 1100);
+                    combo::q_force_use_selected_targe = q_config->add_checkbox(myhero->get_model() + ".combo.q.force_use_selected_targe", "Force use Q on selected target", true);
 
                     auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
                     {
@@ -561,14 +563,13 @@ namespace thresh
 
 #pragma region q_logic
     void q_logic()
-    {
+    {        
         if (combo::use_q2->get_bool())
         {
             for (auto& enemy : entitylist->get_enemy_heroes())
             {
                 if (enemy->is_valid() && !enemy->is_dead() && can_use_q_on(enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_int()) && enemy->has_buff(buff_hash("ThreshQ")))
                 {
-                    console->print("Q2 on %s", enemy->get_model_cstr());
                     if (q->cast())
                     {
                         return;
@@ -578,7 +579,9 @@ namespace thresh
         }
 
         // Get a target from a given range
-        auto target = target_selector->get_target(combo::q_max_range->get_int(), damage_type::magical);
+        auto selected_target = target_selector->get_selected_target();
+        auto target = selected_target != nullptr && selected_target->is_valid() && selected_target->is_valid_target(combo::q_max_range->get_int()) 
+            ? selected_target : target_selector->get_target(combo::q_max_range->get_int(), damage_type::magical);
 
         // Minimum distance to target
         float min_distance = combo::thresh_mode->get_int() == 0 ? combo::q_min_range->get_int() : myhero->get_attack_range();
