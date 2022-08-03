@@ -85,6 +85,11 @@ namespace kayle
 		TreeEntry* use_w = nullptr;
 	}
 
+	namespace antigapclose
+	{
+		TreeEntry* use_q = nullptr;
+	}
+
 	namespace hitchance
 	{
 		TreeEntry* q_hitchance = nullptr;
@@ -96,6 +101,7 @@ namespace kayle
 	void on_draw();
 	void on_before_attack(game_object_script target, bool* process);
 	void on_after_attack_orbwalker(game_object_script target);
+	void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 
 	// Declaring functions responsible for spell-logic
 	//
@@ -230,6 +236,12 @@ namespace kayle
 				fleemode::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
 			}
 
+			auto antigapclose = main_tab->add_tab(myhero->get_model() + ".antigapclose", "Anti Gapclose");
+			{
+				antigapclose::use_q = antigapclose->add_checkbox(myhero->get_model() + ".antigapclose.q", "Use Q", true);
+				antigapclose::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+			}
+
 			auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
 			{
 				hitchance::q_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.q", "Hitchance Q", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
@@ -261,6 +273,10 @@ namespace kayle
 			Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
 		}
 
+		// Add anti gapcloser handler
+		//
+		antigapcloser::add_event_handler(on_gapcloser);
+
 		// To add a new event you need to define a function and call add_calback
 		//
 		event_handler<events::on_update>::add_callback(on_update);
@@ -285,6 +301,10 @@ namespace kayle
 		// Remove permashow
 		//
 		Permashow::Instance.Destroy();
+
+		// Remove anti gapcloser handler
+		//
+		antigapcloser::remove_event_handler(on_gapcloser);
 
 		// VERY important to remove always ALL events
 		//
@@ -652,6 +672,17 @@ namespace kayle
 				{
 					return;
 				}
+			}
+		}
+	}
+
+	void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
+	{
+		if (antigapclose::use_q->get_bool() && q->is_ready() && !myhero->is_under_enemy_turret())
+		{
+			if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
+			{
+				q->cast(sender, get_hitchance(hitchance::q_hitchance));
 			}
 		}
 	}
