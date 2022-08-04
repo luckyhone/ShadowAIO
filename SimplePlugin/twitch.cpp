@@ -130,7 +130,7 @@ namespace twitch
         //
         q = plugin_sdk->register_spell(spellslot::q, 500);
         w = plugin_sdk->register_spell(spellslot::w, 950);
-        w->set_skillshot(0.25f, 200.f, 1400.0f, { }, skillshot_type::skillshot_circle);
+        w->set_skillshot(0.25f, 100.f, 1400.0f, { }, skillshot_type::skillshot_circle);
         e = plugin_sdk->register_spell(spellslot::e, 1200);
         r = plugin_sdk->register_spell(spellslot::r, 1100);
         b = plugin_sdk->register_spell(spellslot::recall, 0);

@@ -126,7 +126,7 @@ namespace missfortune
         q = plugin_sdk->register_spell(spellslot::q, myhero->get_attack_range());
         w = plugin_sdk->register_spell(spellslot::w, 0);
         e = plugin_sdk->register_spell(spellslot::e, 1000);
-        e->set_skillshot(0.25f, 200.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+        e->set_skillshot(0.25f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         r = plugin_sdk->register_spell(spellslot::r, 1450);
         r->set_skillshot(0.0f, 200.0f, 2000.0f, { }, skillshot_type::skillshot_line);
 

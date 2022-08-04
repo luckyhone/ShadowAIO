@@ -115,7 +115,7 @@ namespace gwen
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, 450);
-        q->set_skillshot(0.5f, 250.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
+        q->set_skillshot(0.5f, 200.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
         w = plugin_sdk->register_spell(spellslot::w, 425);
         e = plugin_sdk->register_spell(spellslot::e, 350);
         r = plugin_sdk->register_spell(spellslot::r, 1350);

@@ -42,8 +42,8 @@ namespace viego
         std::map<std::uint32_t, TreeEntry*> r_use_on;
         TreeEntry* auto_catch_soul = nullptr;
         TreeEntry* force_catch_soul = nullptr;
-        TreeEntry* max_soul_distance = nullptr;
         TreeEntry* simple_spell_usage_on_soul = nullptr;
+        TreeEntry* max_soul_distance = nullptr;
     }
 
     namespace harass
@@ -116,7 +116,7 @@ namespace viego
         w->set_charged(500.0f, 900.0f, 1.0f);
         e = plugin_sdk->register_spell(spellslot::e, 775);
         r = plugin_sdk->register_spell(spellslot::r, 500);
-        r->set_skillshot(0.50f, 275.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+        r->set_skillshot(0.50f, 150.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -171,14 +171,10 @@ namespace viego
                     combo::auto_catch_soul = passive_config->add_checkbox(myhero->get_model() + ".combo.passive.auto_soul_catch", "Auto Soul Catch", true);
                     combo::auto_catch_soul->set_texture(myhero->get_passive_icon_texture());
                     combo::force_catch_soul = passive_config->add_checkbox(myhero->get_model() + ".combo.passive.force_catch_soul", "Force Soul Catch", true);
-
-                    auto auto_catch_soul_config = combo->add_tab(myhero->get_model() + "combo.passive.auto_soul_catch.config", "Soul Catch Config");
-                    {
-                        combo::max_soul_distance = auto_catch_soul_config->add_slider("combo.passive.auto_soul_catch.max_distance", "Max distance to soul", 225, 100, 600);
-                    }
-
+                    combo::force_catch_soul->set_texture(myhero->get_passive_icon_texture());
                     combo::simple_spell_usage_on_soul = passive_config->add_checkbox(myhero->get_model() + ".combo.passive.auto_soul_spell_usage", "Simple Soul Spell Usage", true);
                     combo::simple_spell_usage_on_soul->set_texture(myhero->get_passive_icon_texture());
+                    combo::max_soul_distance = passive_config->add_slider("combo.passive.auto_soul_catch.max_distance", "Max distance to soul", 225, 100, 600);
                 }
             }
 

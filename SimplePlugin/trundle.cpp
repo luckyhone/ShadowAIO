@@ -100,7 +100,7 @@ namespace trundle
         q = plugin_sdk->register_spell(spellslot::q, myhero->get_attack_range());
         w = plugin_sdk->register_spell(spellslot::w, 750);
         e = plugin_sdk->register_spell(spellslot::e, 1000);
-        e->set_skillshot(0.75f, 225.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+        e->set_skillshot(0.75f, 112.5f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         r = plugin_sdk->register_spell(spellslot::r, 650);
 
 
