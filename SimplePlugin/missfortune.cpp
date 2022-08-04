@@ -41,6 +41,7 @@ namespace missfortune
         TreeEntry* r_auto_if_enemies_more_than = nullptr;
         TreeEntry* r_auto_on_cc = nullptr;
         TreeEntry* r_cancel_if_nobody_inside = nullptr;
+        TreeEntry* r_block_mouse_move = nullptr;
         TreeEntry* r_disable_evade = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
         bool previous_evade_state = false;
@@ -50,6 +51,7 @@ namespace missfortune
     namespace harass
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_only_if_mana_more_than = nullptr;
     }
@@ -100,6 +102,7 @@ namespace missfortune
     void on_update();
     void on_draw();
     void on_before_attack_orbwalker(game_object_script target, bool* process);
+    void on_issue_order(game_object_script& target, vector& pos, _issue_order_type& type, bool* process);
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 
     // Declaring functions responsible for spell-logic
@@ -173,6 +176,7 @@ namespace missfortune
 
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator3", "Other Settings");
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
+                    combo::r_block_mouse_move = r_config->add_checkbox(myhero->get_model() + ".combo.r.block_mouse_move", "Block Mouse Move on R", true);
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
@@ -195,6 +199,8 @@ namespace missfortune
             {
                 harass::use_q = harass->add_checkbox(myhero->get_model() + ".harass.q", "Use Q", true);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                harass::use_w = harass->add_checkbox(myhero->get_model() + ".harass.w", "Use W", false);
+                harass::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = harass->add_tab(myhero->get_model() + "harass.r.config", "E Config");
@@ -291,6 +297,7 @@ namespace missfortune
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
         event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack_orbwalker);
+        event_handler<events::on_issue_order>::add_callback(on_issue_order);
     }
 
     void unload()
@@ -319,6 +326,7 @@ namespace missfortune
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
         event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack_orbwalker);
+        event_handler<events::on_issue_order>::remove_handler(on_issue_order);
     }
 
     // Main update script function
@@ -359,6 +367,7 @@ namespace missfortune
 
                 if (hit_by_r.empty())
                 {
+                    last_r_time = 0.0f;
                     if (combo::previous_orbwalker_state)
                     {
                         orbwalker->set_attack(true);
@@ -676,7 +685,7 @@ namespace missfortune
                             evade->disable_evade();
                             combo::previous_evade_state = true;
                         }
-                        if (r->cast(pred.get_cast_position()))
+                        if (r->cast(pred.get_unit_position()))
                         {
                             last_r_time = gametime->get_time();
                             return true;
@@ -722,7 +731,7 @@ namespace missfortune
                     evade->disable_evade();
                     combo::previous_evade_state = true;
                 }
-                if (r->cast(pred.get_cast_position()))
+                if (r->cast(pred.get_unit_position()))
                 {
                     last_r_time = gametime->get_time();
                     return true;
@@ -750,7 +759,7 @@ namespace missfortune
                         evade->disable_evade();
                         combo::previous_evade_state = true;
                     }
-                    if (r->cast(pred.get_cast_position()))
+                    if (r->cast(pred.get_unit_position()))
                     {
                         last_r_time = gametime->get_time();
                         return true;
@@ -786,7 +795,7 @@ namespace missfortune
                         evade->disable_evade();
                         combo::previous_evade_state = true;
                     }
-                    if (r->cast(pred.get_cast_position()))
+                    if (r->cast(pred.get_unit_position()))
                     {
                         last_r_time = gametime->get_time();
                         return true;
@@ -893,14 +902,11 @@ namespace missfortune
     void on_before_attack_orbwalker(game_object_script target, bool* process)
     {
         // Use w before autoattack on enemies
-        if (target->is_ai_hero())
+        if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
         {
-            if (combo::use_w->get_bool())
+            if (w->cast())
             {
-                if (w->cast())
-                {
-                    return;
-                }
+                return;
             }
         }
 
@@ -927,6 +933,14 @@ namespace missfortune
             {
                 return;
             }
+        }
+    }
+
+    void on_issue_order(game_object_script& target, vector& pos, _issue_order_type& type, bool* process)
+    {
+        if (combo::r_block_mouse_move->get_bool() && last_r_time != 0.0f && (myhero->is_casting_interruptible_spell() || gametime->get_time() - last_r_time < 0.3f))
+        {
+            *process = false;
         }
     }
 
