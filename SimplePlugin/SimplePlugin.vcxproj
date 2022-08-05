@@ -172,6 +172,7 @@
     <ClCompile Include="malzahar.cpp" />
     <ClCompile Include="masteryi.cpp" />
     <ClCompile Include="missfortune.cpp" />
+    <ClCompile Include="nasus.cpp" />
     <ClCompile Include="permashow.cpp" />
     <ClCompile Include="rengar.cpp" />
     <ClCompile Include="teemo.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="malzahar.h" />
     <ClInclude Include="masteryi.h" />
     <ClInclude Include="missfortune.h" />
+    <ClInclude Include="nasus.h" />
     <ClInclude Include="permashow.hpp" />
     <ClInclude Include="rengar.h" />
     <ClInclude Include="teemo.h" />

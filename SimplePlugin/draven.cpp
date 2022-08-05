@@ -45,6 +45,7 @@ namespace draven
         TreeEntry* w_cast_in_fight = nullptr;
         TreeEntry* w_cast_before_catching_axe = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_semi_manual_cast = nullptr;
         TreeEntry* e_mode = nullptr;
         TreeEntry* e_max_range = nullptr;
         TreeEntry* e_spell_interrupter = nullptr;
@@ -124,6 +125,7 @@ namespace draven
     void q_logic();
     void w_logic();
     void e_logic();
+    void e_logic_semi();
     void r_logic();
     void r_logic_semi();
 
@@ -199,6 +201,7 @@ namespace draven
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
+                    combo::e_semi_manual_cast = e_config->add_hotkey(myhero->get_model() + ".combo.e.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'X', true);
                     combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"In Combo", nullptr},{"After AA", nullptr } }, 1);
                     combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "Maximum E Range", 800.0f, 1, e->range());
                     combo::e_spell_interrupter = e_config->add_checkbox(myhero->get_model() + ".combo.e.spell_interrupter", "Auto E spell interrupter", true);
@@ -338,6 +341,7 @@ namespace draven
             Permashow::Instance.AddElement("Catch Under Turret", catch_axes_settings::catch_axes_under_turret);
             Permashow::Instance.AddElement("Don't Catch Axes", catch_axes_settings::dont_catch_axes);
             Permashow::Instance.AddElement("Semi Auto R", combo::r_semi_manual_cast);
+            Permashow::Instance.AddElement("Semi Auto E", combo::e_semi_manual_cast);
         }
 
         // Add anti gapcloser handler
@@ -406,6 +410,11 @@ namespace draven
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
+            if (e->is_ready() && combo::e_semi_manual_cast->get_bool())
+            {
+                e_logic_semi();
+            }
+
             if (r->is_ready() && combo::r_semi_manual_cast->get_bool())
             {
                 r_logic_semi();
@@ -703,6 +712,20 @@ namespace draven
             {
                 e->cast(target, get_hitchance(hitchance::e_hitchance));
             }
+        }
+    }
+#pragma endregion
+
+#pragma region e_logic_semi
+    void e_logic_semi()
+    {
+        // Get a target from a given range
+        auto target = target_selector->get_target(combo::e_max_range->get_int(), damage_type::physical);
+
+        // Always check an object is not a nullptr!
+        if (target != nullptr)
+        {
+            e->cast(target, get_hitchance(hitchance::e_hitchance));
         }
     }
 #pragma endregion

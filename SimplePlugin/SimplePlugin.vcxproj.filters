@@ -88,6 +88,9 @@
     <ClCompile Include="thresh.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="nasus.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -166,6 +169,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="thresh.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="nasus.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

@@ -4,7 +4,7 @@
 //
 PLUGIN_NAME("ShadowAIO");
 PLUGIN_TYPE(plugin_type::champion);
-SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::Trundle, champion_id::Jax, champion_id::Kayle, champion_id::Vex, champion_id::MasterYi, champion_id::Chogath, champion_id::Twitch, champion_id::Kalista, champion_id::Malzahar, champion_id::MissFortune, champion_id::Teemo, champion_id::Gwen, champion_id::Ivern, champion_id::Rengar, champion_id::Draven, champion_id::Belveth, champion_id::Viego, champion_id::Thresh);
+SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::Trundle, champion_id::Jax, champion_id::Kayle, champion_id::Vex, champion_id::MasterYi, champion_id::Chogath, champion_id::Twitch, champion_id::Kalista, champion_id::Malzahar, champion_id::MissFortune, champion_id::Teemo, champion_id::Gwen, champion_id::Ivern, champion_id::Rengar, champion_id::Draven, champion_id::Belveth, champion_id::Viego, champion_id::Thresh, champion_id::Nasus);
 
 // Include champion file
 //
@@ -28,6 +28,7 @@ SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::
 #include "belveth.h"
 #include "viego.h"
 #include "thresh.h"
+#include "nasus.h"
 
 // Entry point of plugin
 //
@@ -140,6 +141,11 @@ PLUGIN_API bool on_sdk_load(plugin_sdk_core* plugin_sdk_good)
             // Load thresh script
             //
             thresh::load();
+            break;
+        case champion_id::Nasus:
+            // Load nasus script
+            //
+            nasus::load();
             break;
         default:
             // We don't support this champ, print message and return false (core will not load this plugin and on_sdk_unload will be never called)
@@ -259,6 +265,11 @@ PLUGIN_API void on_sdk_unload()
             // Unload thresh script
             //
             thresh::unload();
+            break;
+        case champion_id::Nasus:
+            // Unload nasus script
+            //
+            nasus::unload();
             break;
         default:
             break;

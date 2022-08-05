@@ -46,10 +46,12 @@ namespace vex
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
         TreeEntry* r_killable_by_combo = nullptr;
+        TreeEntry* r_use_only_passive_ready = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
         TreeEntry* r_target_above_range = nullptr;
-        TreeEntry* r_use_only_passive_ready = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
+        TreeEntry* use_r2 = nullptr;
+        TreeEntry* r2_maxiumum_enemies_nearby = nullptr;
     }
 
     namespace harass
@@ -146,13 +148,16 @@ namespace vex
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
-                    combo::r_killable_by_combo = r_config->add_checkbox(myhero->get_model() + ".combo.r.killable_by_combo", "Use if target is killable by combo", true);
+                    combo::r_killable_by_combo = r_config->add_checkbox(myhero->get_model() + ".combo.r.killable_by_combo", "Use R if target is killable by combo", true);
+                    combo::r_killable_by_combo->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+                    combo::r_use_only_passive_ready = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_only_passive_ready", "Use R only if passive is ready", false);
+                    combo::r_use_only_passive_ready->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 30, 0, 100);
                     combo::r_target_above_range = r_config->add_slider(myhero->get_model() + ".combo.r.target_is_above_range", "Target is above range", 300, 0, 800);
-                    combo::r_use_only_passive_ready = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_only_passive_ready", "Use only if passive is ready", false);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
@@ -167,6 +172,14 @@ namespace vex
                             combo::r_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
                         }
                     }
+                }
+
+                combo::use_r2 = combo->add_checkbox(myhero->get_model() + ".combo.r2", "Use R2", true);
+                combo::use_r2->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+
+                auto r2_config = combo->add_tab(myhero->get_model() + ".combo.r2.config", "R2 Config");
+                {
+                    combo::r2_maxiumum_enemies_nearby = r2_config->add_slider(myhero->get_model() + ".combo.r2.maxiumum_enemies_nearby", "Maximum enemies nearby target", 2, 1, 5);
                 }
             }
 
@@ -230,6 +243,7 @@ namespace vex
                 draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".draw.r", "Draw R range", true);
                 draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 draw_settings::draw_range_r_minimap = draw_settings->add_checkbox(myhero->get_model() + ".draw.r.minimap", "Draw R range on minimap", true);
+                draw_settings::draw_range_r_minimap->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
 
                 auto draw_damage = draw_settings->add_tab(myhero->get_model() + ".draw.damage", "Draw Damage");
@@ -478,15 +492,19 @@ namespace vex
 #pragma region r_logic
     void r_logic()
     {
-        for (auto& enemy : entitylist->get_enemy_heroes())
+        if (combo::use_r2->get_bool())
         {
-            if (enemy->is_valid() && !enemy->is_dead() && can_use_r_on(enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
+            for (auto& enemy : entitylist->get_enemy_heroes())
             {
-                if (enemy->has_buff(buff_hash("vexr2timer")))
+                if (enemy->is_valid() && !enemy->is_dead() && can_use_r_on(enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
                 {
-                    if (r->cast())
+                    int max_enemies = combo::r2_maxiumum_enemies_nearby->get_int();
+                    if (max_enemies >= enemy->count_allies_in_range(800) && enemy->has_buff(buff_hash("VexRTarget")))
                     {
-                        return;
+                        if (r->cast())
+                        {
+                            return;
+                        }
                     }
                 }
             }
@@ -517,6 +535,24 @@ namespace vex
     {
         if (combo::r_semi_manual_cast->get_bool())
         {
+            if (combo::use_r2->get_bool())
+            {
+                for (auto& enemy : entitylist->get_enemy_heroes())
+                {
+                    if (enemy->is_valid() && !enemy->is_dead() && can_use_r_on(enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
+                    {
+                        int max_enemies = combo::r2_maxiumum_enemies_nearby->get_int();
+                        if (max_enemies >= enemy->count_allies_in_range(800) && enemy->has_buff(buff_hash("VexRTarget")))
+                        {
+                            if (r->cast())
+                            {
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
             // Get a target from a given range
             auto target = target_selector->get_target(r->range(), damage_type::magical);
 
