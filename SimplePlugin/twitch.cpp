@@ -372,7 +372,7 @@ namespace twitch
             {
                 if (q->cast())
                 {
-                    scheduler->delay_action(0.1f + ping->get_ping() / 1000, [] { b->cast(); });
+                    scheduler->delay_action(0.25f + ping->get_ping() / 1000, [] { b->cast(); });
                     return;
                 }
             }

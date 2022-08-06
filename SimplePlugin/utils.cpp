@@ -17,11 +17,13 @@ namespace utils
 
 	bool has_crowd_control_buff(game_object_script target)
 	{
-		return target->has_buff_type({ 
-			buff_type::Stun, 
-			buff_type::Knockup, 
-			buff_type::Asleep, 
-			buff_type::Charm, 
+		return target->has_buff_type({
+			buff_type::Stun,
+			buff_type::Knockup,
+			buff_type::Asleep,
+			buff_type::Berserk,
+			buff_type::Charm,
+			buff_type::Flee,
 			buff_type::Fear, 
 			buff_type::Snare, 
 			buff_type::Suppression, 
