@@ -468,7 +468,7 @@ namespace nasus
     void q_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(q->range(), damage_type::physical);
+        auto target = target_selector->get_target(myhero->get_attack_range() + 25, damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr && q->get_damage(target) + myhero->get_auto_attack_damage(target) > target->get_real_health())

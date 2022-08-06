@@ -34,6 +34,7 @@ namespace rengar
         TreeEntry* w_use_empowered_if_immobile = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_use_empowered_if_chasing = nullptr;
+        std::map<std::uint32_t, TreeEntry*> r_leap_use_on;
     }
 
     namespace harass
@@ -92,7 +93,7 @@ namespace rengar
 
     // Utils
     //
-    //bool can_use_r_leap_on(game_object_script target);
+    bool can_use_r_leap_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     bool is_empowered();
     bool is_on_r();
@@ -136,6 +137,19 @@ namespace rengar
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
                     combo::e_use_empowered_if_chasing = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_empowered_if_chasing", "Use empowered E if chasing enemy", true);
+                }
+                auto use_r_on_tab = combo->add_tab(myhero->get_model() + ".combo.r.leap_use_on", "Use R Leap On");
+                {
+                    for (auto&& enemy : entitylist->get_enemy_heroes())
+                    {
+                        // In this case you HAVE to set should save to false since key contains network id which is unique per game
+                        //
+                        combo::r_leap_use_on[enemy->get_network_id()] = use_r_on_tab->add_checkbox(std::to_string(enemy->get_network_id()), enemy->get_model(), true, false);
+
+                        // Set texture to enemy square icon
+                        //
+                        combo::r_leap_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
+                    }
                 }
             }
 
@@ -494,6 +508,17 @@ namespace rengar
     }
 #pragma endregion
 
+#pragma region can_use_r_leap_on
+    bool can_use_r_leap_on(game_object_script target)
+    {
+        auto it = combo::r_leap_use_on.find(target->get_network_id());
+        if (it == combo::r_leap_use_on.end())
+            return false;
+
+        return it->second->get_bool();
+    }
+#pragma endregion
+
 #pragma region get_hitchance
     hit_chance get_hitchance(TreeEntry* entry)
     {
@@ -537,6 +562,12 @@ namespace rengar
 
     void on_before_attack(game_object_script target, bool* process)
     {
+        if (target->is_ai_hero() && is_on_r() && !can_use_r_leap_on(target))
+        {
+            *process = false;
+            return;
+        }
+
         if (q->is_ready())
         {
             // Using q before autoattack on enemies
