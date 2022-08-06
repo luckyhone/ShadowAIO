@@ -615,7 +615,7 @@ namespace thresh
                     }
                 }
 
-                if (combo::w_to_ally_stunned->get_bool() && target->is_immovable() && myhero->get_distance(target) < combo::w_to_ally_stunned_target_is_below_range->get_int())
+                if (combo::w_to_ally_stunned->get_bool() && utils::has_crowd_control_buff(target) && myhero->get_distance(target) < combo::w_to_ally_stunned_target_is_below_range->get_int())
                 {
                     for (auto& ally : entitylist->get_ally_heroes())
                     {

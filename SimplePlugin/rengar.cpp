@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "rengar.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace rengar
@@ -333,14 +334,17 @@ namespace rengar
                             q_logic();
                         }
 
-                        if (w->is_ready() && harass::use_w->get_bool())
+                        if (!is_on_r())
                         {
-                            w_logic();
-                        }
+                            if (w->is_ready() && harass::use_w->get_bool())
+                            {
+                                w_logic();
+                            }
 
-                        if (e->is_ready() && harass::use_e->get_bool())
-                        {
-                            e_logic();
+                            if (e->is_ready() && harass::use_e->get_bool())
+                            {
+                                e_logic();
+                            }
                         }
                     }
                 }
@@ -349,7 +353,7 @@ namespace rengar
             // Checking if the user has selected flee_mode() (Default Z)
             if (orbwalker->flee_mode())
             {
-                if (e->is_ready() && fleemode::use_e->get_bool())
+                if (!is_on_r() && e->is_ready() && fleemode::use_e->get_bool())
                 {
                     // Get a target from a given range
                     auto target = target_selector->get_target(e->range(), damage_type::physical);
@@ -479,7 +483,7 @@ namespace rengar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 1 || (!myhero->can_move() && combo::w_use_empowered_if_immobile->get_bool()))
+            if (!is_empowered() || combo::empowered_spell_priority->get_int() == 1 || (utils::has_crowd_control_buff(myhero) && combo::w_use_empowered_if_immobile->get_bool()))
             {
                 return w->cast();
             }
