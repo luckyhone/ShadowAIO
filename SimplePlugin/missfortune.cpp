@@ -128,7 +128,7 @@ namespace missfortune
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         r = plugin_sdk->register_spell(spellslot::r, 1450);
-        r->set_skillshot(0.0f, 200.0f, 2000.0f, { }, skillshot_type::skillshot_line);
+        r->set_skillshot(0.0f, 180.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -148,7 +148,8 @@ namespace missfortune
                 {
                     combo::q_use_on_minion_to_crit_on_enemy = q_config->add_checkbox(myhero->get_model() + ".combo.q.use_on_minion_to_crit_on_enemy", "Use Q on minions to crit on enemy", true);
                     combo::q_use_on_minion_to_crit_on_enemy->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                    combo::q_use_on_minion_to_crit_on_enemy_use_on_moving = q_config->add_checkbox(myhero->get_model() + ".combo.q.use_on_minion_to_crit_on_enemy_use_on_moving", "^ Use on Moving minions", false);
+                    combo::q_use_on_minion_to_crit_on_enemy_use_on_moving = q_config->add_checkbox(myhero->get_model() + ".combo.q.use_on_minion_to_crit_on_enemy_use_on_moving", "^ Use Q on moving minions", false);
+                    combo::q_use_on_minion_to_crit_on_enemy_use_on_moving->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 }
 
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W before AA", true);
@@ -164,7 +165,6 @@ namespace missfortune
                     combo::r_min_range = r_config->add_slider(myhero->get_model() + ".combo.r.min_range", "Minimum R range", 400, 1, r->range());
                     combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", 1200, 550, r->range());
 
-
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "Usage Settings");
                     combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
                     combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use R if target killable by x waves", 6, 1, 14);
@@ -177,7 +177,10 @@ namespace missfortune
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator3", "Other Settings");
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_block_mouse_move = r_config->add_checkbox(myhero->get_model() + ".combo.r.block_mouse_move", "Block Mouse Move on R", true);
+                    combo::r_block_mouse_move->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
+                    combo::r_disable_evade->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
@@ -205,7 +208,7 @@ namespace missfortune
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = harass->add_tab(myhero->get_model() + "harass.r.config", "E Config");
                 {
-                    harass::e_only_if_mana_more_than = e_config->add_slider(myhero->get_model() + ".harass.e.only_if_mana_more_than", "Use only if mana more than (in %)", 50, 0, 100);
+                    harass::e_only_if_mana_more_than = e_config->add_slider(myhero->get_model() + ".harass.e.only_if_mana_more_than", "Use E if mana more than (in %)", 40, 0, 100);
                 }
             }
 

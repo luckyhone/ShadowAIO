@@ -44,6 +44,7 @@ namespace viego
         TreeEntry* force_catch_soul = nullptr;
         TreeEntry* simple_spell_usage_on_soul = nullptr;
         TreeEntry* max_soul_distance = nullptr;
+        TreeEntry* extra_windup_time = nullptr;
     }
 
     namespace harass
@@ -175,6 +176,8 @@ namespace viego
                     combo::simple_spell_usage_on_soul = passive_config->add_checkbox(myhero->get_model() + ".combo.passive.auto_soul_spell_usage", "Simple Soul Spell Usage", true);
                     combo::simple_spell_usage_on_soul->set_texture(myhero->get_passive_icon_texture());
                     combo::max_soul_distance = passive_config->add_slider("combo.passive.auto_soul_catch.max_distance", "Max distance to soul", 225, 100, 600);
+                    combo::extra_windup_time = passive_config->add_slider("combo.passive.extra_windup_time", "Extra windup time", 20, 0, 100);
+                    combo::extra_windup_time->set_tooltip("Increase if you have problems with disconnecting");
                 }
             }
 
@@ -344,7 +347,7 @@ namespace viego
                         }
                     }
 
-                    if (combo::simple_spell_usage_on_soul->get_bool() && orbwalker->can_move(0.20f))
+                    if (combo::simple_spell_usage_on_soul->get_bool() && !myhero->is_casting_interruptible_spell() && orbwalker->can_move(combo::extra_windup_time->get_int() / 100))
                     {
                         for (int i = 0; i < 3; i++)
                         {
@@ -356,7 +359,7 @@ namespace viego
                                 bool channeling = spell->get_spell_data()->mUseChargeChanneling();
                                 float* castrange = spell->get_spell_data()->CastRange();
                                 float range = std::max(200.0f, std::min(900.0f, *castrange));
-                                //console->print("Spell %d: %s  Channeling: [%s]", i, spell->get_name().c_str(), channeling ? "true" : "false");
+                                //console->print("Spell %d: %s Channeling: [%s]", i, spell->get_name().c_str(), channeling ? "true" : "false");
 
                                 // Get a target from a given range
                                 auto target = target_selector->get_target(range, damage_type::physical);
@@ -369,17 +372,19 @@ namespace viego
                                     if (type == spell_targeting::target)
                                     {
                                         myhero->cast_spell(slot, target, true, channeling);
+                                        return;
                                     }
                                     else if (type == spell_targeting::self || type == spell_targeting::self_aoe)
                                     {
                                         myhero->cast_spell(slot, myhero, true, channeling);
+                                        return;
                                     }
                                     else
                                     {
                                         float* castradius = spell->get_spell_data()->CastRadius();
                                         float delay = std::max(0.25f, spell->get_spell_data()->mCastTime());
-                                        float radius = *castradius <= 50.0f ? 200.0f : *castradius;
-                                        float speed = spell->get_spell_data()->MissileSpeed() <= 250.0f ? FLT_MAX : spell->get_spell_data()->MissileSpeed();
+                                        float radius = *castradius <= 50.0f ? 100.0f : *castradius;
+                                        float speed = spell->get_spell_data()->MissileSpeed() < 400.0f ? FLT_MAX : spell->get_spell_data()->MissileSpeed();
 
                                         //console->print("Delay: [%.2f] Range: [%.2f] Radius: [%.2f] Speed: [%.2f] Type: [%d]", spell->get_spell_data()->mCastTime(), *castrange, spell->get_spell_data()->CastRadius(), spell->get_spell_data()->MissileSpeed(), (unsigned char)spell->get_spell_data()->get_targeting_type());
 
@@ -402,6 +407,7 @@ namespace viego
                                         if (output.hitchance > hit_chance::high)
                                         {
                                             myhero->cast_spell(slot, output.get_cast_position(), true, channeling);
+                                            return;
                                         }
                                     }
                                 }
@@ -535,7 +541,7 @@ namespace viego
 
                     if (!w->is_charging())
                     {
-                        if (q->is_ready() && jungleclear::use_q->get_bool())
+                        if (q->is_ready() && jungleclear::use_q->get_bool() && combo::q_mode->get_int() == 1)
                         {
                             q->cast_on_best_farm_position(1, true);
                         }
@@ -739,6 +745,12 @@ namespace viego
     {
         // Use q after autoattack on enemies
         if (q->is_ready() && combo::q_mode->get_int() != 1 && target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+        {
+            q->cast(target);
+        }
+
+        // Use q after autoattack on monsters
+        if (q->is_ready() && combo::q_mode->get_int() != 1 && orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_q->get_bool() && target->is_valid() && !target->is_dead() && target->is_monster())
         {
             q->cast(target);
         }
