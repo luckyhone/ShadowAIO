@@ -181,7 +181,6 @@ namespace missfortune
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
                     combo::r_disable_evade->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
 
-
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
                         for (auto&& enemy : entitylist->get_enemy_heroes())

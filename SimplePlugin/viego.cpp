@@ -752,7 +752,7 @@ namespace viego
         // Use q after autoattack on monsters
         if (q->is_ready() && combo::q_mode->get_int() != 1 && orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_q->get_bool() && target->is_valid() && !target->is_dead() && target->is_monster())
         {
-            q->cast(target);
+            q->cast_on_best_farm_position(1, true);
         }
     }
 
