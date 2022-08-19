@@ -410,7 +410,7 @@ namespace rengar
                         if (q->cast())
                             return;
                     }
-                    if (!is_empowered())
+                    if (!is_empowered() && !is_on_r())
                     {
                         if (w->is_ready() && laneclear::use_w->get_bool())
                         {
@@ -437,7 +437,7 @@ namespace rengar
                         if (q->cast())
                             return;
                     }
-                    if (!is_empowered())
+                    if (!is_empowered() && !is_on_r())
                     {
                         if (w->is_ready() && jungleclear::use_w->get_bool())
                         {
@@ -555,7 +555,7 @@ namespace rengar
 
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
     {
-        if (antigapclose::use_e->get_bool() && q->is_ready())
+        if (antigapclose::use_e->get_bool() && q->is_ready() && !is_on_r())
         {
             if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
             {
