@@ -283,14 +283,6 @@ namespace rengar
             return;
         }
 
-        if (orbwalker->combo_mode() && myhero->get_attack_range() == 745 && !is_on_r())
-        {
-            if (e->is_ready() && combo::use_e->get_bool())
-            {
-                e_logic();
-            }
-        }
-
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
         // Too small time can interrupt the attack
@@ -555,9 +547,9 @@ namespace rengar
 
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
     {
-        if (antigapclose::use_e->get_bool() && q->is_ready() && !is_on_r())
+        if (antigapclose::use_e->get_bool() && e->is_ready() && !is_on_r())
         {
-            if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
+            if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
             {
                 e->cast(sender, get_hitchance(hitchance::e_hitchance));
             }
@@ -570,6 +562,18 @@ namespace rengar
         {
             *process = false;
             return;
+        }
+
+        if (e->is_ready() && !is_on_r())
+        {
+            // Using E while middle of a jump on enemies
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
+            {
+                if (myhero->get_attack_range() >= r->range() && (!is_empowered() || combo::empowered_spell_priority->get_int() == 2))
+                {
+                    e->cast(target, get_hitchance(hitchance::e_hitchance));
+                }
+            }
         }
 
         if (q->is_ready())
