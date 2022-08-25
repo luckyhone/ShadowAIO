@@ -34,6 +34,8 @@ namespace kayle
 		TreeEntry* w_use_on_low_hp = nullptr;
 		TreeEntry* w_only_if_enemies_nearby = nullptr;
 		TreeEntry* w_myhero_hp_under = nullptr;
+		TreeEntry* w_ally_hp_under = nullptr;
+		std::map<std::uint32_t, TreeEntry*> w_use_on;
 		TreeEntry* w_use_while_chasing = nullptr;
 		TreeEntry* w_target_above_range = nullptr;
 		TreeEntry* w_target_hp_under = nullptr;
@@ -112,6 +114,7 @@ namespace kayle
 
 	// Utils
 	//
+	bool can_use_w_on(game_object_script target);
 	bool can_use_r_on(game_object_script target);
 	hit_chance get_hitchance(TreeEntry* entry);
 
@@ -149,6 +152,21 @@ namespace kayle
 					combo::w_only_if_enemies_nearby = w_config->add_checkbox(myhero->get_model() + ".combo.w.only_if_enemies_nearby", "Use W only if enemies nearby", true);
 					combo::w_only_if_enemies_nearby->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
 					combo::w_myhero_hp_under = w_config->add_slider(myhero->get_model() + ".combo.w.myhero_hp_under", "Myhero HP is under (in %)", 30, 0, 100);
+					combo::w_ally_hp_under = w_config->add_slider(myhero->get_model() + ".combo.w.ally_hp_under", "Ally HP is under (in %)", 25, 0, 100);
+
+					auto use_w_on_tab = w_config->add_tab(myhero->get_model() + ".combo.w.use_on", "Use W on");
+					{
+						for (auto&& ally : entitylist->get_ally_heroes())
+						{
+							// In this case you HAVE to set should save to false since key contains network id which is unique per game
+							//
+							combo::w_use_on[ally->get_network_id()] = use_w_on_tab->add_checkbox(std::to_string(ally->get_network_id()), ally->get_model(), true, false);
+
+							// Set texture to enemy square icon
+							//
+							combo::w_use_on[ally->get_network_id()]->set_texture(ally->get_square_icon_portrait());
+						}
+					}
 
 					w_config->add_separator(myhero->get_model() + ".combo.w.separator2", "W while chasing Options");
 					combo::w_use_while_chasing = w_config->add_checkbox(myhero->get_model() + ".combo.w.use_while_chasing", "Use W while chasing an enemy", true);
@@ -531,13 +549,22 @@ namespace kayle
 #pragma region w_logic
 	void w_logic()
 	{
-		if (combo::w_use_on_low_hp->get_bool() && !utils::has_unkillable_buff(myhero) && myhero->get_health_percent() < combo::w_myhero_hp_under->get_int())
+		if (combo::w_use_on_low_hp->get_bool())
 		{
-			if (!combo::w_only_if_enemies_nearby->get_bool() || myhero->count_enemies_in_range(w->range()) != 0)
+			for (auto&& ally : entitylist->get_ally_heroes())
 			{
-				if (w->cast())
+				if (ally->is_valid() && !ally->is_dead() && can_use_w_on(ally) && ally->get_distance(myhero->get_position()) <= w->range())
 				{
-					return;
+					if (!utils::has_unkillable_buff(ally) && (!combo::w_only_if_enemies_nearby->get_bool() || ally->count_enemies_in_range(w->range()) != 0))
+					{
+						if ((ally->get_health_percent() < (ally->is_me() ? combo::w_myhero_hp_under->get_int() : combo::w_ally_hp_under->get_int())))
+						{
+							if (w->cast(ally))
+							{
+								return;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -602,6 +629,17 @@ namespace kayle
 				}
 			}
 		}
+	}
+#pragma endregion
+
+#pragma region can_use_w_on
+	bool can_use_w_on(game_object_script target)
+	{
+		auto it = combo::w_use_on.find(target->get_network_id());
+		if (it == combo::w_use_on.end())
+			return false;
+
+		return it->second->get_bool();
 	}
 #pragma endregion
 
