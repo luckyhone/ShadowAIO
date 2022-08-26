@@ -40,6 +40,7 @@ namespace chogath
         TreeEntry* q_max_range = nullptr;
         TreeEntry* q_auto_on_cc = nullptr;
         TreeEntry* q_auto_dashing = nullptr;
+        TreeEntry* q_try_to_hit_with_the_center = nullptr;
         std::map<std::uint32_t, TreeEntry*> q_use_on;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
@@ -144,6 +145,7 @@ namespace chogath
                     combo::q_max_range = q_config->add_slider(myhero->get_model() + ".combo.q.max_range", "Maximum Q range", q->range(), 300, q->range());
                     combo::q_auto_on_cc = q_config->add_checkbox(myhero->get_model() + ".combo.q.auto_on_cc", "Auto Q on CC", true);
                     combo::q_auto_dashing = q_config->add_checkbox(myhero->get_model() + ".combo.q.auto_dashing", "Auto Q dashing", true);
+                    combo::q_try_to_hit_with_the_center = q_config->add_checkbox(myhero->get_model() + ".combo.q.try_to_hit_with_the_center", "Try to hit the center of target", false);
 
                     auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
                     {
@@ -330,6 +332,15 @@ namespace chogath
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
+            if (combo::q_try_to_hit_with_the_center->get_bool())
+            {
+                q->set_skillshot(1.125f, 20.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+            }
+            else
+            {
+                q->set_skillshot(1.125f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
+            }
+
             if (q->is_ready() && combo::use_q->get_bool())
             {
                 q_logic_auto();
