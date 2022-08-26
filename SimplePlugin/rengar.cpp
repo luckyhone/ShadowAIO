@@ -35,6 +35,7 @@ namespace rengar
         TreeEntry* w_use_empowered_if_immobile = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* e_use_empowered_if_chasing = nullptr;
+        TreeEntry* e_use_midair_on_leap = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_leap_use_on;
     }
 
@@ -132,12 +133,16 @@ namespace rengar
                 auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
                     combo::w_use_empowered_if_immobile = w_config->add_checkbox(myhero->get_model() + ".combo.w.use_empowered_if_immobile", "Use empowered W if immobile", true);
+                    combo::w_use_empowered_if_immobile->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
-                    combo::e_use_empowered_if_chasing = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_empowered_if_chasing", "Use empowered E if chasing enemy", true);
+                    combo::e_use_empowered_if_chasing = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_empowered_if_chasing", "Use empowered E when chasing enemy", true);
+                    combo::e_use_empowered_if_chasing->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                    combo::e_use_midair_on_leap = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_midair_on_leap", "Use E midair on leap", true);
+                    combo::e_use_midair_on_leap->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 }
                 auto use_r_on_tab = combo->add_tab(myhero->get_model() + ".combo.r.leap_use_on", "Use R Leap On");
                 {
@@ -173,7 +178,9 @@ namespace rengar
                 auto q_config = laneclear->add_tab(myhero->get_model() + ".laneclear.q.config", "Q Config");
                 {
                     laneclear::q_use_empowered = q_config->add_hotkey(myhero->get_model() + ".laneclear.q.empowered", "Use Empowered Q", TreeHotkeyMode::Toggle, 'J', true);
+                    laneclear::q_use_empowered->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                     laneclear::q_use_on_turret = q_config->add_checkbox(myhero->get_model() + ".laneclear.q.use_on_turret", "Use Q on turret", true);
+                    laneclear::q_use_on_turret->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 }
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", false);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
@@ -564,7 +571,7 @@ namespace rengar
             return;
         }
 
-        if (e->is_ready() && !is_on_r())
+        if (e->is_ready() && !is_on_r() && combo::e_use_midair_on_leap)
         {
             // Using E while middle of a jump on enemies
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
