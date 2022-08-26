@@ -327,6 +327,11 @@ namespace chogath
             return;
         }
 
+        if (q->is_ready() && combo::use_q->get_bool())
+        {
+            q->set_radius(combo::q_try_to_hit_with_the_center->get_bool() ? 10.0f : 100.0f);
+        }
+
         if (r->is_ready() && combo::use_r->get_bool())
         {
             r_logic();
@@ -337,15 +342,6 @@ namespace chogath
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
-            if (combo::q_try_to_hit_with_the_center->get_bool())
-            {
-                q->set_skillshot(1.125f, 20.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
-            }
-            else
-            {
-                q->set_skillshot(1.125f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
-            }
-
             if (q->is_ready() && combo::use_q->get_bool())
             {
                 q_logic_auto();
