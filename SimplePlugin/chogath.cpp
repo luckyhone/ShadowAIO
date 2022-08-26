@@ -142,10 +142,13 @@ namespace chogath
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
-                    combo::q_max_range = q_config->add_slider(myhero->get_model() + ".combo.q.max_range", "Maximum Q range", q->range(), 300, q->range());
+                    combo::q_max_range = q_config->add_slider(myhero->get_model() + ".combo.q.max_range", "Maximum Q range", q->range() - 50, 300, q->range());
                     combo::q_auto_on_cc = q_config->add_checkbox(myhero->get_model() + ".combo.q.auto_on_cc", "Auto Q on CC", true);
+                    combo::q_auto_on_cc->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                     combo::q_auto_dashing = q_config->add_checkbox(myhero->get_model() + ".combo.q.auto_dashing", "Auto Q dashing", true);
-                    combo::q_try_to_hit_with_the_center = q_config->add_checkbox(myhero->get_model() + ".combo.q.try_to_hit_with_the_center", "Try to hit the center of target", false);
+                    combo::q_auto_dashing->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                    combo::q_try_to_hit_with_the_center = q_config->add_checkbox(myhero->get_model() + ".combo.q.try_to_hit_with_the_center", "Try to hit Q in the center of target", false);
+                    combo::q_try_to_hit_with_the_center->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
 
                     auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
                     {
@@ -171,7 +174,9 @@ namespace chogath
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
                     combo::r_use_flash_r = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_flash_r", "Use Flash + R above R range", true);
+                    combo::r_use_flash_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                     combo::r_use_on_epic_monsters = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_on_epic_monsters", "Auto R on epic monsters", true);
+                    combo::r_use_on_epic_monsters->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
