@@ -43,6 +43,8 @@ namespace chogath
         TreeEntry* q_try_to_hit_with_the_center = nullptr;
         std::map<std::uint32_t, TreeEntry*> q_use_on;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_max_range = nullptr;
+        TreeEntry* w_use_prediction = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_use_flash_r = nullptr;
@@ -166,6 +168,12 @@ namespace chogath
                 }
 
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
+                auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
+                {
+                    combo::w_max_range = w_config->add_slider(myhero->get_model() + ".combo.w.max_range", "Maximum W range", w->range() - 50, 1, q->range());
+                    combo::w_use_prediction = w_config->add_checkbox(myhero->get_model() + ".combo.w.use_prediction", "Use Prediction on W", true);
+                    combo::w_use_prediction->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                }
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -538,12 +546,19 @@ namespace chogath
     void w_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(w->range(), damage_type::magical);
+        auto target = target_selector->get_target(combo::w_max_range->get_int(), damage_type::magical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            w->cast(target, get_hitchance(hitchance::w_hitchance));
+            if (combo::w_use_prediction->get_bool())
+            {
+                w->cast(target, get_hitchance(hitchance::w_hitchance));
+            }
+            else
+            {
+                w->cast(target->get_position());
+            }
         }
     }
 #pragma endregion
@@ -773,7 +788,7 @@ namespace chogath
 
         // Draw W range
         if (w->is_ready() && draw_settings::draw_range_w->get_bool())
-            draw_manager->add_circle(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
+            draw_manager->add_circle(myhero->get_position(), combo::w_max_range->get_int(), draw_settings::w_color->get_color());
 
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
