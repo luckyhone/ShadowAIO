@@ -32,6 +32,7 @@ namespace trundle
         TreeEntry* w_mode = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
+        TreeEntry* r_max_range = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
         TreeEntry* r_dont_waste_if_target_hp_below = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
@@ -134,12 +135,16 @@ namespace trundle
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
-                    r_config->add_separator(myhero->get_model() + ".combo.r.separator1", "Usage Settings");
+                    r_config->add_separator(myhero->get_model() + ".combo.r.separator1", "Range Settings");
+                    combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", myhero->get_attack_range() + 125, 1, r->range());
+
+                    r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "Usage Settings");
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 65, 0, 100);
                     combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
 
-                    r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "Other Settings");
+                    r_config->add_separator(myhero->get_model() + ".combo.r.separator3", "Other Settings");
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
+                    combo::r_semi_manual_cast->set_tooltip("Automatically casts R on target with highest maximum health");
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
@@ -427,7 +432,7 @@ namespace trundle
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            w->cast(target->get_position());
+            w->cast(combo::w_mode->get_int() == 0 ? myhero->get_position() : target->get_position());
         }
     }
 #pragma endregion
@@ -450,7 +455,7 @@ namespace trundle
     void r_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(r->range(), damage_type::magical);
+        auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::magical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr && can_use_r_on(target))
@@ -472,7 +477,7 @@ namespace trundle
         // Delete invalid enemies
         enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
             {
-                return !x->is_valid_target(r->range());
+                return !x->is_valid_target(combo::r_max_range->get_int());
             }), enemies.end());
 
         // Sort enemies by max health
@@ -623,6 +628,6 @@ namespace trundle
 
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
-            draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
+            draw_manager->add_circle(myhero->get_position(), combo::r_max_range->get_int(), draw_settings::r_color->get_color());
     }
 };
