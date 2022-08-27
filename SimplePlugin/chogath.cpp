@@ -170,7 +170,7 @@ namespace chogath
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
-                    combo::w_max_range = w_config->add_slider(myhero->get_model() + ".combo.w.max_range", "Maximum W range", w->range() - 50, 1, q->range());
+                    combo::w_max_range = w_config->add_slider(myhero->get_model() + ".combo.w.max_range", "Maximum W range", w->range() - 50, 1, w->range());
                     combo::w_use_prediction = w_config->add_checkbox(myhero->get_model() + ".combo.w.use_prediction", "Use Prediction on W", true);
                     combo::w_use_prediction->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 }
