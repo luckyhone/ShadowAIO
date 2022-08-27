@@ -163,12 +163,12 @@ namespace missfortune
                 {
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator1", "Range Settings");
                     combo::r_min_range = r_config->add_slider(myhero->get_model() + ".combo.r.min_range", "Minimum R range", 400, 1, r->range());
-                    combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", 1200, 550, r->range());
+                    combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", 1150, 550, r->range());
 
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "Usage Settings");
                     combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
                     combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use R if target killable by x waves", 6, 1, 14);
-                    combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Use R if hit enemies more than", 2, 1, 5);
+                    combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Use R if will hit enemies more than", 2, 1, 5);
                     combo::r_auto_on_cc = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_cc", "Use R on CC", false);
                     combo::r_auto_on_cc->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                     combo::r_cancel_if_nobody_inside = r_config->add_checkbox(myhero->get_model() + ".combo.r.cancel_if_nobody_inside", "Cancel R if nobody inside", false);
@@ -359,8 +359,7 @@ namespace missfortune
                 {
                     if (enemy->is_valid() && !enemy->is_dead() && enemy->is_valid_target(r->range()))
                     {
-                        auto pred = prediction->get_prediction(enemy, r->get_delay(), r->get_radius(), r->get_speed());
-                        if (pred.hitchance >= hit_chance::impossible)
+                        if (r->get_prediction(enemy).hitchance >= hit_chance::low)
                         {
                             hit_by_r.push_back(enemy);
                         }

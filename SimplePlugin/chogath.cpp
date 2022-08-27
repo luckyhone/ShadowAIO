@@ -583,17 +583,14 @@ namespace chogath
                 }
             }
         }
-        else
+        else if (flash && flash->is_ready() && combo::r_use_flash_r->get_bool())
         {
-            if (flash && flash->is_ready() && combo::r_use_flash_r->get_bool())
+            auto target = target_selector->get_target(r->range() + flash->range(), damage_type::magical);
+            if (target != nullptr && can_use_r_on(target) && myhero->get_distance(target) > r->range() + 50 && r->get_damage(target) > target->get_health())
             {
-                auto target = target_selector->get_target(r->range() + flash->range(), damage_type::magical);
-                if (target != nullptr && can_use_r_on(target) && myhero->get_distance(target) > r->range() + 50 && r->get_damage(target) > target->get_health())
+                if (flash->cast(target) && r->cast(target))
                 {
-                    if (flash->cast(target) && r->cast(target))
-                    {
-                        return;
-                    }
+                    return;
                 }
             }
         }

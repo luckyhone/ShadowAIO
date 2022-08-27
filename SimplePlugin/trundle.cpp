@@ -29,10 +29,12 @@ namespace trundle
         TreeEntry* use_q = nullptr;
         TreeEntry* q_mode = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_mode = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
         TreeEntry* r_dont_waste_if_target_hp_below = nullptr;
+        TreeEntry* r_semi_manual_cast = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
@@ -48,14 +50,12 @@ namespace trundle
         TreeEntry* use_q = nullptr;
         TreeEntry* use_q_on_turret = nullptr;
         TreeEntry* use_w = nullptr;
-        TreeEntry* use_e = nullptr;
     }
 
     namespace jungleclear
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
-        TreeEntry* use_e = nullptr;
     }
 
     namespace fleemode
@@ -87,6 +87,7 @@ namespace trundle
     void w_logic();
     void e_logic();
     void r_logic();
+    void r_logic_semi();
 
     // Utils
     //
@@ -119,18 +120,26 @@ namespace trundle
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
-                    combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "Q Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 0);
+                    combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "Q Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 1);
                 }
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
+                {
+                    combo::w_mode = w_config->add_combobox(myhero->get_model() + ".combo.w.mode", "W Mode", { {"Myhero Position", nullptr},{"Target Position", nullptr } }, 1);
+                }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
+                    r_config->add_separator(myhero->get_model() + ".combo.r.separator1", "Usage Settings");
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 65, 0, 100);
                     combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
+
+                    r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "Other Settings");
+                    combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
 
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
@@ -165,8 +174,6 @@ namespace trundle
                 laneclear::use_q_on_turret->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 laneclear::use_w = laneclear->add_checkbox(myhero->get_model() + ".laneclear.w", "Use W", false);
                 laneclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", false);
-                laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
             auto jungleclear = main_tab->add_tab(myhero->get_model() + ".jungleclear", "Jungle Clear Settings");
@@ -175,8 +182,6 @@ namespace trundle
                 jungleclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 jungleclear::use_w = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.w", "Use W", true);
                 jungleclear::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
-                jungleclear::use_e = jungleclear->add_checkbox(myhero->get_model() + ".jungleclear.e", "Use E", false);
-                jungleclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
 
@@ -217,6 +222,7 @@ namespace trundle
         {
             Permashow::Instance.Init(main_tab);
             Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+            Permashow::Instance.AddElement("Semi Auto R", combo::r_semi_manual_cast);
         }
 
         // Add anti gapcloser handler
@@ -273,6 +279,12 @@ namespace trundle
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
+            //Checking if the user is holding Semi Auto R key (Default T)
+            if (r->is_ready() && combo::use_r->get_bool() && combo::r_semi_manual_cast->get_bool())
+            {
+                r_logic_semi();
+            }
+
             //Checking if the user has combo_mode() (Default SPACE)
             if (orbwalker->combo_mode())
             {
@@ -326,7 +338,7 @@ namespace trundle
             {
                 if (w->is_ready() && fleemode::use_w->get_bool())
                 {
-                    if (w->cast(myhero))
+                    if (w->cast(hud->get_hud_input_logic()->get_game_cursor_position()))
                     {
                         return;
                     }
@@ -370,40 +382,17 @@ namespace trundle
                 {
                     if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (w->cast(myhero))
-                            return;
-                    }
-
-                    if (e->is_ready() && laneclear::use_e->get_bool())
-                    {
-                        if (lane_minions.front()->is_under_ally_turret())
-                        {
-                            if (myhero->count_enemies_in_range(900) == 0)
-                            {
-                                if (e->cast(lane_minions.front()))
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                        if (e->cast(lane_minions.front()))
+                        if (w->cast_on_best_farm_position(1))
                             return;
                     }
                 }
-
 
                 if (!monsters.empty())
                 {
                     // Logic responsible for monsters
                     if (w->is_ready() && jungleclear::use_w->get_bool())
                     {
-                        if (w->cast(myhero))
-                            return;
-                    }
-
-                    if (e->is_ready() && jungleclear::use_e->get_bool())
-                    {
-                        if (e->cast(monsters.front()))
+                        if (w->cast_on_best_farm_position(1, true))
                             return;
                     }
                 }
@@ -438,7 +427,7 @@ namespace trundle
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            w->cast(myhero);
+            w->cast(target->get_position());
         }
     }
 #pragma endregion
@@ -470,6 +459,31 @@ namespace trundle
             {
                 r->cast(target);
             }
+        }
+    }
+#pragma endregion
+
+#pragma region r_logic_semi
+    void r_logic_semi()
+    {
+        // Gets enemy heroes from the entitylist
+        auto enemies = entitylist->get_enemy_heroes();
+
+        // Delete invalid enemies
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
+            {
+                return !x->is_valid_target(r->range());
+            }), enemies.end());
+
+        // Sort enemies by max health
+        std::sort(enemies.begin(), enemies.end(), [](game_object_script a, game_object_script b)
+            {
+                return a->get_max_health() > b->get_max_health();
+            });
+
+        if (!enemies.empty())
+        {
+            r->cast(enemies.front());
         }
     }
 #pragma endregion
