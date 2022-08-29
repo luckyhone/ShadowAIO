@@ -689,6 +689,6 @@ namespace trundle
         }
 
         auto pos = myhero->get_position();
-        return to3D(V2E(pos, target->get_position(), target->get_distance(pos) + 130));
+        return to3D(V2E(pos, target->get_position(), target->get_distance(pos) + 115));
     }
 };
