@@ -31,6 +31,10 @@ namespace trundle
         TreeEntry* use_w = nullptr;
         TreeEntry* w_mode = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_min_range = nullptr;
+        TreeEntry* e_max_range = nullptr;
+        TreeEntry* e_mode = nullptr;
+        TreeEntry* e_only_if_target_is_moving = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_max_range = nullptr;
         TreeEntry* r_target_hp_under = nullptr;
@@ -94,6 +98,7 @@ namespace trundle
     //
     bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
+    vector get_pillar_position(game_object_script target);
 
     void load()
     {
@@ -119,20 +124,38 @@ namespace trundle
             {
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
                     combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "Q Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 1);
                 }
+
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+
                 auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
                     combo::w_mode = w_config->add_combobox(myhero->get_model() + ".combo.w.mode", "W Mode", { {"Myhero Position", nullptr},{"Target Position", nullptr } }, 1);
                 }
+
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+
+                auto e_config = combo->add_tab(myhero->get_model() + "combo.e.config", "E Config");
+                {
+                    e_config->add_separator(myhero->get_model() + ".combo.e.separator1", "Range Settings");
+                    combo::e_min_range = e_config->add_slider(myhero->get_model() + ".combo.e.min_range", "Minimum E range", myhero->get_attack_range() + 75, 1, e->range());
+                    combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "Maximum E range", e->range() - 100, 1, e->range());
+
+                    e_config->add_separator(myhero->get_model() + ".combo.e.separator2", "Usage Settings");
+                    combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Old", nullptr},{"Test 1", nullptr }, {"Test 2", nullptr } }, 0);
+                    combo::e_only_if_target_is_moving = e_config->add_checkbox(myhero->get_model() + ".combo.e.only_if_target_is_moving", "Use E only if target is moving", false);
+                    combo::e_only_if_target_is_moving->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+                }
+
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+
                 auto r_config = combo->add_tab(myhero->get_model() + ".combo.r.config", "R Config");
                 {
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator1", "Range Settings");
@@ -166,7 +189,7 @@ namespace trundle
             {
                 harass::use_q = harass->add_checkbox(myhero->get_model() + ".harass.q", "Use Q", true);
                 harass::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", true);
+                harass::use_e = harass->add_checkbox(myhero->get_model() + ".harass.e", "Use E", false);
                 harass::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
@@ -441,12 +464,19 @@ namespace trundle
     void e_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(e->range() - 100, damage_type::physical);
+        auto target = target_selector->get_target(combo::e_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr)
+        if (target != nullptr && myhero->get_distance(target) > combo::e_min_range->get_int() && (target->is_moving() || !combo::e_only_if_target_is_moving->get_bool()))
         {
-            e->cast(target, get_hitchance(hitchance::e_hitchance));
+            if (combo::e_mode->get_int() == 0)
+            {
+                e->cast(target, get_hitchance(hitchance::e_hitchance));
+            }
+            else
+            {
+                e->cast(get_pillar_position(target));
+            }
         }
     }
 #pragma endregion
@@ -624,10 +654,41 @@ namespace trundle
 
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
-            draw_manager->add_circle(myhero->get_position(), e->range(), draw_settings::e_color->get_color());
+            draw_manager->add_circle(myhero->get_position(), combo::e_max_range->get_int(), draw_settings::e_color->get_color());
 
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), combo::r_max_range->get_int(), draw_settings::r_color->get_color());
+    }
+
+    vector to2D(vector vec)
+    {
+        return vector(vec.x, vec.y);
+    }
+
+    vector to3D(vector vec)
+    {
+        return vector(vec.x, vec.y, myhero->get_position().z);
+    }
+
+    vector add(vector vec, float fl)
+    {
+        return vector(vec.x + fl, vec.y + fl);
+    }
+
+    vector V2E(vector from, vector direction, float distance)
+    {
+        return to2D(from) + (to2D((direction - from).normalized()) * distance);
+    }
+
+    vector get_pillar_position(game_object_script target)
+    {
+        if (combo::e_mode->get_int() == 1)
+        {
+            return to3D(to2D(target->get_position()).extend(to2D(myhero->get_position()), -e->get_radius() / 2));
+        }
+
+        auto pos = myhero->get_position();
+        return to3D(V2E(pos, target->get_position(), target->get_distance(pos) + 230));
     }
 };
