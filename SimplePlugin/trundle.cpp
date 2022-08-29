@@ -163,7 +163,7 @@ namespace trundle
 
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "Usage Settings");
                     combo::r_target_hp_under = r_config->add_slider(myhero->get_model() + ".combo.r.target_hp_under", "Target HP is under (in %)", 65, 0, 100);
-                    combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
+                    combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 25, 1, 100);
 
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator3", "Other Settings");
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
@@ -420,7 +420,7 @@ namespace trundle
                     // Logic responsible for monsters
                     if (w->is_ready() && jungleclear::use_w->get_bool())
                     {
-                        if (w->cast_on_best_farm_position(1, true))
+                        if (w->cast(monsters.front()->get_position()))
                             return;
                     }
                 }
