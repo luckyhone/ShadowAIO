@@ -144,11 +144,11 @@ namespace trundle
                 auto e_config = combo->add_tab(myhero->get_model() + "combo.e.config", "E Config");
                 {
                     e_config->add_separator(myhero->get_model() + ".combo.e.separator1", "Range Settings");
-                    combo::e_min_range = e_config->add_slider(myhero->get_model() + ".combo.e.min_range", "Minimum E range", myhero->get_attack_range() + 75, 1, e->range());
+                    combo::e_min_range = e_config->add_slider(myhero->get_model() + ".combo.e.min_range", "Minimum E range", myhero->get_attack_range() + 100, 1, e->range());
                     combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.e.max_range", "Maximum E range", e->range() - 100, 1, e->range());
 
                     e_config->add_separator(myhero->get_model() + ".combo.e.separator2", "Usage Settings");
-                    combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Old", nullptr},{"Test 1", nullptr }, {"Test 2", nullptr } }, 0);
+                    combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Standard", nullptr},{"Test 1", nullptr }, {"Test 2", nullptr } }, 0);
                     combo::e_only_if_target_is_moving = e_config->add_checkbox(myhero->get_model() + ".combo.e.only_if_target_is_moving", "Use E only if target is moving", false);
                     combo::e_only_if_target_is_moving->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 }
