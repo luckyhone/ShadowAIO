@@ -687,6 +687,7 @@ namespace trundle
         {
             return to3D(to2D(target->get_position()).extend(to2D(myhero->get_position()), -e->get_radius() / 2));
         }
+
         auto pos = myhero->get_position();
         return to3D(V2E(pos, target->get_position(), target->get_distance(pos) + 230));
     }
