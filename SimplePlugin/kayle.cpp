@@ -398,7 +398,7 @@ namespace kayle
 				// You can use this function to delete minions that aren't in the specified range
 				lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
 					{
-						return !x->is_valid_target(q->range());
+						return !x->is_valid_target(e->range());
 					}), lane_minions.end());
 
 				//std::sort -> sort lane minions by distance
@@ -411,7 +411,7 @@ namespace kayle
 				{
 					for (auto&& minion : lane_minions)
 					{
-						if (minion->get_health() > myhero->get_auto_attack_damage(minion) || !orbwalker->can_attack())
+						if (minion->get_health() > myhero->get_auto_attack_damage(minion) || myhero->is_winding_up())
 						{
 							if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
 							{
@@ -695,7 +695,7 @@ namespace kayle
 
 	inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color)
 	{
-		if (target != nullptr && target->is_valid() && target->is_hpbar_recently_rendered())
+		if (target != nullptr && target->is_valid() && target->is_visible_on_screen() && target->is_hpbar_recently_rendered())
 		{
 			auto bar_pos = target->get_hpbar_pos();
 
