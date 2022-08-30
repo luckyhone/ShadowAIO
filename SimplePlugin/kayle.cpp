@@ -1,6 +1,7 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "kayle.h"
 #include "utils.h"
+#include "dmg_lib.h"
 #include "permashow.hpp"
 
 namespace kayle
@@ -25,6 +26,14 @@ namespace kayle
 		TreeEntry* e_color = nullptr;
 		TreeEntry* draw_range_r = nullptr;
 		TreeEntry* r_color = nullptr;
+
+		namespace draw_damage_settings
+		{
+			TreeEntry* draw_damage = nullptr;
+			TreeEntry* q_damage = nullptr;
+			TreeEntry* e_damage = nullptr;
+			TreeEntry* r_damage = nullptr;
+		}
 	}
 
 	namespace combo
@@ -117,6 +126,7 @@ namespace kayle
 	bool can_use_w_on(game_object_script target);
 	bool can_use_r_on(game_object_script target);
 	hit_chance get_hitchance(TreeEntry* entry);
+	inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
 	void load()
 	{
@@ -220,7 +230,7 @@ namespace kayle
 			auto laneclear = main_tab->add_tab(myhero->get_model() + ".laneclear", "Lane Clear Settings");
 			{
 				laneclear::spell_farm = laneclear->add_hotkey(myhero->get_model() + ".laneclear.enabled", "Toggle Spell Farm", TreeHotkeyMode::Toggle, 0x04, true);
-				laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q", "Use Q", false);
+				laneclear::use_q = laneclear->add_checkbox(myhero->get_model() + ".laneclear.q", "Use Q", true);
 				laneclear::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
 				laneclear::use_e = laneclear->add_checkbox(myhero->get_model() + ".laneclear.e", "Use E", true);
 				laneclear::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -280,6 +290,17 @@ namespace kayle
 				draw_settings::draw_range_r = draw_settings->add_checkbox(myhero->get_model() + ".draw.r", "Draw R range", true);
 				draw_settings::draw_range_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
 				draw_settings::r_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.r.color", "R Color", color);
+
+				auto draw_damage = draw_settings->add_tab(myhero->get_model() + ".draw.damage", "Draw Damage");
+				{
+					draw_settings::draw_damage_settings::draw_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.enabled", "Draw Combo Damage", true);
+					draw_settings::draw_damage_settings::q_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.q", "Draw Q Damage", true);
+					draw_settings::draw_damage_settings::q_damage->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+					draw_settings::draw_damage_settings::e_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.e", "Draw E Damage", true);
+					draw_settings::draw_damage_settings::e_damage->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
+					draw_settings::draw_damage_settings::r_damage = draw_damage->add_checkbox(myhero->get_model() + ".draw.damage.r", "Draw R Damage", true);
+					draw_settings::draw_damage_settings::r_damage->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+				}
 			}
 		}
 
@@ -394,14 +415,14 @@ namespace kayle
 						{
 							if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
 							{
-								if (q->is_ready() && lasthit::use_q->get_bool() && q->get_damage(minion) > minion->get_health())
+								if (q->is_ready() && lasthit::use_q->get_bool() && dmg_lib::get_damage(q, minion) > minion->get_health())
 								{
 									if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
 									{
 										return;
 									}
 								}
-								if (e->is_ready() && lasthit::use_e->get_bool() && e->get_damage(minion) + myhero->get_auto_attack_damage(minion) > minion->get_health())
+								if (e->is_ready() && lasthit::use_e->get_bool() && dmg_lib::get_damage(e, minion) > minion->get_health())
 								{
 									if (e->cast())
 									{
@@ -601,7 +622,7 @@ namespace kayle
 		// Always check an object is not a nullptr!
 		if (target != nullptr)
 		{
-			if (r->level() == 0 || e->get_damage(target) >= target->get_health())
+			if (r->level() == 0 || dmg_lib::get_damage(e, target) >= target->get_health())
 			{
 				e->cast();
 			}
@@ -671,6 +692,37 @@ namespace kayle
 		return hit_chance::medium;
 	}
 #pragma endregion
+
+	inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color)
+	{
+		if (target != nullptr && target->is_valid() && target->is_hpbar_recently_rendered())
+		{
+			auto bar_pos = target->get_hpbar_pos();
+
+			if (bar_pos.is_valid() && !target->is_dead() && target->is_visible())
+			{
+				const auto health = target->get_health();
+
+				bar_pos = vector(bar_pos.x + (105 * (health / target->get_max_health())), bar_pos.y -= 10);
+
+				auto damage_size = (105 * (damage / target->get_max_health()));
+
+				if (damage >= health)
+				{
+					damage_size = (105 * (health / target->get_max_health()));
+				}
+
+				if (damage_size > 105)
+				{
+					damage_size = 105;
+				}
+
+				const auto size = vector(bar_pos.x + (damage_size * -1), bar_pos.y + 11);
+
+				draw_manager->add_filled_rect(bar_pos, size, color);
+			}
+		}
+	}
 
 	void on_before_attack(game_object_script target, bool* process)
 	{
@@ -747,5 +799,29 @@ namespace kayle
 		// Draw R range
 		if (r->is_ready() && draw_settings::draw_range_r->get_bool())
 			draw_manager->add_circle(myhero->get_position(), r->range(), draw_settings::r_color->get_color());
+
+		// Draw combo damage
+		if (draw_settings::draw_damage_settings::draw_damage->get_bool())
+		{
+			for (auto& enemy : entitylist->get_enemy_heroes())
+			{
+				if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
+				{
+					float damage = 0.0f;
+
+					if (q->is_ready() && draw_settings::draw_damage_settings::q_damage->get_bool())
+						damage += dmg_lib::get_damage(q, enemy);
+
+					if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
+						damage += dmg_lib::get_damage(e, enemy);
+
+					if (r->is_ready() && draw_settings::draw_damage_settings::r_damage->get_bool())
+						damage += dmg_lib::get_damage(r, enemy);
+
+					if (damage != 0.0f)
+						draw_dmg_rl(enemy, damage, 0x8000ff00);
+				}
+			}
+		}
 	}
 };

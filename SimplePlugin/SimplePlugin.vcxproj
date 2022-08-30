@@ -161,6 +161,7 @@
     <ClCompile Include="belveth.cpp" />
     <ClCompile Include="chogath.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="dmg_lib.cpp" />
     <ClCompile Include="draven.cpp" />
     <ClCompile Include="farm.cpp" />
     <ClCompile Include="gwen.cpp" />
@@ -190,6 +191,7 @@
     <ClInclude Include="..\plugin_sdk\plugin_sdk.hpp" />
     <ClInclude Include="belveth.h" />
     <ClInclude Include="chogath.h" />
+    <ClInclude Include="dmg_lib.h" />
     <ClInclude Include="draven.h" />
     <ClInclude Include="farm.h" />
     <ClInclude Include="gwen.h" />
