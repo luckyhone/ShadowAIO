@@ -525,12 +525,6 @@ namespace kayle
 						if (q->cast_on_best_farm_position(1))
 							return;
 					}
-
-					if (e->is_ready() && laneclear::use_e->get_bool())
-					{
-						if (e->cast())
-							return;
-					}
 				}
 
 
@@ -540,12 +534,6 @@ namespace kayle
 					if (q->is_ready() && jungleclear::use_q->get_bool())
 					{
 						if (q->cast_on_best_farm_position(1, true))
-							return;
-					}
-
-					if (e->is_ready() && jungleclear::use_e->get_bool())
-					{
-						if (e->cast())
 							return;
 					}
 				}
@@ -736,6 +724,24 @@ namespace kayle
 					return;
 				}
 			}
+
+			// Using e before autoattack on minions
+			if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_e->get_bool() && target->is_ai_minion())
+			{
+				if (e->cast())
+				{
+					return;
+				}
+			}
+
+			// Using e before autoattack on monsters
+			if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_e->get_bool() && target->is_monster())
+			{
+				if (e->cast())
+				{
+					return;
+				}
+			}
 		}
 	}
 
@@ -747,6 +753,24 @@ namespace kayle
 			{
 				// Using e after autoattack on enemies
 				if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
+				{
+					if (e->cast())
+					{
+						return;
+					}
+				}
+
+				// Using e after autoattack on minions
+				if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_e->get_bool() && target->is_ai_minion())
+				{
+					if (e->cast())
+					{
+						return;
+					}
+				}
+
+				// Using e after autoattack on monsters
+				if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_e->get_bool() && target->is_monster())
 				{
 					if (e->cast())
 					{

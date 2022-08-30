@@ -66,7 +66,7 @@ namespace dmg_lib
 		//
 		else
 		{
-			return spell->get_damage(target);
+			return damagelib->get_spell_damage(myhero, target, spell->slot, false);
 		}
 	}
 }
