@@ -413,7 +413,7 @@ namespace kayle
 					{
 						if (minion->get_health() > myhero->get_auto_attack_damage(minion) || myhero->is_winding_up())
 						{
-							if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
+							if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range() || myhero->get_distance(minion) > myhero->get_attack_range()))
 							{
 								if (q->is_ready() && lasthit::use_q->get_bool() && dmg_lib::get_damage(q, minion) > minion->get_health())
 								{
