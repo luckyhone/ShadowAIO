@@ -582,7 +582,7 @@ namespace masteryi
 
 	inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color)
 	{
-		if (target != nullptr && target->is_valid() && target->is_hpbar_recently_rendered())
+		if (target != nullptr && target->is_valid() && target->is_visible_on_screen() && target->is_hpbar_recently_rendered())
 		{
 			auto bar_pos = target->get_hpbar_pos();
 
