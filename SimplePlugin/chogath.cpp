@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "chogath.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace chogath
@@ -41,6 +42,7 @@ namespace chogath
         TreeEntry* q_auto_on_cc = nullptr;
         TreeEntry* q_auto_dashing = nullptr;
         TreeEntry* q_try_to_hit_with_the_center = nullptr;
+        TreeEntry* q_only_if_enemy_is_not_moving = nullptr;
         std::map<std::uint32_t, TreeEntry*> q_use_on;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_max_range = nullptr;
@@ -151,6 +153,8 @@ namespace chogath
                     combo::q_auto_dashing->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                     combo::q_try_to_hit_with_the_center = q_config->add_checkbox(myhero->get_model() + ".combo.q.try_to_hit_with_the_center", "Try to hit Q in the center of target", false);
                     combo::q_try_to_hit_with_the_center->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                    combo::q_only_if_enemy_is_not_moving = q_config->add_checkbox(myhero->get_model() + ".combo.q.only_if_enemy_is_not_moving", "Use Q only if enemy is not moving", false);
+                    combo::q_only_if_enemy_is_not_moving->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
 
                     auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
                     {
@@ -509,7 +513,10 @@ namespace chogath
         // Always check an object is not a nullptr!
         if (target != nullptr && can_use_q_on(target))
         {
-            q->cast(target, get_hitchance(hitchance::q_hitchance));
+            if (!combo::q_only_if_enemy_is_not_moving->get_bool() || (!target->is_moving() || target->is_winding_up() || target->is_casting_interruptible_spell() || utils::has_crowd_control_buff(target)))
+            {
+                q->cast(target, get_hitchance(hitchance::q_hitchance));
+            }
         }
     }
 #pragma endregion

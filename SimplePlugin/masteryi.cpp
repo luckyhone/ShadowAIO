@@ -28,12 +28,6 @@ namespace masteryi
 		TreeEntry* q_semi_manual_cast = nullptr;
 		TreeEntry* use_w = nullptr;
 		TreeEntry* w_after_aa = nullptr;
-		TreeEntry* w_cancel_if_enemy_leaving_q_range = nullptr;
-		TreeEntry* w_incoming_damage = nullptr;
-		TreeEntry* w_incoming_damage_time = nullptr;
-		TreeEntry* w_incoming_damage_over_my_hp_in_percent = nullptr;
-		TreeEntry* w_incoming_damgae_block_orbwalker_time = nullptr;
-		TreeEntry* w_incoming_damgae_block_orbwalker_turret_damage_time = nullptr;
 		TreeEntry* use_e = nullptr;
 		TreeEntry* e_before_q = nullptr;
 		TreeEntry* use_r = nullptr;
@@ -93,7 +87,6 @@ namespace masteryi
 	void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 	void on_before_attack(game_object_script target, bool* process);
 	void on_after_attack(game_object_script target);
-	void on_buff_lose(game_object_script sender, buff_instance_script buff);
 
 	// Declaring functions responsible for spell-logic
 	//
@@ -104,11 +97,6 @@ namespace masteryi
 	// Utilities
 	//
 	inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
-
-	// Other
-	//
-	bool is_meditating = false;
-	float block_orbwalker_time = 0.0f;
 
 	void load()
 	{
@@ -143,12 +131,6 @@ namespace masteryi
 				auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
 				{
 					combo::w_after_aa = w_config->add_checkbox(myhero->get_model() + ".combo.w.after_aa", "Use W after AA", true);
-					combo::w_cancel_if_enemy_leaving_q_range = w_config->add_checkbox(myhero->get_model() + ".combo.w.cancel_if_enemy_leaving_q_range", "Cancel W if target is leaving Q range", true);
-					combo::w_incoming_damage = w_config->add_checkbox(myhero->get_model() + ".combo.w.incoming_damage", "Use W on Incoming Damage", true);
-					combo::w_incoming_damage_time = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_time", "Set incoming damage time (in ms)", 300, 0, 1000);
-					combo::w_incoming_damage_over_my_hp_in_percent = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_over_my_hp", "Incoming damage is over my HP (in %)", 20, 0, 100);
-					combo::w_incoming_damgae_block_orbwalker_time = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_block_orbwalker_time", "Block orbwalker for (in ms)", 750, 1, 2500);
-					combo::w_incoming_damgae_block_orbwalker_turret_damage_time = w_config->add_slider(myhero->get_model() + ".combo.w.incoming_damage_block_orbwalker_turret_damage_time", "Block orbwalker (turret damage) for (in ms)", 350, 1, 1500);
 				}
 				combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
 				combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -260,7 +242,6 @@ namespace masteryi
 		event_handler<events::on_draw>::add_callback(on_draw);
 		event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
 		event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack);
-		event_handler<events::on_buff_lose>::add_callback(on_buff_lose);
 	}
 
 	void unload()
@@ -290,7 +271,6 @@ namespace masteryi
 		event_handler<events::on_draw>::remove_handler(on_draw);
 		event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
 		event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack);
-		event_handler<events::on_buff_lose>::remove_handler(on_buff_lose);
 	}
 
 	// Main update script function
@@ -310,61 +290,6 @@ namespace masteryi
 		//	}
 		//}
 
-		if (!is_meditating && combo::use_w->get_bool() && combo::w_incoming_damage->get_bool() && w->is_ready())
-		{
-			if ((health_prediction->get_incoming_damage(myhero, combo::w_incoming_damage_time->get_int() / 1000.f, true) * 100.f) /
-				myhero->get_max_health() > myhero->get_health_percent() * (combo::w_incoming_damage_over_my_hp_in_percent->get_int() / 100.f))
-			{
-				if (w->cast())
-				{
-					is_meditating = true;
-					if (health_prediction->has_turret_aggro(myhero))
-					{
-						block_orbwalker_time = gametime->get_time() + (combo::w_incoming_damgae_block_orbwalker_turret_damage_time->get_int() / 1000.0f);
-					}
-					else
-					{
-						block_orbwalker_time = gametime->get_time() + (combo::w_incoming_damgae_block_orbwalker_time->get_int() / 1000.0f);
-					}
-					orbwalker->set_attack(false);
-					orbwalker->set_movement(false);
-					if (!evade->is_evade_disabled() && !combo::previous_evade_state)
-					{
-						evade->disable_evade();
-						combo::previous_evade_state = true;
-					};
-				}
-			}
-		}
-
-		if (is_meditating && combo::w_cancel_if_enemy_leaving_q_range->get_bool())
-		{
-			if (myhero->count_enemies_in_range(q->range() + 200) != 0 && myhero->count_enemies_in_range(q->range() - 50) == 0)
-			{
-				is_meditating = false;
-				block_orbwalker_time = 0.0f;
-				orbwalker->set_attack(true);
-				orbwalker->set_movement(true);
-				if (combo::previous_evade_state)
-				{
-					evade->enable_evade();
-					combo::previous_evade_state = false;
-				}
-			}
-		}
-
-		if (gametime->get_time() > block_orbwalker_time)
-		{
-			is_meditating = false;
-			orbwalker->set_attack(true);
-			orbwalker->set_movement(true);
-			if (combo::previous_evade_state)
-			{
-				evade->enable_evade();
-				combo::previous_evade_state = false;
-			}
-		}
-
 		// Very important if can_move ( extra_windup ) 
 		// Extra windup is the additional time you have to wait after the aa
 		// Too small time can interrupt the attack
@@ -379,9 +304,6 @@ namespace masteryi
 			{
 				q_logic();
 			}
-
-			if (is_meditating && block_orbwalker_time >= gametime->get_time())
-				return;
 
 			//Checking if the user has combo_mode() (Default SPACE)
 			if (orbwalker->combo_mode())
@@ -640,21 +562,6 @@ namespace masteryi
 				{
 					return;
 				}
-			}
-		}
-	}
-
-	void on_buff_lose(game_object_script sender, buff_instance_script buff)
-	{
-		if (sender->is_me() && buff->get_name() == "Meditate")
-		{
-			is_meditating = false;
-			orbwalker->set_attack(true);
-			orbwalker->set_movement(true);
-			if (combo::previous_evade_state)
-			{
-				evade->enable_evade();
-				combo::previous_evade_state = false;
 			}
 		}
 	}

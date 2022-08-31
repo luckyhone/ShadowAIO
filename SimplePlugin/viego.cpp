@@ -37,6 +37,7 @@ namespace viego
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
+        TreeEntry* r_save = nullptr;
         TreeEntry* r_include_aa_in_damage_calculation = nullptr;
         TreeEntry* r_use_before_expire = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
@@ -149,6 +150,7 @@ namespace viego
                 auto r_config = combo->add_tab(myhero->get_model() + "combo.r.config", "R Config");
                 {
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
+                    combo::r_save = r_config->add_hotkey(myhero->get_model() + ".combo.r.save", "Save R", TreeHotkeyMode::Toggle, 'G', false);
                     combo::r_include_aa_in_damage_calculation = r_config->add_slider("combo.r.include_aa_in_damage_calculation", "Include x AA in R damage calculation", 1, 0, 3);
                     combo::r_use_before_expire = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_before_expire", "Use R before expire on soul", true);
                     
@@ -250,6 +252,7 @@ namespace viego
             Permashow::Instance.Init(main_tab);
             Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
             Permashow::Instance.AddElement("Semi Auto R", combo::r_semi_manual_cast);
+            Permashow::Instance.AddElement("Save R", combo::r_save);
             Permashow::Instance.AddElement("Allow Tower Dive", combo::allow_tower_dive);
         }
 
@@ -625,7 +628,7 @@ namespace viego
         auto target = target_selector->get_target(r->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && can_use_r_on(target) && get_viego_r_damage(target) > target->get_real_health())
+        if (target != nullptr && !combo::r_save->get_bool() && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && can_use_r_on(target) && get_viego_r_damage(target) > target->get_real_health())
         {
             r->cast(target, get_hitchance(hitchance::r_hitchance));
         }
