@@ -29,9 +29,9 @@ namespace kindred
 
     namespace combo
     {
+        TreeEntry* allow_tower_dive = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* q_mode = nullptr;
-        TreeEntry* q_use_under_enemy_turret = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
@@ -111,13 +111,13 @@ namespace kindred
 
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
+                combo::allow_tower_dive = combo->add_hotkey(myhero->get_model() + ".combo.allow_tower_dive", "Allow Tower Dive", TreeHotkeyMode::Toggle, 'A', true);
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
 
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
-                    combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Usage Mode", { {"In Combo", nullptr},{"After AA or if enemy above AA range", nullptr } }, 0);
-                    combo::q_use_under_enemy_turret = q_config->add_hotkey(myhero->get_model() + ".combo.q.use_under_enemy_turret", "Use if target is under enemy turret", TreeHotkeyMode::Toggle, 'A', true);
+                    combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "Q Mode", { {"In Combo", nullptr},{"After AA or if enemy above AA range", nullptr } }, 0);
                 }
 
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
@@ -211,7 +211,7 @@ namespace kindred
         {
             Permashow::Instance.Init(main_tab);
             Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
-            Permashow::Instance.AddElement("Q under turret", combo::q_use_under_enemy_turret);
+            Permashow::Instance.AddElement("Allow Tower Dive", combo::allow_tower_dive);
         }
 
         // To add a new event you need to define a function and call add_calback
@@ -427,7 +427,7 @@ namespace kindred
     void q_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(q->range() + myhero->get_attack_range(), damage_type::physical);
+        auto target = target_selector->get_target(q->range() + myhero->get_attack_range() + 50, damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
@@ -435,11 +435,11 @@ namespace kindred
             if (combo::q_mode->get_int() == 0 || myhero->get_distance(target) > myhero->get_attack_range())
             {
                 auto pos = hud->get_hud_input_logic()->get_game_cursor_position();
-                if (pos.distance(target) < myhero->get_attack_range())
+                if (pos.distance(target) <= myhero->get_attack_range() + 50)
                 {
                     if (!evade->is_dangerous(pos))
                     {
-                        if (combo::q_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
+                        if (combo::allow_tower_dive->get_bool() || !target->is_under_ally_turret())
                         {
                             q->cast(pos);
                         }
@@ -580,11 +580,11 @@ namespace kindred
             if (((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())) && target->is_ai_hero())
             {
                 auto pos = hud->get_hud_input_logic()->get_game_cursor_position();
-                if (pos.distance(target) < myhero->get_attack_range())
+                if (pos.distance(target) < myhero->get_attack_range() + 50)
                 {
                     if (!evade->is_dangerous(pos))
                     {
-                        if (combo::q_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
+                        if (combo::allow_tower_dive->get_bool() || !target->is_under_ally_turret())
                         {
                             q->cast(pos);
                         }

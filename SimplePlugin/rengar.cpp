@@ -571,7 +571,7 @@ namespace rengar
             return;
         }
 
-        if (e->is_ready() && !is_on_r() && combo::e_use_midair_on_leap)
+        if (e->is_ready() && !is_on_r() && combo::e_use_midair_on_leap->get_bool())
         {
             // Using E while middle of a jump on enemies
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
