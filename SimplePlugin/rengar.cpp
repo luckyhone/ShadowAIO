@@ -607,15 +607,6 @@ namespace rengar
                 }
             }
 
-            // Using q before autoattack on turrets
-            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::q_use_on_turret->get_bool() && target->is_ai_turret())
-            {
-                if (q->cast())
-                {
-                    return;
-                }
-            }
-
             if (laneclear::spell_farm->get_bool())
             {
                 // Using q before autoattack on lane minions
@@ -663,6 +654,15 @@ namespace rengar
                     {
                         return;
                     }
+                }
+            }
+
+            // Using q after autoattack on turrets
+            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::q_use_on_turret->get_bool() && target->is_ai_turret())
+            {
+                if (q->cast())
+                {
+                    return;
                 }
             }
 
