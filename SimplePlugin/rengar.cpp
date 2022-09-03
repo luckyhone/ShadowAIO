@@ -74,6 +74,11 @@ namespace rengar
         TreeEntry* use_e = nullptr;
     } 
 
+    namespace misc
+    {
+        TreeEntry* check_extra_windup_in_combo = nullptr;
+    }
+
     namespace hitchance
     {
         TreeEntry* e_hitchance = nullptr;
@@ -210,6 +215,11 @@ namespace rengar
                 antigapclose::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
             }
 
+            auto misc = main_tab->add_tab(myhero->get_model() + ".misc", "Miscellaneous Settings");
+            {
+                misc::check_extra_windup_in_combo = misc->add_checkbox(myhero->get_model() + ".misc.check_extra_windup_in_combo", "Check extra windujp in combo", true);
+            }
+
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
             {
                 hitchance::e_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.e", "Hitchance E", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
@@ -293,7 +303,7 @@ namespace rengar
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
         // Too small time can interrupt the attack
-        if (orbwalker->can_move(0.05f))
+        if (!misc::check_extra_windup_in_combo->get_bool() || orbwalker->can_move(0.05f))
         {
             //Checking if the user has combo_mode() (Default SPACE
             if (orbwalker->combo_mode())
