@@ -217,7 +217,7 @@ namespace rengar
 
             auto misc = main_tab->add_tab(myhero->get_model() + ".misc", "Miscellaneous Settings");
             {
-                misc::check_extra_windup_in_combo = misc->add_checkbox(myhero->get_model() + ".misc.check_extra_windup_in_combo", "Check extra windujp in combo", true);
+                misc::check_extra_windup_in_combo = misc->add_checkbox(myhero->get_model() + ".misc.check_extra_windup_in_combo", "Check extra windup in combo", false);
             }
 
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
