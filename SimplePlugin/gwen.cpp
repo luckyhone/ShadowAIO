@@ -41,6 +41,7 @@ namespace gwen
         TreeEntry* use_q = nullptr;
         TreeEntry* q_only_on_stacks = nullptr;
         TreeEntry* q_ignore_stacks_if_killable = nullptr;
+        TreeEntry* q_auto_harass = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_damage_time = nullptr;
         TreeEntry* w_over_my_hp_in_percent = nullptr;
@@ -142,6 +143,7 @@ namespace gwen
                 {
                     combo::q_only_on_stacks = q_config->add_slider(myhero->get_model() + ".combo.q.only_on_stacks", "Use Q only on x stacks", 4, 1, 4);
                     combo::q_ignore_stacks_if_killable = q_config->add_checkbox(myhero->get_model() + ".combo.q.ignore_stacks_if_killable", "Ignore stacks if killable", true);
+                    combo::q_auto_harass = q_config->add_hotkey(myhero->get_model() + ".combo.q.config", "Auto Q harass", TreeHotkeyMode::Toggle, 'G', false);
                 }
 
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
@@ -274,6 +276,7 @@ namespace gwen
 	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
 	        Permashow::Instance.AddElement("Semi Manual R", combo::r_semi_manual_cast);
             Permashow::Instance.AddElement("Allow Tower Dive", combo::allow_tower_dive);
+            Permashow::Instance.AddElement("Auto Q Harass", combo::q_auto_harass);
         }
 
         // To add a new event you need to define a function and call add_calback
@@ -328,6 +331,11 @@ namespace gwen
             //        console->print("[ShadowAIO] [DEBUG] Buff name %s, count: %d", buff->get_name_cstr(), buff->get_count());
             //    }
             //}
+
+            if (q->is_ready() && combo::q_auto_harass->get_bool())
+            {
+                q_logic();
+            }
 
             if (w->is_ready() && combo::use_w->get_bool())
             {
