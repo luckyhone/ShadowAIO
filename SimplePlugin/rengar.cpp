@@ -32,8 +32,11 @@ namespace rengar
         TreeEntry* empowered_spell_priority = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_max_range = nullptr;
         TreeEntry* w_use_empowered_if_immobile = nullptr;
         TreeEntry* use_e = nullptr;
+        TreeEntry* e_max_range = nullptr;
+        TreeEntry* e_use_prediction = nullptr;
         TreeEntry* e_use_empowered_if_chasing = nullptr;
         TreeEntry* e_use_midair_on_leap = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_leap_use_on;
@@ -72,11 +75,6 @@ namespace rengar
     namespace antigapclose
     {
         TreeEntry* use_e = nullptr;
-    } 
-
-    namespace misc
-    {
-        TreeEntry* check_extra_windup_in_combo = nullptr;
     }
 
     namespace hitchance
@@ -119,6 +117,13 @@ namespace rengar
         e->set_skillshot(0.25f, 80.0f, 1500.0f, { collisionable_objects::minions, collisionable_objects::yasuo_wall, collisionable_objects::heroes }, skillshot_type::skillshot_line);
         r = plugin_sdk->register_spell(spellslot::r, 745);
 
+        // Disabling spell lock
+        //
+        q->set_spell_lock(false);
+        w->set_spell_lock(false);
+        e->set_spell_lock(false);
+        r->set_spell_lock(false);
+
         // Create a menu according to the description in the "Menu Section"
         //
         main_tab = menu->create_tab("rengar", "Rengar");
@@ -137,6 +142,7 @@ namespace rengar
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
+                    combo::w_max_range = w_config->add_slider(myhero->get_model() + ".combo.w.max_range", "Maximum W range", w->range() - 50, 1, w->range());
                     combo::w_use_empowered_if_immobile = w_config->add_checkbox(myhero->get_model() + ".combo.w.use_empowered_if_immobile", "Use empowered W if immobile", true);
                     combo::w_use_empowered_if_immobile->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 }
@@ -144,6 +150,12 @@ namespace rengar
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
+                    e_config->add_separator(myhero->get_model() + ".combo.e.separator1", "Range Settings");
+                    combo::e_max_range = e_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum E range", e->range() - 50, 1, e->range());
+
+                    e_config->add_separator(myhero->get_model() + ".combo.e.separator2", "Usage Settings");
+                    combo::e_use_prediction = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_prediction", "Use prediction in E", true);
+                    combo::e_use_prediction->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                     combo::e_use_empowered_if_chasing = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_empowered_if_chasing", "Use empowered E when chasing enemy", true);
                     combo::e_use_empowered_if_chasing->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                     combo::e_use_midair_on_leap = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_midair_on_leap", "Use E midair on leap", true);
@@ -213,11 +225,6 @@ namespace rengar
             {
                 antigapclose::use_e = antigapclose->add_checkbox(myhero->get_model() + ".antigapclose.e", "Use E", true);
                 antigapclose::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
-            }
-
-            auto misc = main_tab->add_tab(myhero->get_model() + ".misc", "Miscellaneous Settings");
-            {
-                misc::check_extra_windup_in_combo = misc->add_checkbox(myhero->get_model() + ".misc.check_extra_windup_in_combo", "Check extra windup in combo", false);
             }
 
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
@@ -299,165 +306,158 @@ namespace rengar
         {
             return;
         }
-
-        // Very important if can_move ( extra_windup ) 
-        // Extra windup is the additional time you have to wait after the aa
-        // Too small time can interrupt the attack
-        if (!misc::check_extra_windup_in_combo->get_bool() || orbwalker->can_move(0.05f))
+        //Checking if the user has combo_mode() (Default SPACE
+        if (orbwalker->combo_mode())
         {
-            //Checking if the user has combo_mode() (Default SPACE
-            if (orbwalker->combo_mode())
+            if (q->is_ready() && combo::use_q->get_bool())
             {
-                if (q->is_ready() && combo::use_q->get_bool())
+                q_logic();
+            }
+
+            if (!is_on_r())
+            {
+                if (w->is_ready() && combo::use_w->get_bool())
                 {
-                    q_logic();
+                    w_logic();
                 }
 
-                if (!is_on_r())
+                if (e->is_ready() && combo::use_e->get_bool())
                 {
-                    if (w->is_ready() && combo::use_w->get_bool())
+                    e_logic();
+                }
+            }
+        }
+
+        //Checking if the user has selected harass() (Default C)
+        if (orbwalker->harass())
+        {
+            // Get a target from a given range
+            auto target = target_selector->get_target(combo::e_max_range->get_int(), damage_type::physical);
+
+            // Always check an object is not a nullptr!
+            if (target != nullptr)
+            {
+                if (!myhero->is_under_enemy_turret())
+                {
+                    if (q->is_ready() && harass::use_q->get_bool())
                     {
-                        w_logic();
+                        q_logic();
                     }
 
-                    if (e->is_ready() && combo::use_e->get_bool())
+                    if (!is_on_r())
                     {
-                        e_logic();
+                        if (w->is_ready() && harass::use_w->get_bool())
+                        {
+                            w_logic();
+                        }
+
+                        if (e->is_ready() && harass::use_e->get_bool())
+                        {
+                            e_logic();
+                        }
                     }
                 }
             }
+        }
 
-            //Checking if the user has selected harass() (Default C)
-            if (orbwalker->harass())
+        // Checking if the user has selected flee_mode() (Default Z)
+        if (orbwalker->flee_mode())
+        {
+            if (!is_on_r() && e->is_ready() && fleemode::use_e->get_bool())
             {
                 // Get a target from a given range
-                auto target = target_selector->get_target(e->range(), damage_type::physical);
+                auto target = target_selector->get_target(combo::e_max_range->get_int(), damage_type::physical);
 
                 // Always check an object is not a nullptr!
                 if (target != nullptr)
                 {
-                    if (!myhero->is_under_enemy_turret())
+                    utils::fast_cast(e, target, get_hitchance(hitchance::e_hitchance), false, 0);
+                }
+            }
+        }
+
+        // Checking if the user has selected lane_clear_mode() (Default V)
+        if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
+        {
+            // Gets enemy minions from the entitylist
+            auto lane_minions = entitylist->get_enemy_minions();
+
+            // Gets jugnle mobs from the entitylist
+            auto monsters = entitylist->get_jugnle_mobs_minions();
+
+            // You can use this function to delete minions that aren't in the specified range
+            lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                {
+                    return !x->is_valid_target(w->range());
+                }), lane_minions.end());
+
+            // You can use this function to delete monsters that aren't in the specified range
+            monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
+                {
+                    return !x->is_valid_target(w->range());
+                }), monsters.end());
+
+            //std::sort -> sort lane minions by distance
+            std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                {
+                    return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                });
+
+            //std::sort -> sort monsters by max health
+            std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
+                {
+                    return a->get_max_health() > b->get_max_health();
+                });
+
+            if (!lane_minions.empty())
+            {
+                if (is_empowered() && laneclear::save_empowered_spell_if_enemy_nearby && myhero->count_enemies_in_range(900) != 0)
+                {
+                    return;
+                }
+                if (q->is_ready() && laneclear::use_q->get_bool() && laneclear::q_use_empowered->get_bool() && is_empowered())
+                {
+                    if (utils::fast_cast(q))
+                        return;
+                }
+                if (!is_empowered() && !is_on_r())
+                {
+                    if (w->is_ready() && laneclear::use_w->get_bool())
                     {
-                        if (q->is_ready() && harass::use_q->get_bool())
-                        {
-                            q_logic();
-                        }
-
-                        if (!is_on_r())
-                        {
-                            if (w->is_ready() && harass::use_w->get_bool())
-                            {
-                                w_logic();
-                            }
-
-                            if (e->is_ready() && harass::use_e->get_bool())
-                            {
-                                e_logic();
-                            }
-                        }
+                        if (utils::fast_cast(w))
+                            return;
+                    }
+                    if (e->is_ready() && laneclear::use_e->get_bool())
+                    {
+                        if (utils::fast_cast(e, 1, false))
+                            return;
                     }
                 }
             }
 
-            // Checking if the user has selected flee_mode() (Default Z)
-            if (orbwalker->flee_mode())
+            // Logic responsible for monsters
+            if (!monsters.empty())
             {
-                if (!is_on_r() && e->is_ready() && fleemode::use_e->get_bool())
+                if (is_empowered() && laneclear::save_empowered_spell_if_enemy_nearby && myhero->count_enemies_in_range(900) != 0)
                 {
-                    // Get a target from a given range
-                    auto target = target_selector->get_target(e->range(), damage_type::physical);
-
-                    // Always check an object is not a nullptr!
-                    if (target != nullptr)
-                    {
-                        e->cast(target, get_hitchance(hitchance::e_hitchance));
-                    }
+                    return;
                 }
-            }
-
-            // Checking if the user has selected lane_clear_mode() (Default V)
-            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
-            {
-                // Gets enemy minions from the entitylist
-                auto lane_minions = entitylist->get_enemy_minions();
-
-                // Gets jugnle mobs from the entitylist
-                auto monsters = entitylist->get_jugnle_mobs_minions();
-
-                // You can use this function to delete minions that aren't in the specified range
-                lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(w->range());
-                    }), lane_minions.end());
-
-                // You can use this function to delete monsters that aren't in the specified range
-                monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(w->range());
-                    }), monsters.end());
-
-                //std::sort -> sort lane minions by distance
-                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-                    });
-
-                //std::sort -> sort monsters by max health
-                std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_max_health() > b->get_max_health();
-                    });
-
-                if (!lane_minions.empty())
+                if (q->is_ready() && jungleclear::use_q->get_bool())
                 {
-                    if (is_empowered() && laneclear::save_empowered_spell_if_enemy_nearby && myhero->count_enemies_in_range(900) != 0)
-                    {
+                    if (utils::fast_cast(q))
                         return;
-                    }
-                    if (q->is_ready() && laneclear::use_q->get_bool() && laneclear::q_use_empowered->get_bool() && is_empowered())
+                }
+                if (!is_empowered() && !is_on_r())
+                {
+                    if (w->is_ready() && jungleclear::use_w->get_bool())
                     {
-                        if (q->cast())
+                        if (utils::fast_cast(w))
                             return;
                     }
-                    if (!is_empowered() && !is_on_r())
+                    if (e->is_ready() && jungleclear::use_e->get_bool())
                     {
-                        if (w->is_ready() && laneclear::use_w->get_bool())
-                        {
-                            if (w->cast())
-                                return;
-                        }
-                        if (e->is_ready() && laneclear::use_e->get_bool())
-                        {
-                            if (e->cast_on_best_farm_position(1))
-                                return;
-                        }
-                    }
-                }
-
-                // Logic responsible for monsters
-                if (!monsters.empty())
-                {
-                    if (is_empowered() && laneclear::save_empowered_spell_if_enemy_nearby && myhero->count_enemies_in_range(900) != 0)
-                    {
-                        return;
-                    }
-                    if (q->is_ready() && jungleclear::use_q->get_bool())
-                    {
-                        if (q->cast())
+                        if (utils::fast_cast(e, 1, true))
                             return;
-                    }
-                    if (!is_empowered() && !is_on_r())
-                    {
-                        if (w->is_ready() && jungleclear::use_w->get_bool())
-                        {
-                            if (w->cast())
-                                return;
-                        }
-                        if (e->is_ready() && jungleclear::use_e->get_bool())
-                        {
-                            if (e->cast_on_best_farm_position(1, true))
-                                return;
-                        }
                     }
                 }
             }
@@ -475,7 +475,7 @@ namespace rengar
         {
             if (!is_empowered() || combo::empowered_spell_priority->get_int() == 0)
             {
-                return q->cast();
+                return utils::fast_cast(q);
             }
         }
 
@@ -487,14 +487,14 @@ namespace rengar
     bool w_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(w->range(), damage_type::magical);
+        auto target = target_selector->get_target(combo::w_max_range->get_int(), damage_type::magical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
             if (!is_empowered() || combo::empowered_spell_priority->get_int() == 1 || (utils::has_crowd_control_buff(myhero) && combo::w_use_empowered_if_immobile->get_bool()))
             {
-                return w->cast();
+                return utils::fast_cast(w);
             }
         }
 
@@ -506,14 +506,19 @@ namespace rengar
     bool e_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(e->range(), damage_type::physical);
+        auto target = target_selector->get_target(combo::e_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
             if (!is_empowered() || combo::empowered_spell_priority->get_int() == 2 || (target->get_distance(myhero) > myhero->get_attack_range() + 325 && target->can_move() && target->is_moving() && combo::e_use_empowered_if_chasing->get_bool()))
             {
-                return e->cast(target, get_hitchance(hitchance::e_hitchance));
+                if (combo::e_use_prediction->get_bool())
+                {
+                    return utils::fast_cast(e, target, get_hitchance(hitchance::e_hitchance), false, 0);
+                }
+                
+                return utils::fast_cast(e, target->get_position());
             }
         }
 
@@ -568,7 +573,7 @@ namespace rengar
         {
             if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
             {
-                e->cast(sender, get_hitchance(hitchance::e_hitchance));
+                utils::fast_cast(e, sender, get_hitchance(hitchance::e_hitchance), false, 0);
             }
         }
     }
@@ -588,7 +593,7 @@ namespace rengar
             {
                 if (myhero->get_attack_range() >= r->range() && (!is_empowered() || combo::empowered_spell_priority->get_int() == 2))
                 {
-                    e->cast(target, get_hitchance(hitchance::e_hitchance));
+                    utils::fast_cast(e, target, get_hitchance(hitchance::e_hitchance), false, 0);
                 }
             }
         }
@@ -600,7 +605,7 @@ namespace rengar
             {
                 if (!is_empowered() || combo::empowered_spell_priority->get_int() == 0)
                 {
-                    if (q->cast())
+                    if (utils::fast_cast(q))
                     {
                         return;
                     }
@@ -618,7 +623,7 @@ namespace rengar
                     }
                     if (!is_empowered() || laneclear::q_use_empowered->get_bool())
                     {
-                        if (q->cast())
+                        if (utils::fast_cast(q))
                         {
                             return;
                         }
@@ -632,7 +637,7 @@ namespace rengar
                     {
                         return;
                     }
-                    if (q->cast())
+                    if (utils::fast_cast(q))
                     {
                         return;
                     }
@@ -650,7 +655,7 @@ namespace rengar
             {
                 if (!is_empowered() || combo::empowered_spell_priority->get_int() == 0)
                 {
-                    if (q->cast())
+                    if (utils::fast_cast(q))
                     {
                         return;
                     }
@@ -660,7 +665,7 @@ namespace rengar
             // Using q after autoattack on turrets
             if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::q_use_on_turret->get_bool() && target->is_ai_turret())
             {
-                if (q->cast())
+                if (utils::fast_cast(q))
                 {
                     return;
                 }
@@ -677,7 +682,7 @@ namespace rengar
                     }
                     if (!is_empowered() || laneclear::q_use_empowered->get_bool())
                     {
-                        if (q->cast())
+                        if (utils::fast_cast(q))
                         {
                             return;
                         }
@@ -691,7 +696,7 @@ namespace rengar
                     {
                         return;
                     }
-                    if (q->cast())
+                    if (utils::fast_cast(q))
                     {
                         return;
                     }
@@ -709,11 +714,11 @@ namespace rengar
 
         // Draw W range
         if (w->is_ready() && draw_settings::draw_range_w->get_bool())
-            draw_manager->add_circle(myhero->get_position(), w->range(), draw_settings::w_color->get_color());
+            draw_manager->add_circle(myhero->get_position(), combo::w_max_range->get_int(), draw_settings::w_color->get_color());
 
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
-            draw_manager->add_circle(myhero->get_position(), e->range(), draw_settings::e_color->get_color());
+            draw_manager->add_circle(myhero->get_position(), combo::e_max_range->get_int(), draw_settings::e_color->get_color());
 
         // Draw R range
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
