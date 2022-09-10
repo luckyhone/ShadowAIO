@@ -301,6 +301,10 @@ namespace chogath
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
         event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
+
+        // Chat message after load
+        //
+        utils::on_load();
     }
 
     void unload()

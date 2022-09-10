@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "ivern.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace ivern
@@ -188,6 +189,10 @@ namespace ivern
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
+
+        // Chat message after load
+        //
+        utils::on_load();
     }
 
     void unload()

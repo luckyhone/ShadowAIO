@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "teemo.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace teemo
@@ -305,6 +306,10 @@ namespace teemo
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
         event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack);
+
+        // Chat message after load
+        //
+        utils::on_load();
     }
 
     void unload()

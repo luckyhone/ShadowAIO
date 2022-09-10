@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "belveth.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace belveth
@@ -220,6 +221,10 @@ namespace belveth
 		event_handler<events::on_update>::add_callback(on_update);
 		event_handler<events::on_draw>::add_callback(on_draw);
 		event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
+
+		// Chat message after load
+		//
+		utils::on_load();
 	}
 
 	void unload()

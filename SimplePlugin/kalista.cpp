@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "kalista.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace kalista
@@ -90,7 +91,6 @@ namespace kalista
     // Event handler functions
     void on_update();
     void on_draw();
-    //void on_after_attack_orbwalker(game_object_script target);
 
     // Declaring functions responsible for spell-logic
     //
@@ -164,7 +164,7 @@ namespace kalista
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
                     combo::r_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies nearby search radius", 900, 300, 1600);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
-                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 1000, 0, 1000);
+                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 750, 0, 1000);
                 }
             }
 
@@ -249,7 +249,10 @@ namespace kalista
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
-        //event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
+
+        // Chat message after load
+        //
+        utils::on_load();
     }
 
     void unload()
@@ -273,7 +276,6 @@ namespace kalista
         //
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
-        //event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack_orbwalker);
     }
 
     // Main update script function

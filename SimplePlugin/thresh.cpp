@@ -347,6 +347,10 @@ namespace thresh
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
+
+        // Chat message after load
+        //
+        utils::on_load();
     }
 
     void unload()

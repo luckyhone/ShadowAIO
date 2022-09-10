@@ -4,6 +4,10 @@
 namespace utils
 {
 
+	// AIO Utilities
+	//
+	void on_load();
+
 	// Buff checks
 	//
 	bool has_unkillable_buff(game_object_script target);

@@ -1,5 +1,7 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "missfortune.h"
+#include "dmg_lib.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace missfortune
@@ -28,9 +30,18 @@ namespace missfortune
     namespace combo
     {
         TreeEntry* use_q = nullptr;
+        TreeEntry* q_mode = nullptr;
         TreeEntry* q_use_on_minion_to_crit_on_enemy = nullptr;
         TreeEntry* q_use_on_minion_to_crit_on_enemy_use_on_moving = nullptr;
+        TreeEntry* q_use_on_minion_to_crit_on_enemy_only_on_killable = nullptr;
         TreeEntry* use_w = nullptr;
+        TreeEntry* w_mode = nullptr;
+        TreeEntry* w_use_while_chasing = nullptr;
+        TreeEntry* w_target_above_range = nullptr;
+        TreeEntry* w_target_below_range = nullptr;
+        TreeEntry* w_target_hp_under = nullptr;
+        TreeEntry* w_dont_use_target_under_turret = nullptr;
+        TreeEntry* w_check_if_target_is_not_facing = nullptr;
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
@@ -39,6 +50,7 @@ namespace missfortune
         TreeEntry* r_use_if_killable_by_x_waves = nullptr;
         TreeEntry* r_dont_waste_if_target_hp_below = nullptr;
         TreeEntry* r_auto_if_enemies_more_than = nullptr;
+        TreeEntry* r_try_to_use_e_before_r = nullptr;
         TreeEntry* r_auto_on_cc = nullptr;
         TreeEntry* r_cancel_if_nobody_inside = nullptr;
         TreeEntry* r_block_mouse_move = nullptr;
@@ -102,12 +114,14 @@ namespace missfortune
     void on_update();
     void on_draw();
     void on_before_attack_orbwalker(game_object_script target, bool* process);
+    void on_after_attack_orbwalker(game_object_script target);
     void on_issue_order(game_object_script& target, vector& pos, _issue_order_type& type, bool* process);
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 
     // Declaring functions responsible for spell-logic
     //
     void q_logic();
+    void w_logic();
     void e_logic();
     bool r_logic();
     bool r_logic_auto();
@@ -128,7 +142,7 @@ namespace missfortune
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         r = plugin_sdk->register_spell(spellslot::r, 1450);
-        r->set_skillshot(0.0f, 180.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
+        r->set_skillshot(0.0f, 200.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -146,13 +160,36 @@ namespace missfortune
 
                 auto q_config = combo->add_tab(myhero->get_model() + "combo.q.config", "Q Config");
                 {
+                    q_config->add_separator(myhero->get_model() + ".combo.q.separator1", "Usage Settings");
+                    combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "Q Mode", { {"In Combo", nullptr},{"After AA", nullptr } }, 1);
+
+                    q_config->add_separator(myhero->get_model() + ".combo.q.separator2", "Q Minion Logic Settings");
+
                     combo::q_use_on_minion_to_crit_on_enemy = q_config->add_checkbox(myhero->get_model() + ".combo.q.use_on_minion_to_crit_on_enemy", "Use Q on minions to crit on enemy", true);
                     combo::q_use_on_minion_to_crit_on_enemy->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                     combo::q_use_on_minion_to_crit_on_enemy_use_on_moving = q_config->add_checkbox(myhero->get_model() + ".combo.q.use_on_minion_to_crit_on_enemy_use_on_moving", "^ Use Q on moving minions", false);
                     combo::q_use_on_minion_to_crit_on_enemy_use_on_moving->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                    combo::q_use_on_minion_to_crit_on_enemy_only_on_killable = q_config->add_checkbox(myhero->get_model() + ".combo.q.use_on_minion_to_crit_on_enemy_only_on_killable", "^ Use Q only on killable minions", true);
+                    combo::q_use_on_minion_to_crit_on_enemy_only_on_killable->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 }
 
-                combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W before AA", true);
+                combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
+
+                auto w_config = combo->add_tab(myhero->get_model() + "combo.w.config", "W Config");
+                {
+                    w_config->add_separator(myhero->get_model() + ".combo.w.separator1", "W on AA Settings");
+                    combo::w_mode = w_config->add_combobox(myhero->get_model() + ".combo.w.mode", "W Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 0);
+
+                    w_config->add_separator(myhero->get_model() + ".combo.w.separator2", "W while chasing Options");
+                    combo::w_use_while_chasing = w_config->add_checkbox(myhero->get_model() + ".combo.w.use_while_chasing", "Use W while chasing an enemy", true);
+                    combo::w_use_while_chasing->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
+                    combo::w_target_above_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_above_range", "Target is above range", 525, 0, 800);
+                    combo::w_target_below_range = w_config->add_slider(myhero->get_model() + ".combo.w.target_below_range", "Target is below range", 950, 0, 1100);
+                    combo::w_target_hp_under = w_config->add_slider(myhero->get_model() + ".combo.w.target_hp_under", "Target HP is under (in %)", 50, 0, 100);
+                    combo::w_dont_use_target_under_turret = w_config->add_checkbox(myhero->get_model() + ".combo.w.dont_use_target_under_turret", "Dont use if target is under turret", true);
+                    combo::w_check_if_target_is_not_facing = w_config->add_checkbox(myhero->get_model() + ".combo.w.check_if_target_is_not_facing", "Check if target is not facing myhero", true);
+                }
+
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -168,10 +205,12 @@ namespace missfortune
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "Usage Settings");
                     combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
                     combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use R if target killable by x waves", 6, 1, 14);
-                    combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Use R if will hit enemies more than", 2, 1, 5);
+                    combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Use R if will hit enemies more than", 3, 1, 5);
+                    combo::r_try_to_use_e_before_r = r_config->add_checkbox(myhero->get_model() + ".combo.r.r_try_to_use_e_before_r", "Try to use E before R", true);
+                    combo::r_try_to_use_e_before_r->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                     combo::r_auto_on_cc = r_config->add_checkbox(myhero->get_model() + ".combo.r.auto_on_cc", "Use R on CC", false);
                     combo::r_auto_on_cc->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
-                    combo::r_cancel_if_nobody_inside = r_config->add_checkbox(myhero->get_model() + ".combo.r.cancel_if_nobody_inside", "Cancel R if nobody inside", false);
+                    combo::r_cancel_if_nobody_inside = r_config->add_checkbox(myhero->get_model() + ".combo.r.cancel_if_nobody_inside", "Cancel R if nobody inside", true);
                     combo::r_cancel_if_nobody_inside->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
 
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator3", "Other Settings");
@@ -299,7 +338,12 @@ namespace missfortune
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
         event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack_orbwalker);
+        event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
         event_handler<events::on_issue_order>::add_callback(on_issue_order);
+
+        // Chat message after load
+        //
+        utils::on_load();
     }
 
     void unload()
@@ -328,6 +372,7 @@ namespace missfortune
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
         event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack_orbwalker);
+        event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack_orbwalker);
         event_handler<events::on_issue_order>::remove_handler(on_issue_order);
     }
 
@@ -339,22 +384,12 @@ namespace missfortune
             return;
         }
 
-        if (myhero->is_casting_interruptible_spell() || gametime->get_time() - last_r_time < 0.3f)
+        if (myhero->is_casting_interruptible_spell() || myhero->has_buff(buff_hash("missfortunebulletsound")) || gametime->get_time() - last_r_time < 0.3f)
         {
-            orbwalker->set_attack(false);
-            orbwalker->set_movement(false);
-            combo::previous_orbwalker_state = true;
-
-            if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
-            {
-                evade->disable_evade();
-                combo::previous_evade_state = true;
-            }
+            std::vector<game_object_script> hit_by_r;
 
             if (combo::r_cancel_if_nobody_inside->get_bool())
             {
-                std::vector<game_object_script> hit_by_r;
-
                 for (auto& enemy : entitylist->get_enemy_heroes())
                 {
                     if (enemy->is_valid() && !enemy->is_dead() && enemy->is_valid_target(r->range()))
@@ -365,25 +400,30 @@ namespace missfortune
                         }
                     }
                 }
-
-                if (hit_by_r.empty())
-                {
-                    last_r_time = 0.0f;
-                    if (combo::previous_orbwalker_state)
-                    {
-                        orbwalker->set_attack(true);
-                        orbwalker->set_movement(true);
-                        combo::previous_orbwalker_state = false;
-                    }
-                    if (combo::previous_evade_state)
-                    {
-                        evade->enable_evade();
-                        combo::previous_evade_state = false;
-                    }
-                }
             }
 
-            return;
+            if (!hit_by_r.empty())
+            {
+                if (!combo::previous_orbwalker_state)
+                {
+                    orbwalker->set_attack(false);
+                    orbwalker->set_movement(false);
+                    combo::previous_orbwalker_state = true;
+                }
+
+                if (!combo::previous_evade_state && combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
+                {
+                    evade->disable_evade();
+                    combo::previous_evade_state = true;
+                }
+
+                return;
+            }
+        }
+
+        if (last_r_time != 0.0f)
+        {
+            last_r_time = 0.0f;
         }
 
         if (combo::previous_orbwalker_state)
@@ -430,6 +470,11 @@ namespace missfortune
                 {
                     q_logic();
                 }
+                
+                if (w->is_ready() && combo::use_w->get_bool())
+                {
+                    w_logic();
+                }
 
                 if (e->is_ready() && combo::use_e->get_bool())
                 {
@@ -460,7 +505,7 @@ namespace missfortune
                     {
                         for (auto&& minion : lane_minions)
                         {
-                            if (q->get_damage(minion) > minion->get_health())
+                            if (dmg_lib::get_damage(q, minion) > minion->get_health())
                             {
                                 if (q->cast(minion))
                                 {
@@ -480,6 +525,11 @@ namespace missfortune
                     if (q->is_ready() && harass::use_q->get_bool())
                     {
                         q_logic();
+                    }
+
+                    if (w->is_ready() && harass::use_w->get_bool())
+                    {
+                        w_logic();
                     }
 
                     if (e->is_ready() && harass::use_e->get_bool())
@@ -597,12 +647,16 @@ namespace missfortune
     void q_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(myhero->get_attack_range() , damage_type::physical);
+        auto target = target_selector->get_target(myhero->get_attack_range() + 50, damage_type::physical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            q->cast(target);
+            // Checking if the target will die from Q damage
+            if (combo::q_mode->get_int() == 0 || dmg_lib::get_damage(q, target) >= target->get_health())
+            {
+                q->cast(target);
+            }
         }
         else if (combo::q_use_on_minion_to_crit_on_enemy->get_bool())
         {
@@ -626,6 +680,12 @@ namespace missfortune
                         return !combo::q_use_on_minion_to_crit_on_enemy_use_on_moving->get_bool() && x->is_moving();
                     }), minions.end());
 
+                // Delete unkillable minions
+                minions.erase(std::remove_if(minions.begin(), minions.end(), [](game_object_script x)
+                    {
+                        return !combo::q_use_on_minion_to_crit_on_enemy_only_on_killable->get_bool() && x->get_health() > dmg_lib::get_damage(q, x);
+                    }), minions.end());
+
                 // Delete minions that aren't in the specified range
                 minions.erase(std::remove_if(minions.begin(), minions.end(), [target](game_object_script x)
                     {
@@ -641,6 +701,32 @@ namespace missfortune
                 if (!minions.empty())
                 {
                     q->cast(minions.front());
+                }
+            }
+        }
+    }
+#pragma endregion
+
+#pragma region w_logic
+    void w_logic()
+    {
+        if (combo::w_use_while_chasing->get_bool())
+        {
+            // Get a target from a given range
+            auto target = target_selector->get_target(combo::w_target_below_range->get_int(), damage_type::physical);
+
+            // Always check an object is not a nullptr!
+            if (target != nullptr)
+            {
+                if (target->get_health_percent() < combo::w_target_hp_under->get_int() && target->get_distance(myhero) > combo::w_target_above_range->get_int())
+                {
+                    if (!combo::w_dont_use_target_under_turret->get_bool() || !target->is_under_ally_turret())
+                    {
+                        if (!combo::w_check_if_target_is_not_facing->get_bool() || !target->is_facing(myhero))
+                        {
+                            w->cast();
+                        }
+                    }
                 }
             }
         }
@@ -672,10 +758,10 @@ namespace missfortune
         {
             if (target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
-                if (r->get_damage(target) * combo::r_use_if_killable_by_x_waves->get_int() > target->get_health())
+                if (dmg_lib::get_damage(r, target) * combo::r_use_if_killable_by_x_waves->get_int() > target->get_health())
                 {
                     auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
-                    if (pred.hitchance >= get_hitchance(hitchance::e_hitchance))
+                    if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
                     {
                         orbwalker->set_attack(false);
                         orbwalker->set_movement(false);
@@ -685,6 +771,10 @@ namespace missfortune
                         {
                             evade->disable_evade();
                             combo::previous_evade_state = true;
+                        }
+                        if (combo::r_try_to_use_e_before_r->get_bool() && e->is_ready() && target->is_valid_target(e->range()))
+                        {
+                            e->cast(pred.get_unit_position());
                         }
                         if (r->cast(pred.get_unit_position()))
                         {
@@ -732,6 +822,10 @@ namespace missfortune
                     evade->disable_evade();
                     combo::previous_evade_state = true;
                 }
+                if (combo::r_try_to_use_e_before_r->get_bool() && e->is_ready() && hit_by_r.front()->is_valid_target(e->range()))
+                {
+                    e->cast(pred.get_unit_position());
+                }
                 if (r->cast(pred.get_unit_position()))
                 {
                     last_r_time = gametime->get_time();
@@ -760,6 +854,10 @@ namespace missfortune
                         evade->disable_evade();
                         combo::previous_evade_state = true;
                     }
+                    if (combo::r_try_to_use_e_before_r->get_bool() && e->is_ready() && target->is_valid_target(e->range()))
+                    {
+                        e->cast(pred.get_unit_position());
+                    }
                     if (r->cast(pred.get_unit_position()))
                     {
                         last_r_time = gametime->get_time();
@@ -785,7 +883,7 @@ namespace missfortune
             if (target != nullptr && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
             {
                 auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
-                if (pred.hitchance >= get_hitchance(hitchance::e_hitchance))
+                if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
                 {
                     orbwalker->set_attack(false);
                     orbwalker->set_movement(false);
@@ -795,6 +893,10 @@ namespace missfortune
                     {
                         evade->disable_evade();
                         combo::previous_evade_state = true;
+                    }
+                    if (combo::r_try_to_use_e_before_r->get_bool() && e->is_ready() && target->is_valid_target(e->range()))
+                    {
+                        e->cast(pred.get_unit_position());
                     }
                     if (r->cast(pred.get_unit_position()))
                     {
@@ -894,7 +996,7 @@ namespace missfortune
             {
                 if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
                 {
-                    draw_dmg_rl(enemy, r->get_damage(enemy) * combo::r_use_if_killable_by_x_waves->get_int(), 0x8000ff00);
+                    draw_dmg_rl(enemy, dmg_lib::get_damage(r, enemy) * combo::r_use_if_killable_by_x_waves->get_int(), 0x8000ff00);
                 }
             }
         }
@@ -902,44 +1004,93 @@ namespace missfortune
 
     void on_before_attack_orbwalker(game_object_script target, bool* process)
     {
-        // Use w before autoattack on enemies
-        if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
+        if (w->is_ready() && combo::w_mode->get_int() == 0)
         {
-            if (w->cast())
+            // Use w before autoattack on enemies
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
             {
-                return;
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Use w before autoattack on lane minions
+            if (target->is_minion() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_w->get_bool())) {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Use w before autoattack on monsters
+            if (target->is_monster() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_w->get_bool())) {
+                if (w->cast())
+                {
+                    return;
+                }
             }
         }
+    }
 
-        // Use w before autoattack on lane minions
-        if (target->is_minion() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_w->get_bool())) {
-            if (w->cast())
-            {
-                return;
-            }
-        }
-
-        // Use w before autoattack on monsters
-        if (target->is_monster() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_w->get_bool())) {
-            if (w->cast())
-            {
-                return;
-            }
-        }
-
-        // Use w before autoattack on turrets
-        if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_w_on_turret->get_bool() && target->is_ai_turret())
+    void on_after_attack_orbwalker(game_object_script target)
+    {
+        if (q->is_ready() && combo::q_mode->get_int() == 1)
         {
-            if (w->cast())
+            // Using q after autoattack on enemies
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
             {
-                return;
+                if (q->cast(target))
+                {
+                    return;
+                }
+            }
+        }
+
+        if (w->is_ready() && combo::w_mode->get_int() == 1)
+        {
+            // Use w after autoattack on enemies
+            if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_w->get_bool()) || (orbwalker->harass() && harass::use_w->get_bool())))
+            {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Use w after autoattack on lane minions
+            if (target->is_minion() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && laneclear::use_w->get_bool())) {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+
+            // Use w after autoattack on monsters
+            if (target->is_monster() && (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool() && jungleclear::use_w->get_bool())) {
+                if (w->cast())
+                {
+                    return;
+                }
+            }
+        }
+
+        if (w->is_ready())
+        {
+            // Use w before autoattack on turrets
+            if (orbwalker->lane_clear_mode() && myhero->is_under_enemy_turret() && laneclear::use_w_on_turret->get_bool() && target->is_ai_turret())
+            {
+                if (w->cast())
+                {
+                    return;
+                }
             }
         }
     }
 
     void on_issue_order(game_object_script& target, vector& pos, _issue_order_type& type, bool* process)
     {
-        if (combo::r_block_mouse_move->get_bool() && last_r_time != 0.0f && (myhero->is_casting_interruptible_spell() || gametime->get_time() - last_r_time < 0.3f))
+        if (combo::r_block_mouse_move->get_bool() && combo::previous_orbwalker_state && last_r_time != 0.0f && (myhero->is_casting_interruptible_spell() || myhero->has_buff(buff_hash("missfortunebulletsound")) || gametime->get_time() - last_r_time < 0.3f))
         {
             *process = false;
         }

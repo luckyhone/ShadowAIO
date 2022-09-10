@@ -356,6 +356,10 @@ namespace draven
         event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack);
         event_handler<events::on_create_object>::add_callback(on_create_object);
         event_handler<events::on_delete_object>::add_callback(on_delete_object);
+
+        // Chat message after load
+        //
+        utils::on_load();
     }
 
     void unload()

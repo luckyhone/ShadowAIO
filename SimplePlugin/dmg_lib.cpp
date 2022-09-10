@@ -62,11 +62,27 @@ namespace dmg_lib
 			return calculate(0.0f, base_magic_dmg, 0.0f, false, target);
 		}
 
-		// Default, not included
+		// Miss Fortune
 		//
-		else
+		else if (spell_name == "MissFortuneRicochetShot")
 		{
-			return damagelib->get_spell_damage(myhero, target, spell->slot, false);
+			float dmg[] = { 20.0f, 45.0f, 70.0f, 95.0f, 120.0f };
+			float base_dmg = myhero->get_total_attack_damage();
+			float base_magic_dmg = 0.35 * myhero->get_total_ability_power();
+			float final_dmg = dmg[spell->level() - 1] + base_dmg + base_magic_dmg;
+			return calculate(final_dmg, 0.0f, 0.0f, false, target);
 		}
+
+		else if (spell_name == "MissFortuneBulletTime")
+		{
+			float base_dmg = 0.75 * myhero->get_total_attack_damage();
+			float base_magic_dmg = 0.20 * myhero->get_total_ability_power();
+			float final_dmg = base_dmg + base_magic_dmg;
+			return calculate(final_dmg, 0.0f, 0.0f, false, target);
+		}
+
+		// Default, not included in my dmglib
+		//
+		return damagelib->get_spell_damage(myhero, target, spell->slot, false);
 	}
 }

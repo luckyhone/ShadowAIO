@@ -165,7 +165,7 @@ namespace nasus
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
                     combo::r_hp_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.hp_enemies_search_radius", "Enemies nearby search radius", 350, 150, 1600);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
-                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 1000, 0, 1000);
+                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 750, 0, 1000);
 
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "R if enemies nearby Settings");
 
@@ -264,6 +264,10 @@ namespace nasus
         event_handler<events::on_draw>::add_callback(on_draw);
         event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
         event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
+
+        // Chat message after load
+        //
+        utils::on_load();
     }
 
     void unload()

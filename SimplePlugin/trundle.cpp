@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "trundle.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace trundle
@@ -263,6 +264,10 @@ namespace trundle
         event_handler<events::on_draw>::add_callback(on_draw);
         event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
         event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack);
+
+        // Chat message after load
+        //
+        utils::on_load();
     }
 
     void unload()

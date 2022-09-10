@@ -1,5 +1,6 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "jax.h"
+#include "utils.h"
 #include "permashow.hpp"
 
 namespace jax
@@ -157,7 +158,7 @@ namespace jax
                 combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
                 auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
                 {
-                    combo::w_mode = w_config->add_combobox(myhero->get_model() + ".combo.w.mode", "W Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 0);
+                    combo::w_mode = w_config->add_combobox(myhero->get_model() + ".combo.w.mode", "W Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 1);
                 }
                 combo::use_e = combo->add_checkbox(myhero->get_model() + ".combo.e", "Use E", true);
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -271,6 +272,10 @@ namespace jax
         event_handler<events::on_draw>::add_callback(on_draw);
         event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
         event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
+
+        // Chat message after load
+        //
+        utils::on_load();
     }
 
     void unload()

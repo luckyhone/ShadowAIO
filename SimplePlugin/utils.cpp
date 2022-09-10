@@ -5,6 +5,14 @@
 namespace utils
 {
 
+	void on_load()
+	{
+		std::string msg = "<b><font color=\"#7289da\">[ShadowAIO]</font></b><font color=\"#FFFFFF\">: Loaded champion</font> <b><font color=\"#7289da\">" + myhero->get_model() + "</font></b>";
+		myhero->print_chat(1, msg.c_str());
+		msg = "<b><font color=\"#7289da\">[ShadowAIO]</font></b><font color=\"#FFFFFF\">: Bugs or suggestions please send on Discord - </font> <b><font color=\"#7289da\">racism gaming#0375</font></b>";
+		myhero->print_chat(1, msg.c_str());
+	}
+
 	bool has_unkillable_buff(game_object_script target)
 	{
 		return target->is_zombie() || target->has_buff({ buff_hash("UndyingRage"), buff_hash("ChronoShift"), buff_hash("KayleR"), buff_hash("KindredRNoDeathBuff") });;
@@ -34,12 +42,14 @@ namespace utils
 
 	bool fast_cast(script_spell* spell)
 	{
+		console->print("[%f] FAST CAST (SPELL) %s", gametime->get_time(), spell->name().c_str());
 		myhero->cast_spell(spell->slot, true, spell->is_charged_spell);
 		return true;
 	}
 
 	bool fast_cast(script_spell* spell, vector position)
 	{
+		console->print("[%f] FAST CAST (SPELL, POSITION) %s", gametime->get_time(), spell->name().c_str());
 		if (!spell->is_charged_spell)
 		{
 			myhero->cast_spell(spell->slot, position);
@@ -55,6 +65,8 @@ namespace utils
 
 	bool fast_cast(script_spell* spell, game_object_script unit, hit_chance minimum, bool aoe, int min_targets)
 	{
+		console->print("[%f] FAST CAST (FARM) %s", gametime->get_time(), spell->name().c_str());
+
 		vector cast_position;
 
 		prediction_input x;
