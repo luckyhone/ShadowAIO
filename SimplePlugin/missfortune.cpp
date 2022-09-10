@@ -760,7 +760,7 @@ namespace missfortune
         auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && !target->is_zombie()  && target->is_attack_allowed_on_target() && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
+        if (target != nullptr && !target->is_zombie() && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
         {
             if (target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
@@ -807,7 +807,7 @@ namespace missfortune
 
         for (auto& enemy : entitylist->get_enemy_heroes())
         {
-            if (enemy->is_valid() && !enemy->is_dead() && !enemy->is_zombie() && enemy->is_valid_target(combo::r_max_range->get_int()))
+            if (enemy->is_valid() && !enemy->is_dead() && !enemy->is_zombie() && !utils::has_unkillable_buff(enemy) && enemy->is_valid_target(combo::r_max_range->get_int()))
             {
                 auto pred = prediction->get_prediction(enemy, r->get_delay(), r->get_radius(), r->get_speed());
                 if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
