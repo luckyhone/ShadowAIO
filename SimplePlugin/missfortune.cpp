@@ -45,6 +45,7 @@ namespace missfortune
         TreeEntry* use_e = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
+        TreeEntry* r_save = nullptr;
         TreeEntry* r_min_range = nullptr;
         TreeEntry* r_max_range = nullptr;
         TreeEntry* r_use_if_killable_by_x_waves = nullptr;
@@ -215,6 +216,7 @@ namespace missfortune
 
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator3", "Other Settings");
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
+                    combo::r_save = r_config->add_hotkey(myhero->get_model() + ".combo.r.save", "Save R", TreeHotkeyMode::Toggle, 'G', false);
                     combo::r_block_mouse_move = r_config->add_checkbox(myhero->get_model() + ".combo.r.block_mouse_move", "Block Mouse Move on R", true);
                     combo::r_block_mouse_move->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
@@ -327,6 +329,7 @@ namespace missfortune
 	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
 	        Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
 	        Permashow::Instance.AddElement("Semi Auto R", combo::r_semi_manual_cast);
+            Permashow::Instance.AddElement("Save R", combo::r_save);
         }
 
         // Add anti gapcloser handler
@@ -750,6 +753,9 @@ namespace missfortune
 #pragma region r_logic
     bool r_logic()
     {
+        if (combo::r_save->get_bool())
+            return false;
+
         // Get a target from a given range
         auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
@@ -794,6 +800,9 @@ namespace missfortune
 #pragma region r_logic_auto
     bool r_logic_auto()
     {
+        if (combo::r_save->get_bool())
+            return false;
+
         std::vector<game_object_script> hit_by_r;
 
         for (auto& enemy : entitylist->get_enemy_heroes())
