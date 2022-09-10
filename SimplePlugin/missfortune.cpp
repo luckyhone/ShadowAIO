@@ -217,7 +217,7 @@ namespace missfortune
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator3", "Other Settings");
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_save = r_config->add_hotkey(myhero->get_model() + ".combo.r.save", "Save R", TreeHotkeyMode::Toggle, 'G', false);
-                    combo::r_block_mouse_move = r_config->add_checkbox(myhero->get_model() + ".combo.r.block_mouse_move", "Block Mouse Move on R", true);
+                    combo::r_block_mouse_move = r_config->add_checkbox(myhero->get_model() + ".combo.r.block_mouse_move", "Block Mouse Move on R", false);
                     combo::r_block_mouse_move->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
                     combo::r_disable_evade->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
@@ -760,7 +760,7 @@ namespace missfortune
         auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && target->is_attack_allowed_on_target() && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
+        if (target != nullptr && !target->is_zombie()  && target->is_attack_allowed_on_target() && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
         {
             if (target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
@@ -807,7 +807,7 @@ namespace missfortune
 
         for (auto& enemy : entitylist->get_enemy_heroes())
         {
-            if (enemy->is_valid() && !enemy->is_dead() && enemy->is_valid_target(combo::r_max_range->get_int()))
+            if (enemy->is_valid() && !enemy->is_dead() && !enemy->is_zombie() && enemy->is_valid_target(combo::r_max_range->get_int()))
             {
                 auto pred = prediction->get_prediction(enemy, r->get_delay(), r->get_radius(), r->get_speed());
                 if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
@@ -1016,7 +1016,7 @@ namespace missfortune
         if (q->is_ready())
         {
             // Use q before autoattack on lane minions (lasthit)
-            if (target->is_minion() && dmg_lib::get_damage(q, target) >= target->get_health() && (orbwalker->lane_clear_mode() && lasthit::lasthit->get_bool() && lasthit::use_q->get_bool()))
+            if (target->is_minion() && dmg_lib::get_damage(q, target) >= target->get_health() && (orbwalker->lane_clear_mode() || orbwalker->harass() || orbwalker->last_hit_mode()) && lasthit::lasthit->get_bool() && lasthit::use_q->get_bool())
             {
                 *process = false;
                 if (q->cast(target))
