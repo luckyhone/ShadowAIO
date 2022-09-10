@@ -493,7 +493,7 @@ namespace missfortune
                 // You can use this function to delete minions that aren't in the specified range
                 lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(q->range());
+                        return !x->is_valid_target(q->range() + 50);
                     }), lane_minions.end());
 
                 //std::sort -> sort lane minions by distance
@@ -583,13 +583,13 @@ namespace missfortune
                 // You can use this function to delete minions that aren't in the specified range
                 lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(e->range());
+                        return !x->is_valid_target(q->range() + 50);
                     }), lane_minions.end());
 
                 // You can use this function to delete monsters that aren't in the specified range
                 monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(e->range());
+                        return !x->is_valid_target(q->range() + 50);
                     }), monsters.end());
 
                 //std::sort -> sort lane minions by distance
@@ -1013,6 +1013,19 @@ namespace missfortune
 
     void on_before_attack_orbwalker(game_object_script target, bool* process)
     {
+        if (q->is_ready())
+        {
+            // Use q before autoattack on lane minions (lasthit)
+            if (target->is_minion() && dmg_lib::get_damage(q, target) >= target->get_health() && (orbwalker->lane_clear_mode() && lasthit::lasthit->get_bool() && lasthit::use_q->get_bool()))
+            {
+                *process = false;
+                if (q->cast(target))
+                {
+                    return;
+                }
+            }
+        }
+
         if (w->is_ready() && combo::w_mode->get_int() == 0)
         {
             // Use w before autoattack on enemies
