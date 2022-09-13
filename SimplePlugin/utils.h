@@ -17,7 +17,10 @@ namespace utils
 	// Fast spell casting
 	//
 	bool fast_cast(script_spell* spell);
+	bool cast(spellslot slot, bool is_charged_spell);
+	bool cast(spellslot slot, game_object_script unit, bool is_charged_spell);
 	bool fast_cast(script_spell* spell, vector position);
+	bool cast(spellslot slot, vector position, bool is_charged_spell);
 	bool fast_cast(script_spell* spell, game_object_script unit, hit_chance minimum, bool aoe, int min_targets);
 	bool fast_cast(script_spell* spell, int minMinions, bool is_jugnle_mobs);
 };

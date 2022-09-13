@@ -30,10 +30,10 @@ namespace jax
 
     namespace combo
     {
+        TreeEntry* allow_tower_dive = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* q_only_when_e_ready = nullptr;
         TreeEntry* q_target_above_range = nullptr;
-        TreeEntry* q_if_target_is_under_turret = nullptr;
         std::map<std::uint32_t, TreeEntry*> q_use_on;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_mode = nullptr;
@@ -135,11 +135,11 @@ namespace jax
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
                 {
+                    combo::allow_tower_dive = combo->add_hotkey(myhero->get_model() + ".combo.allow_tower_dive", "Allow Tower Dive", TreeHotkeyMode::Toggle, 'A', true);
                     combo::q_only_when_e_ready = q_config->add_checkbox(myhero->get_model() + ".combo.q.only_when_e_ready", "Use Q only when E is ready", false);
                     combo::q_only_when_e_ready->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                     combo::q_target_above_range = q_config->add_slider(myhero->get_model() + ".combo.q.target_above_range", "Only if target is above range", myhero->get_attack_range() + 50, 0, q->range());
-                    combo::q_if_target_is_under_turret = q_config->add_hotkey(myhero->get_model() + ".combo.q.if_target_is_under_turret", "Use Q if target is under turret", TreeHotkeyMode::Toggle, 'A', false);
-     
+
                     auto use_q_on_tab = q_config->add_tab(myhero->get_model() + ".combo.q.use_on", "Use Q On");
                     {
                         for (auto&& enemy : entitylist->get_enemy_heroes())
@@ -263,7 +263,8 @@ namespace jax
 	        Permashow::Instance.Init(main_tab);
 	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
             Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
-	        Permashow::Instance.AddElement("Q under turret", combo::q_if_target_is_under_turret);
+            Permashow::Instance.AddElement("Allow Tower Dive", combo::allow_tower_dive);
+            Permashow::Instance.AddElement("Ward Jump Key", misc::ward_jump_key);
         }
 
         // To add a new event you need to define a function and call add_calback
@@ -408,7 +409,7 @@ namespace jax
                 // You can use this function to delete minions that aren't in the specified range
                 lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                     {
-                        return !x->is_valid_target(q->range());
+                        return !x->is_valid_target(myhero->get_attack_range() + 100);
                     }), lane_minions.end());
 
                 //std::sort -> sort lane minions by distance
@@ -609,7 +610,7 @@ namespace jax
         // Always check an object is not a nullptr!
         if (target != nullptr && can_use_q_on(target))
         {
-            if (combo::q_if_target_is_under_turret->get_bool() || !target->is_under_ally_turret())
+            if (combo::allow_tower_dive->get_bool() || !target->is_under_ally_turret())
             {
                 if (target->get_distance(myhero) > combo::q_target_above_range->get_int())
                 {

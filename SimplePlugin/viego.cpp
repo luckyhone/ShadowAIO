@@ -45,7 +45,6 @@ namespace viego
         TreeEntry* force_catch_soul = nullptr;
         TreeEntry* simple_spell_usage_on_soul = nullptr;
         TreeEntry* max_soul_distance = nullptr;
-        TreeEntry* extra_windup_time = nullptr;
     }
 
     namespace harass
@@ -178,8 +177,6 @@ namespace viego
                     combo::simple_spell_usage_on_soul = passive_config->add_checkbox(myhero->get_model() + ".combo.passive.auto_soul_spell_usage", "Simple Soul Spell Usage", true);
                     combo::simple_spell_usage_on_soul->set_texture(myhero->get_passive_icon_texture());
                     combo::max_soul_distance = passive_config->add_slider("combo.passive.auto_soul_catch.max_distance", "Max distance to soul", 225, 100, 600);
-                    combo::extra_windup_time = passive_config->add_slider("combo.passive.extra_windup_time", "Extra windup time", 20, 0, 100);
-                    combo::extra_windup_time->set_tooltip("Increase if you have problems with disconnecting");
                 }
             }
 
@@ -354,7 +351,7 @@ namespace viego
                         }
                     }
 
-                    if (combo::simple_spell_usage_on_soul->get_bool() && !myhero->is_casting_interruptible_spell() && orbwalker->can_move(combo::extra_windup_time->get_int() / 100))
+                    if (combo::simple_spell_usage_on_soul->get_bool() && !myhero->is_casting_interruptible_spell())
                     {
                         for (int i = 0; i < 3; i++)
                         {
@@ -378,13 +375,13 @@ namespace viego
 
                                     if (type == spell_targeting::target)
                                     {
-                                        myhero->cast_spell(slot, target, true, channeling);
-                                        return;
+                                        utils::cast(slot, target, channeling);
+                                        continue;
                                     }
                                     else if (type == spell_targeting::self || type == spell_targeting::self_aoe)
                                     {
-                                        myhero->cast_spell(slot, myhero, true, channeling);
-                                        return;
+                                        utils::cast(slot, myhero, channeling);
+                                        continue;
                                     }
                                     else
                                     {
@@ -413,8 +410,8 @@ namespace viego
 
                                         if (output.hitchance > hit_chance::high)
                                         {
-                                            myhero->cast_spell(slot, output.get_cast_position(), true, channeling);
-                                            return;
+                                            utils::cast(slot, output.get_cast_position(), channeling);
+                                            continue;
                                         }
                                     }
                                 }

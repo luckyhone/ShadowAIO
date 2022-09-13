@@ -83,11 +83,6 @@ namespace vex
         TreeEntry* use_w = nullptr;
     }
 
-    namespace misc
-    {
-        TreeEntry* check_extra_windup_in_combo = nullptr;
-    }
-
     namespace hitchance
     {
         TreeEntry* q_hitchance = nullptr;
@@ -227,11 +222,6 @@ namespace vex
                 antigapclose::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
             }
 
-            auto misc = main_tab->add_tab(myhero->get_model() + ".misc", "Miscellaneous Settings");
-            {
-                misc::check_extra_windup_in_combo = misc->add_checkbox(myhero->get_model() + ".misc.check_extra_windup_in_combo", "Check extra windup in combo", false);
-            }
-
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
             {
                 hitchance::q_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.q", "Hitchance Q", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
@@ -336,127 +326,121 @@ namespace vex
             r_logic_semi();
         }
 
-        // Very important if can_move ( extra_windup ) 
-        // Extra windup is the additional time you have to wait after the aa
-        // Too small time can interrupt the attack
-        if (!misc::check_extra_windup_in_combo->get_bool() || orbwalker->can_move(0.05f))
+
+        //Checking if the user has combo_mode() (Default SPACE
+        if (orbwalker->combo_mode())
         {
-            //Checking if the user has combo_mode() (Default SPACE
-            if (orbwalker->combo_mode())
+            if (r->is_ready() && combo::use_r->get_bool())
             {
-                if (r->is_ready() && combo::use_r->get_bool())
-                {
-                    r_logic();
-                }
-
-                if (q->is_ready() && combo::use_q->get_bool())
-                {
-                    q_logic();
-                }
-
-                if (w->is_ready() && combo::use_w->get_bool())
-                {
-                    w_logic();
-                }
-
-                if (e->is_ready() && combo::use_e->get_bool())
-                {
-                    e_logic();
-                }
+                r_logic();
             }
 
-            //Checking if the user has selected harass() (Default C)
-            if (orbwalker->harass())
+            if (q->is_ready() && combo::use_q->get_bool())
             {
-                // Get a target from a given range
-                auto target = target_selector->get_target(q->range(), damage_type::magical);
+                q_logic();
+            }
 
-                // Always check an object is not a nullptr!
-                if (target != nullptr)
+            if (w->is_ready() && combo::use_w->get_bool())
+            {
+                w_logic();
+            }
+
+            if (e->is_ready() && combo::use_e->get_bool())
+            {
+                e_logic();
+            }
+        }
+
+        //Checking if the user has selected harass() (Default C)
+        if (orbwalker->harass())
+        {
+            // Get a target from a given range
+            auto target = target_selector->get_target(q->range(), damage_type::magical);
+
+            // Always check an object is not a nullptr!
+            if (target != nullptr)
+            {
+                if (!myhero->is_under_enemy_turret())
                 {
-                    if (!myhero->is_under_enemy_turret())
+                    if (q->is_ready() && harass::use_q->get_bool())
                     {
-                        if (q->is_ready() && harass::use_q->get_bool())
-                        {
-                            q_logic();
-                        }
+                        q_logic();
+                    }
 
-                        if (e->is_ready() && harass::use_e->get_bool())
-                        {
-                            e_logic();
-                        }
+                    if (e->is_ready() && harass::use_e->get_bool())
+                    {
+                        e_logic();
                     }
                 }
             }
+        }
 
-            // Checking if the user has selected lane_clear_mode() (Default V)
-            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
-            {
-                // Gets enemy minions from the entitylist
-                auto lane_minions = entitylist->get_enemy_minions();
+        // Checking if the user has selected lane_clear_mode() (Default V)
+        if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
+        {
+            // Gets enemy minions from the entitylist
+            auto lane_minions = entitylist->get_enemy_minions();
 
-                // Gets jugnle mobs from the entitylist
-                auto monsters = entitylist->get_jugnle_mobs_minions();
+            // Gets jugnle mobs from the entitylist
+            auto monsters = entitylist->get_jugnle_mobs_minions();
 
-                // You can use this function to delete minions that aren't in the specified range
-                lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(q->range());
-                    }), lane_minions.end());
-
-                // You can use this function to delete monsters that aren't in the specified range
-                monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(q->range());
-                    }), monsters.end());
-
-                //std::sort -> sort lane minions by distance
-                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-                    });
-
-                //std::sort -> sort monsters by max health
-                std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_max_health() > b->get_max_health();
-                    });
-
-                if (!lane_minions.empty() && lane_minions.size() >= laneclear::farm_only_when_minions_more_than->get_int())
+            // You can use this function to delete minions that aren't in the specified range
+            lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                 {
-                    if (q->is_ready() && laneclear::use_q->get_bool())
-                    {
-                        q->cast_on_best_farm_position(laneclear::farm_only_when_minions_more_than->get_int());
-                    }
+                    return !x->is_valid_target(q->range());
+                }), lane_minions.end());
 
-                    if (w->is_ready() && laneclear::use_w->get_bool())
-                    {
-                        farm::cast_verify_range(w, lane_minions.front());
-                    }
+            // You can use this function to delete monsters that aren't in the specified range
+            monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
+                {
+                    return !x->is_valid_target(q->range());
+                }), monsters.end());
 
-                    if (e->is_ready() && laneclear::use_e->get_bool())
-                    {
-                        e->cast_on_best_farm_position(laneclear::farm_only_when_minions_more_than->get_int());
-                    }
+            //std::sort -> sort lane minions by distance
+            std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                {
+                    return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                });
+
+            //std::sort -> sort monsters by max health
+            std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
+                {
+                    return a->get_max_health() > b->get_max_health();
+                });
+
+            if (!lane_minions.empty() && lane_minions.size() >= laneclear::farm_only_when_minions_more_than->get_int())
+            {
+                if (q->is_ready() && laneclear::use_q->get_bool())
+                {
+                    q->cast_on_best_farm_position(laneclear::farm_only_when_minions_more_than->get_int());
                 }
 
-
-                if (!monsters.empty())
+                if (w->is_ready() && laneclear::use_w->get_bool())
                 {
-                    if (q->is_ready() && jungleclear::use_q->get_bool())
-                    {
-                        q->cast_on_best_farm_position(1, true);
-                    }
+                    farm::cast_verify_range(w, lane_minions.front());
+                }
 
-                    if (w->is_ready() && jungleclear::use_w->get_bool())
-                    {
-                        farm::cast_verify_range(w, monsters.front());
-                    }
+                if (e->is_ready() && laneclear::use_e->get_bool())
+                {
+                    e->cast_on_best_farm_position(laneclear::farm_only_when_minions_more_than->get_int());
+                }
+            }
 
-                    if (e->is_ready() && jungleclear::use_e->get_bool())
-                    {
-                        e->cast_on_best_farm_position(1, true);
-                    }
+            if (!monsters.empty())
+            {
+                if (q->is_ready() && jungleclear::use_q->get_bool())
+                {
+                    q->cast_on_best_farm_position(1, true);
+                }
+
+                if (w->is_ready() && jungleclear::use_w->get_bool())
+                {
+                    farm::cast_verify_range(w, monsters.front());
+                }
+
+                if (e->is_ready() && jungleclear::use_e->get_bool())
+                {
+                    e->cast_on_best_farm_position(1, true);
                 }
             }
         }

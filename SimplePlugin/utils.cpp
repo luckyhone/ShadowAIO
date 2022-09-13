@@ -1,15 +1,43 @@
 #include "../plugin_sdk/plugin_sdk.hpp"
 #include "utils.h"
+#include <map>
 
-#pragma once
 namespace utils
 {
 
+	// Declaration of menu objects
+	TreeTab* main_tab = nullptr;
+
+	// Delay map
+	std::map<spellslot, float> delays;
+
+
+	namespace developer
+	{
+        TreeEntry* debug_mode = nullptr;
+	}
+
 	void on_load()
 	{
+		std::string data = myhero->get_model();
+		std::transform(data.begin(), data.end(), data.begin(),
+			[](unsigned char c) { return std::tolower(c); });
+
+		main_tab = menu->get_tab(data);
+		if (main_tab != nullptr)
+		{
+			auto developer = main_tab->add_tab(myhero->get_model() + ".developer", "Developer Settings");
+			{
+				developer->add_separator(myhero->get_model() + ".aio", "ShadowAIO : Test Build #7");
+				developer::debug_mode = developer->add_checkbox(myhero->get_model() + ".developer.debug_mode", "Debug Mode", false);
+			}
+		}
+
 		std::string msg = "<b><font color=\"#7289da\">[ShadowAIO]</font></b><font color=\"#FFFFFF\">: Loaded champion</font> <b><font color=\"#7289da\">" + myhero->get_model() + "</font></b>";
 		myhero->print_chat(1, msg.c_str());
-		msg = "<b><font color=\"#7289da\">[ShadowAIO]</font></b><font color=\"#FFFFFF\">: Bugs or suggestions please send on Discord - </font> <b><font color=\"#7289da\">racism gaming#0375</font></b>";
+		msg = "<b><font color=\"#7289da\">[ShadowAIO]</font></b><font color=\"#FFFFFF\">: Bugs and suggestions please send on Discord -</font> <b><font color=\"#7289da\">racism gaming#0375</font></b>";
+		myhero->print_chat(1, msg.c_str());
+		msg = "<b><font color=\"#7289da\">[ShadowAIO]</font></b><font color=\"#FFFFFF\">: Discord server:</font> <b><font color=\"#7289da\">https://discord.gg/e5nNkmY5ry</font></b>";
 		myhero->print_chat(1, msg.c_str());
 	}
 
@@ -40,16 +68,47 @@ namespace utils
 		});
 	}
 
+	bool is_empowered()
+	{
+		return myhero->get_mana() >= 4.0f;
+	}
+
 	bool fast_cast(script_spell* spell)
 	{
-		console->print("[%f] FAST CAST (SPELL) %s", gametime->get_time(), spell->name().c_str());
+		if (main_tab != nullptr && developer::debug_mode->get_bool())
+		{
+			myhero->print_chat(1, "[ShadowAIO Debug] Fast Cast (spell) %s ready: %s state: %d empowered: %s", spell->name().c_str(), spell->is_ready() ? "Yes" : "No", spell->toogle_state(), is_empowered() ? "Yes" : "No");
+		}
 		myhero->cast_spell(spell->slot, true, spell->is_charged_spell);
+		return true;
+	}
+
+	bool cast(spellslot slot, bool is_charged_spell)
+	{
+		if (gametime->get_time() < delays[slot] + sciprt_spell_wait)
+			return false;
+
+		myhero->cast_spell(slot, true, is_charged_spell);
+		delays[slot] = gametime->get_time();
+		return true;
+	}
+
+	bool cast(spellslot slot, game_object_script unit, bool is_charged_spell)
+	{
+		if (gametime->get_time() < delays[slot] + sciprt_spell_wait)
+			return false;
+
+		myhero->cast_spell(slot, unit, true, is_charged_spell);
+		delays[slot] = gametime->get_time();
 		return true;
 	}
 
 	bool fast_cast(script_spell* spell, vector position)
 	{
-		console->print("[%f] FAST CAST (SPELL, POSITION) %s", gametime->get_time(), spell->name().c_str());
+		if (main_tab != nullptr && developer::debug_mode->get_bool())
+		{
+			myhero->print_chat(1, "[ShadowAIO Debug] Fast Cast (spell, position) %s ready: %s state: %d empowered: %s", spell->name().c_str(), spell->is_ready() ? "Yes" : "No", spell->toogle_state(), is_empowered() ? "Yes" : "No");
+		}
 		if (!spell->is_charged_spell)
 		{
 			myhero->cast_spell(spell->slot, position);
@@ -63,9 +122,23 @@ namespace utils
 		return spell->start_charging();
 	}
 
+	bool cast(spellslot slot, vector position, bool is_charged_spell)
+	{
+		if (gametime->get_time() < delays[slot] + sciprt_spell_wait)
+			return false;
+
+		myhero->cast_spell(slot, position, true, is_charged_spell);
+
+		delays[slot] = gametime->get_time();
+		return true;
+	}
+
 	bool fast_cast(script_spell* spell, game_object_script unit, hit_chance minimum, bool aoe, int min_targets)
 	{
-		console->print("[%f] FAST CAST (FARM) %s", gametime->get_time(), spell->name().c_str());
+		if (main_tab != nullptr && developer::debug_mode->get_bool())
+		{
+			myhero->print_chat(1, "[ShadowAIO Debug] Fast Cast (spell, unit) %s unit: %s ready: %s state: %d empowered: %s", spell->name().c_str(), unit->get_name_cstr(), spell->is_ready() ? "Yes" : "No", spell->toogle_state(), is_empowered() ? "Yes" : "No");
+		}
 
 		vector cast_position;
 
@@ -116,6 +189,10 @@ namespace utils
 		{
 			if (!spell->is_charged_spell)
 			{
+				if (developer::debug_mode->get_bool())
+				{
+					myhero->print_chat(1, "[ShadowAIO Debug] Fast Cast (spell, farm) %s ready: %s state: %d", spell->name().c_str(), spell->is_ready() ? "Yes" : "No", spell->toogle_state());
+				}
 				myhero->cast_spell(spell->slot, best_pos);
 				return true;
 			}

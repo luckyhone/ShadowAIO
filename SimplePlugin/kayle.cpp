@@ -39,6 +39,7 @@ namespace kayle
 	namespace combo
 	{
 		TreeEntry* use_q = nullptr;
+		TreeEntry* q_mode = nullptr;
 		TreeEntry* use_w = nullptr;
 		TreeEntry* w_use_on_low_hp = nullptr;
 		TreeEntry* w_only_if_enemies_nearby = nullptr;
@@ -52,6 +53,7 @@ namespace kayle
 		TreeEntry* w_check_if_target_is_not_facing = nullptr;
 		TreeEntry* use_e = nullptr;
 		TreeEntry* e_mode = nullptr;
+		TreeEntry* e_ignore_mode_before_lvl_6 = nullptr;
 		TreeEntry* use_r = nullptr;
 		TreeEntry* r_myhero_hp_under = nullptr;
 		TreeEntry* r_ally_hp_under = nullptr;
@@ -152,6 +154,10 @@ namespace kayle
 			{
 				combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
 				combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+				auto q_config = combo->add_tab(myhero->get_model() + "combo.q.config", "Q Config");
+				{
+					combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "Q Mode", { {"If enemy above AA range or After AA", nullptr}, {"In Combo", nullptr}, {"After AA", nullptr } }, 0);
+				}
 				combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
 				combo::use_w->set_texture(myhero->get_spell(spellslot::w)->get_icon_texture());
 				auto w_config = combo->add_tab(myhero->get_model() + ".combo.w.config", "W Config");
@@ -191,6 +197,8 @@ namespace kayle
 				auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
 				{
 					combo::e_mode = e_config->add_combobox(myhero->get_model() + ".combo.e.mode", "E Mode", { {"Before AA", nullptr},{"After AA", nullptr } }, 1);
+					combo::e_ignore_mode_before_lvl_6 = e_config->add_checkbox(myhero->get_model() + ".combo.e.ignore_mode_before_lvl_6", "Ignore E mode before level 6", true);
+					combo::e_ignore_mode_before_lvl_6->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
 				}
 				combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
 				combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
@@ -554,7 +562,11 @@ namespace kayle
 		// Always check an object is not a nullptr!
 		if (target != nullptr)
 		{
-			q->cast(target, get_hitchance(hitchance::q_hitchance));
+			auto q_mode = combo::q_mode->get_int();
+			if ((q_mode == 0 && myhero->get_distance(target) > myhero->get_attack_range()) || q_mode == 1 || q->get_damage(target) > target->get_real_health())
+			{
+				q->cast(target, get_hitchance(hitchance::q_hitchance));
+			}
 		}
 	}
 #pragma endregion
@@ -614,7 +626,7 @@ namespace kayle
 		// Always check an object is not a nullptr!
 		if (target != nullptr)
 		{
-			if (r->level() == 0 || dmg_lib::get_damage(e, target) >= target->get_health())
+			if ((r->level() == 0 && combo::e_ignore_mode_before_lvl_6->get_bool()) || dmg_lib::get_damage(e, target) >= target->get_health())
 			{
 				e->cast();
 			}
@@ -751,6 +763,12 @@ namespace kayle
 
 	void on_after_attack_orbwalker(game_object_script target)
 	{
+		// Use q after autoattack on enemies
+		if (q->is_ready() && combo::q_mode->get_int() != 1 && target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+		{
+			q->cast(target, get_hitchance(hitchance::q_hitchance));
+		}
+
 		if (e->is_ready())
 		{
 			if (combo::e_mode->get_int() == 1)

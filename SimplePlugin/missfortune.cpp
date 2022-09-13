@@ -535,12 +535,9 @@ namespace missfortune
                         w_logic();
                     }
 
-                    if (e->is_ready() && harass::use_e->get_bool())
+                    if (e->is_ready() && harass::use_e->get_bool() && myhero->get_mana_percent() > harass::e_only_if_mana_more_than->get_int())
                     {
-                        if (myhero->get_mana_percent() > harass::e_only_if_mana_more_than->get_int())
-                        {
-                            e_logic();
-                        }
+                        e_logic();
                     }
                 }
             }
