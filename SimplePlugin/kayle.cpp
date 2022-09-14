@@ -417,6 +417,7 @@ namespace kayle
 							{
 								if (e->cast())
 								{
+									myhero->issue_order(minion);
 									return;
 								}
 							}
@@ -631,7 +632,10 @@ namespace kayle
 		{
 			if ((r->level() == 0 && combo::e_ignore_mode_before_lvl_6->get_bool()) || dmg_lib::get_damage(e, target) >= target->get_health())
 			{
-				e->cast();
+				if (e->cast())
+				{
+					myhero->issue_order(target);
+				}
 			}
 		}
 	}
@@ -817,14 +821,11 @@ namespace kayle
 
 	void on_unkillable_minion(game_object_script minion)
 	{
-		myhero->print_chat(1, "Unkillable minion");
 		if (e->is_ready() && lasthit::lasthit->get_bool() && lasthit::use_e->get_bool() && dmg_lib::get_damage(e, minion) >= minion->get_health())
 		{
-			myhero->print_chat(1, "Unkillable minion try to cast");
 			if (e->cast())
 			{
 				myhero->issue_order(minion);
-				myhero->print_chat(1, "Unkillable minion E casted");
 			}
 		}
 	}
