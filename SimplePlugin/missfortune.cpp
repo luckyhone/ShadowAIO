@@ -119,6 +119,7 @@ namespace missfortune
     void on_before_attack_orbwalker(game_object_script target, bool* process);
     void on_after_attack_orbwalker(game_object_script target);
     void on_issue_order(game_object_script& target, vector& pos, _issue_order_type& type, bool* process);
+    void on_process_spell_cast(game_object_script sender, spell_instance_script spell);
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 
     // Declaring functions responsible for spell-logic
@@ -354,6 +355,7 @@ namespace missfortune
         event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack_orbwalker);
         event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
         event_handler<events::on_issue_order>::add_callback(on_issue_order);
+        event_handler<events::on_process_spell_cast>::add_callback(on_process_spell_cast);
 
         // Chat message after load
         //
@@ -388,6 +390,7 @@ namespace missfortune
         event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack_orbwalker);
         event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack_orbwalker);
         event_handler<events::on_issue_order>::remove_handler(on_issue_order);
+        event_handler<events::on_process_spell_cast>::remove_handler(on_process_spell_cast);
     }
 
     // Main update script function
@@ -1207,6 +1210,23 @@ namespace missfortune
         if (combo::r_block_mouse_move->get_bool() && combo::previous_orbwalker_state && last_r_time != 0.0f && (myhero->is_casting_interruptible_spell() || myhero->has_buff(buff_hash("missfortunebulletsound")) || gametime->get_time() - last_r_time < 0.3f))
         {
             *process = false;
+        }
+    }
+
+    void on_process_spell_cast(game_object_script sender, spell_instance_script spell)
+    {
+        if (sender->is_me() && spell->get_spellslot() == r->get_slot())
+        {
+            last_r_time = gametime->get_time();
+            orbwalker->set_attack(false);
+            orbwalker->set_movement(false);
+            combo::previous_orbwalker_state = true;
+
+            if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
+            {
+                evade->disable_evade();
+                combo::previous_evade_state = true;
+            }
         }
     }
 
