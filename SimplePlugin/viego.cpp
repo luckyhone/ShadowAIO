@@ -764,7 +764,7 @@ namespace viego
     int get_viego_r_damage(game_object_script target)
     {
         float r_damage[] = { 12.0f, 16.0f, 20.0f };
-        float base_dmg = (1.2f * total_ad) * (1.0f + crit);
+        float base_dmg = (1.2f * total_ad) + (crit * (1.2f * total_ad));
 
         float base_percent_dmg = r_damage[r->level() - 1];
         base_percent_dmg += (additional_ad * 0.03);
@@ -775,7 +775,7 @@ namespace viego
         float missing_health_damage = (base_percent_dmg / 100) * missing_health;
 
         //if (target->is_visible_on_screen())
-        //    console->print("My Total AD: [%.1f] | My Additional AD: [%.1f] | My Crit: [%.1f] | Base DMG: [%.1f] | Base percent DMG: [%.1f] | Missing Health DMG: [%.1f]", total_ad, additional_ad, crit, base_dmg, base_percent_dmg, missing_health_damage);
+        //    myhero->print_chat(1, "My Total AD: [%.1f] | My Additional AD: [%.1f] | My Crit: [%.1f] | Base DMG: [%.1f] | Base percent DMG: [%.1f] | Missing Health DMG: [%.1f]", total_ad, additional_ad, crit, base_dmg, base_percent_dmg, missing_health_damage);
 
         damage_input input;
         input.raw_physical_damage = base_dmg + missing_health_damage;

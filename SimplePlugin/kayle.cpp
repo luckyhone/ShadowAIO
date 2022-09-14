@@ -114,6 +114,7 @@ namespace kayle
 	void on_draw();
 	void on_before_attack(game_object_script target, bool* process);
 	void on_after_attack_orbwalker(game_object_script target);
+	void on_unkillable_minion(game_object_script minion);
 	void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
 
 	// Declaring functions responsible for spell-logic
@@ -330,6 +331,7 @@ namespace kayle
 		event_handler<events::on_draw>::add_callback(on_draw);
 		event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack);
 		event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack_orbwalker);
+		event_handler<events::on_unkillable_minion>::add_callback(on_unkillable_minion);
 
 		// Chat message after load
 		//
@@ -363,6 +365,7 @@ namespace kayle
 		event_handler<events::on_draw>::remove_handler(on_draw);
 		event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack);
 		event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack_orbwalker);
+		event_handler<events::on_unkillable_minion>::remove_handler(on_unkillable_minion);
 	}
 
 	// Main update script function
@@ -376,6 +379,51 @@ namespace kayle
 		if (r->is_ready() && combo::use_r->get_bool())
 		{
 			r_logic();
+		}
+
+		if ((orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
+		{
+			// Gets enemy minions from the entitylist
+			auto lane_minions = entitylist->get_enemy_minions();
+
+			// You can use this function to delete minions that aren't in the specified range
+			lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+				{
+					return !x->is_valid_target(e->range());
+				}), lane_minions.end());
+
+			//std::sort -> sort lane minions by distance
+			std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+				{
+					return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+				});
+
+			if (!lane_minions.empty())
+			{
+				for (auto&& minion : lane_minions)
+				{
+					if (minion->get_health() > myhero->get_auto_attack_damage(minion) || myhero->is_winding_up() || myhero->get_distance(minion) > myhero->get_attack_range())
+					{
+						if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
+						{
+							if (q->is_ready() && lasthit::use_q->get_bool() && dmg_lib::get_damage(q, minion) > minion->get_health())
+							{
+								if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
+								{
+									return;
+								}
+							}
+							if (e->is_ready() && lasthit::use_e->get_bool() && dmg_lib::get_damage(e, minion) > minion->get_health())
+							{
+								if (e->cast())
+								{
+									return;
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
 		// Very important if can_move ( extra_windup ) 
@@ -399,51 +447,6 @@ namespace kayle
 				if (e->is_ready() && combo::use_e->get_bool())
 				{
 					e_logic();
-				}
-			}
-
-			if ((orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
-			{
-				// Gets enemy minions from the entitylist
-				auto lane_minions = entitylist->get_enemy_minions();
-
-				// You can use this function to delete minions that aren't in the specified range
-				lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-					{
-						return !x->is_valid_target(e->range());
-					}), lane_minions.end());
-
-				//std::sort -> sort lane minions by distance
-				std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-					{
-						return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-					});
-
-				if (!lane_minions.empty())
-				{
-					for (auto&& minion : lane_minions)
-					{
-						if (minion->get_health() > myhero->get_auto_attack_damage(minion) || myhero->is_winding_up() || myhero->get_distance(minion) > myhero->get_attack_range())
-						{
-							if (!lasthit::dont_lasthit_below_aa_range->get_bool() || !minion->is_valid_target(myhero->get_attack_range()))
-							{
-								if (q->is_ready() && lasthit::use_q->get_bool() && dmg_lib::get_damage(q, minion) > minion->get_health())
-								{
-									if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
-									{
-										return;
-									}
-								}
-								if (e->is_ready() && lasthit::use_e->get_bool() && dmg_lib::get_damage(e, minion) > minion->get_health())
-								{
-									if (e->cast())
-									{
-										return;
-									}
-								}
-							}
-						}
-					}
 				}
 			}
 
@@ -808,6 +811,20 @@ namespace kayle
 				{
 					return;
 				}
+			}
+		}
+	}
+
+	void on_unkillable_minion(game_object_script minion)
+	{
+		myhero->print_chat(1, "Unkillable minion");
+		if (e->is_ready() && lasthit::lasthit->get_bool() && lasthit::use_e->get_bool() && dmg_lib::get_damage(e, minion) >= minion->get_health())
+		{
+			myhero->print_chat(1, "Unkillable minion try to cast");
+			if (e->cast())
+			{
+				myhero->issue_order(minion);
+				myhero->print_chat(1, "Unkillable minion E casted");
 			}
 		}
 	}

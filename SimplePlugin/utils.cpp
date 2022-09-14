@@ -28,7 +28,7 @@ namespace utils
 		{
 			auto developer = main_tab->add_tab(myhero->get_model() + ".developer", "Developer Settings");
 			{
-				developer->add_separator(myhero->get_model() + ".aio", "ShadowAIO : Test Build #7");
+				developer->add_separator(myhero->get_model() + ".aio", "ShadowAIO : Test Build #8");
 				developer::debug_mode = developer->add_checkbox(myhero->get_model() + ".developer.debug_mode", "Debug Mode", false);
 			}
 		}
