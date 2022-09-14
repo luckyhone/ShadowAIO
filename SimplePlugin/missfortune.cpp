@@ -9,6 +9,7 @@ namespace missfortune
 
     // To declare a spell, it is necessary to create an object and registering it in load function
     script_spell* q = nullptr;
+    script_spell* q1 = nullptr;
     script_spell* w = nullptr;
     script_spell* e = nullptr;
     script_spell* r = nullptr;
@@ -18,8 +19,6 @@ namespace missfortune
 
     namespace draw_settings
     {
-        TreeEntry* draw_range_q = nullptr;
-        TreeEntry* q_color = nullptr;
         TreeEntry* draw_range_e = nullptr;
         TreeEntry* e_color = nullptr;
         TreeEntry* draw_range_r = nullptr;
@@ -31,9 +30,11 @@ namespace missfortune
     {
         TreeEntry* use_q = nullptr;
         TreeEntry* q_mode = nullptr;
+        TreeEntry* q_auto_harass = nullptr;
         TreeEntry* q_use_on_minion_to_crit_on_enemy = nullptr;
         TreeEntry* q_use_on_minion_to_crit_on_enemy_use_on_moving = nullptr;
         TreeEntry* q_use_on_minion_to_crit_on_enemy_only_on_killable = nullptr;
+        TreeEntry* q_use_on_minion_to_crit_maximum_range_minion_to_enemy = nullptr;
         TreeEntry* use_w = nullptr;
         TreeEntry* w_mode = nullptr;
         TreeEntry* w_use_while_chasing = nullptr;
@@ -105,6 +106,7 @@ namespace missfortune
 
     namespace hitchance
     {
+        TreeEntry* q_hitchance = nullptr;
         TreeEntry* e_hitchance = nullptr;
         TreeEntry* r_hitchance = nullptr;
     }
@@ -122,6 +124,8 @@ namespace missfortune
     // Declaring functions responsible for spell-logic
     //
     void q_logic();
+    void q_logic_auto();
+    void q_logic_minion();
     void w_logic();
     void e_logic();
     bool r_logic();
@@ -134,11 +138,17 @@ namespace missfortune
     hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
+    // Other
+    //
+    game_object_script last_lasthit_target;
+
     void load()
     {
         // Registering a spells
         //
         q = plugin_sdk->register_spell(spellslot::q, myhero->get_attack_range());
+        q1 = plugin_sdk->register_spell(spellslot::q, myhero->get_attack_range());
+        q1->set_skillshot(0.0f, 60.0f, 1400.0f, { collisionable_objects::heroes }, skillshot_type::skillshot_line);
         w = plugin_sdk->register_spell(spellslot::w, 0);
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
@@ -163,6 +173,7 @@ namespace missfortune
                 {
                     q_config->add_separator(myhero->get_model() + ".combo.q.separator1", "Usage Settings");
                     combo::q_mode = q_config->add_combobox(myhero->get_model() + ".combo.q.mode", "Q Mode", { {"In Combo", nullptr},{"After AA", nullptr } }, 1);
+                    combo::q_auto_harass = q_config->add_hotkey(myhero->get_model() + ".combo.q.config", "Auto Q harass", TreeHotkeyMode::Toggle, 'A', true);
 
                     q_config->add_separator(myhero->get_model() + ".combo.q.separator2", "Q Minion Logic Settings");
 
@@ -172,6 +183,7 @@ namespace missfortune
                     combo::q_use_on_minion_to_crit_on_enemy_use_on_moving->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                     combo::q_use_on_minion_to_crit_on_enemy_only_on_killable = q_config->add_checkbox(myhero->get_model() + ".combo.q.use_on_minion_to_crit_on_enemy_only_on_killable", "^ Use Q only on killable minions", true);
                     combo::q_use_on_minion_to_crit_on_enemy_only_on_killable->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
+                    combo::q_use_on_minion_to_crit_maximum_range_minion_to_enemy = q_config->add_slider(myhero->get_model() + ".combo.q.use_on_minion_to_crit_maximum_range_minion_to_enemy", "^ Maximum minion distance to target", 500, 1, 525);
                 }
 
                 combo::use_w = combo->add_checkbox(myhero->get_model() + ".combo.w", "Use W", true);
@@ -302,6 +314,7 @@ namespace missfortune
 
             auto hitchance = main_tab->add_tab(myhero->get_model() + ".hitchance", "Hitchance Settings");
             {
+                hitchance::q_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.q", "Hitchance Q (minion -> enemy)", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
                 hitchance::e_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.e", "Hitchance E", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 1);
                 hitchance::r_hitchance = hitchance->add_combobox(myhero->get_model() + ".hitchance.r", "Hitchance R", { {"Low",nullptr},{"Medium",nullptr },{"High", nullptr},{"Very High",nullptr} }, 2);
             }
@@ -309,9 +322,6 @@ namespace missfortune
             auto draw_settings = main_tab->add_tab(myhero->get_model() + ".draw", "Drawings Settings");
             {
                 float color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
-                draw_settings::draw_range_q = draw_settings->add_checkbox(myhero->get_model() + ".draw.q", "Draw Q range", false);
-                draw_settings::draw_range_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
-                draw_settings::q_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.q.color", "Q Color", color);
                 draw_settings::draw_range_e = draw_settings->add_checkbox(myhero->get_model() + ".draw.e", "Draw E range", true);
                 draw_settings::draw_range_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 draw_settings::e_color = draw_settings->add_colorpick(myhero->get_model() + ".draw.e.color", "E Color", color);
@@ -328,6 +338,7 @@ namespace missfortune
 	        Permashow::Instance.Init(main_tab);
 	        Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
 	        Permashow::Instance.AddElement("Last Hit", lasthit::lasthit);
+            Permashow::Instance.AddElement("Auto Q Harass", combo::q_auto_harass);
 	        Permashow::Instance.AddElement("Semi Auto R", combo::r_semi_manual_cast);
             Permashow::Instance.AddElement("Save R", combo::r_save);
         }
@@ -405,6 +416,8 @@ namespace missfortune
                 }
             }
 
+            bool should_cancel_r = false;
+
             if (!hit_by_r.empty())
             {
                 if (!combo::previous_orbwalker_state)
@@ -420,6 +433,15 @@ namespace missfortune
                     combo::previous_evade_state = true;
                 }
 
+                return;
+            }
+            else if (combo::r_cancel_if_nobody_inside->get_bool())
+            {
+                should_cancel_r = true;
+            }
+
+            if (!should_cancel_r)
+            {
                 return;
             }
         }
@@ -441,6 +463,42 @@ namespace missfortune
             combo::previous_evade_state = false;
         }
 
+        if ((orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
+        {
+            // Gets enemy minions from the entitylist
+            auto lane_minions = entitylist->get_enemy_minions();
+
+            // You can use this function to delete minions that aren't in the specified range
+            lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                {
+                    return !x->is_valid_target(q->range() + 50);
+                }), lane_minions.end());
+
+            //std::sort -> sort lane minions by distance
+            std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                {
+                    return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                });
+
+            if (!lane_minions.empty())
+            {
+                if (q->is_ready() && lasthit::use_q->get_bool())
+                {
+                    for (auto&& minion : lane_minions)
+                    {
+                        if (dmg_lib::get_damage(q, minion) > minion->get_health())
+                        {
+                            if (q->cast(minion))
+                            {
+                                last_lasthit_target = minion;
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
         // Too small time can interrupt the attack
@@ -456,6 +514,11 @@ namespace missfortune
                 {
                     return;
                 }
+            }
+
+            if (q->is_ready() && combo::q_auto_harass->get_bool() && !myhero->is_under_enemy_turret())
+            {
+                q_logic_auto();
             }
 
             //Checking if the user has combo_mode() (Default SPACE)
@@ -482,41 +545,6 @@ namespace missfortune
                 if (e->is_ready() && combo::use_e->get_bool())
                 {
                     e_logic();
-                }
-            }
-
-            if ((orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
-            {
-                // Gets enemy minions from the entitylist
-                auto lane_minions = entitylist->get_enemy_minions();
-
-                // You can use this function to delete minions that aren't in the specified range
-                lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(q->range() + 50);
-                    }), lane_minions.end());
-
-                //std::sort -> sort lane minions by distance
-                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-                    });
-
-                if (!lane_minions.empty())
-                {
-                    if (q->is_ready() && lasthit::use_q->get_bool())
-                    {
-                        for (auto&& minion : lane_minions)
-                        {
-                            if (dmg_lib::get_damage(q, minion) > minion->get_health())
-                            {
-                                if (q->cast(minion))
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                    }
                 }
             }
 
@@ -660,47 +688,112 @@ namespace missfortune
         }
         else if (combo::q_use_on_minion_to_crit_on_enemy->get_bool())
         {
-            // Get a target from a given range
-            auto target = target_selector->get_target(myhero->get_attack_range() + 200, damage_type::physical);
+            q_logic_minion();
+        }
+    }
+#pragma endregion
 
-            if (target != nullptr)
+#pragma region q_logic
+    void q_logic_auto()
+    {
+        // Get a target from a given range
+        auto target = target_selector->get_target(myhero->get_attack_range() + 50, damage_type::physical);
+
+        // Always check an object is not a nullptr!
+        if (target != nullptr)
+        {
+            if (orbwalker->combo_mode() || orbwalker->harass())
             {
-                // List of enemy minions
-                auto minions = entitylist->get_enemy_minions();
-
-                // Delete minions that aren't in the specified range
-                minions.erase(std::remove_if(minions.begin(), minions.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(q->range());
-                    }), minions.end());
-
-                // Delete moving minions
-                minions.erase(std::remove_if(minions.begin(), minions.end(), [](game_object_script x)
-                    {
-                        return !combo::q_use_on_minion_to_crit_on_enemy_use_on_moving->get_bool() && x->is_moving();
-                    }), minions.end());
-
-                // Delete unkillable minions
-                minions.erase(std::remove_if(minions.begin(), minions.end(), [](game_object_script x)
-                    {
-                        return !combo::q_use_on_minion_to_crit_on_enemy_only_on_killable->get_bool() && x->get_health() > dmg_lib::get_damage(q, x);
-                    }), minions.end());
-
-                // Delete minions that aren't in the specified range
-                minions.erase(std::remove_if(minions.begin(), minions.end(), [target](game_object_script x)
-                    {
-                        return x->get_distance(target) > 275;
-                    }), minions.end());
-
-                //std::sort -> sort minions by distance to the target
-                std::sort(minions.begin(), minions.end(), [target](game_object_script a, game_object_script b)
-                    {
-                        return a->get_position().distance(target->get_position()) < b->get_position().distance(target->get_position());
-                    });
-
-                if (!minions.empty())
+                // Checking if the target will die from Q damage
+                if (combo::q_mode->get_int() == 0 || dmg_lib::get_damage(q, target) >= target->get_health())
                 {
-                    q->cast(minions.front());
+                    q->cast(target);
+                }
+            }
+            else
+            {
+                q->cast(target);
+            }
+        }
+        else if (combo::q_use_on_minion_to_crit_on_enemy->get_bool())
+        {
+            q_logic_minion();
+        }
+    }
+#pragma endregion
+
+#pragma region q_logic_minion
+    void q_logic_minion()
+    {
+        // Gets enemy minions from the entitylist
+        auto lane_minions = entitylist->get_enemy_minions();
+
+        // You can use this function to delete minions that aren't in the specified range
+        lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+            {
+                return !x->is_valid_target(myhero->get_attack_range() + 50);
+            }), lane_minions.end());
+
+        // Delete moving minions
+        lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+            {
+                return !combo::q_use_on_minion_to_crit_on_enemy_use_on_moving->get_bool() && x->is_moving();
+            }), lane_minions.end());
+
+        // Delete unkillable minions
+        lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+            {
+                return combo::q_use_on_minion_to_crit_on_enemy_only_on_killable->get_bool() && x->get_health() > dmg_lib::get_damage(q, x);
+            }), lane_minions.end());
+
+        if (!lane_minions.empty())
+        {
+            for (auto& minion : lane_minions)
+            {
+                // Gets enemies from the entitylist
+                auto enemies = entitylist->get_enemy_heroes();
+
+                // Delete invalid enemies
+                enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](game_object_script x)
+                    {
+                        return !x->is_valid_target();
+                    }), enemies.end());
+
+                // You can use this function to delete minions that aren't in the specified range
+                enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [minion](game_object_script x)
+                    {
+                        return x->get_distance(minion) > 525;
+                    }), enemies.end());
+
+                if (!enemies.empty())
+                {
+                    for (auto& enemy : enemies)
+                    {
+                        prediction_input x;
+
+                        x._from = minion->get_position();
+                        x._range_check_from = myhero->get_position();
+                        x.unit = enemy;
+                        x.delay = q1->delay;
+                        x.radius = q1->radius;
+                        x.speed = q1->speed;
+                        x.collision_objects = q1->collision_flags;
+                        x.range = myhero->get_attack_range() + myhero->get_distance(minion);
+                        x.type = q1->type;
+                        x.aoe = false;
+                        x.spell_slot = q1->slot;
+                        x.use_bounding_radius = q1->type != skillshot_type::skillshot_circle;
+
+                        auto pred = prediction->get_prediction(&x);
+
+                        if (pred.hitchance >= get_hitchance(hitchance::q_hitchance))
+                        {
+                            if (q->cast(minion))
+                            {
+                                return;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -984,10 +1077,6 @@ namespace missfortune
             return;
         }
 
-        // Draw Q range
-        if (q->is_ready() && draw_settings::draw_range_q->get_bool())
-            draw_manager->add_circle(myhero->get_position(), q->range(), draw_settings::q_color->get_color());
-
         // Draw E range
         if (e->is_ready() && draw_settings::draw_range_e->get_bool())
             draw_manager->add_circle(myhero->get_position(), e->range(), draw_settings::e_color->get_color());
@@ -1010,6 +1099,12 @@ namespace missfortune
 
     void on_before_attack_orbwalker(game_object_script target, bool* process)
     {
+        if (last_lasthit_target == target)
+        {
+            *process = false;
+            return;
+        }
+
         if (q->is_ready())
         {
             // Use q before autoattack on lane minions (lasthit)

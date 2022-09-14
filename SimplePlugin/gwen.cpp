@@ -337,7 +337,7 @@ namespace gwen
             //    }
             //}
 
-            if (q->is_ready() && combo::q_auto_harass->get_bool())
+            if (q->is_ready() && combo::q_auto_harass->get_bool() && !myhero->is_under_enemy_turret())
             {
                 q_logic();
             }
