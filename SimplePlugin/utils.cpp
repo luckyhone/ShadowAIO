@@ -206,5 +206,22 @@ namespace utils
 
 		return false;
 	}
+
+	bool is_ready(spellslot slot)
+	{
+		auto spellInfo = myhero->get_spell(slot);
+
+		if (spellInfo && spellInfo->is_learned())
+		{
+			auto spell_state = myhero->get_spell_state(slot);
+
+			if (spell_state == 2)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 };
 

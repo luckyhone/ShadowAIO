@@ -40,6 +40,7 @@ namespace viego
         TreeEntry* r_save = nullptr;
         TreeEntry* r_include_aa_in_damage_calculation = nullptr;
         TreeEntry* r_use_before_expire = nullptr;
+        TreeEntry* r_use_if_all_spells_cooldown = nullptr;
         std::map<std::uint32_t, TreeEntry*> r_use_on;
         TreeEntry* auto_catch_soul = nullptr;
         TreeEntry* force_catch_soul = nullptr;
@@ -152,6 +153,9 @@ namespace viego
                     combo::r_save = r_config->add_hotkey(myhero->get_model() + ".combo.r.save", "Save R", TreeHotkeyMode::Toggle, 'G', false);
                     combo::r_include_aa_in_damage_calculation = r_config->add_slider("combo.r.include_aa_in_damage_calculation", "Include x AA in R damage calculation", 1, 0, 3);
                     combo::r_use_before_expire = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_before_expire", "Use R before expire on soul", true);
+                    combo::r_use_before_expire->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
+                    combo::r_use_if_all_spells_cooldown = r_config->add_checkbox(myhero->get_model() + ".combo.r.use_if_all_spells_cooldown", "Use R on soul if all spells are on cooldown", true);
+                    combo::r_use_if_all_spells_cooldown->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                     
                     auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
                     {
@@ -345,11 +349,11 @@ namespace viego
                         r_logic();
 
                         auto buff = myhero->get_buff(buff_hash("viegopassivetransform"));
-                        if ((!q->is_ready() && !w->is_ready() && !e->is_ready()) || (combo::r_use_before_expire->get_bool() && buff != nullptr && buff->is_valid() && buff->is_alive() && buff->get_remaining_time() <= 2.0))
+                        if ((!q->is_ready() && !w->is_ready() && !e->is_ready() && combo::r_use_if_all_spells_cooldown->get_bool()) || (combo::r_use_before_expire->get_bool() && buff != nullptr && buff->is_valid() && buff->is_alive() && buff->get_remaining_time() <= 2.0))
                         {
                             r_logic_semi();
                         }
-                    }
+                    }   
 
                     if (combo::simple_spell_usage_on_soul->get_bool() && !myhero->is_casting_interruptible_spell())
                     {
@@ -358,7 +362,7 @@ namespace viego
                             spellslot slot = static_cast<spellslot>(i);
                             auto spell = myhero->get_spell(slot);
 
-                            if (spell != nullptr && myhero->get_spell_state(slot) == spell_state::Ready)
+                            if (spell != nullptr && utils::is_ready(slot))
                             {
                                 bool channeling = spell->get_spell_data()->mUseChargeChanneling();
                                 float* castrange = spell->get_spell_data()->CastRange();
@@ -372,6 +376,7 @@ namespace viego
                                 if (target != nullptr)
                                 {
                                     spell_targeting type = spell->get_spell_data()->get_targeting_type();
+                                    //console->print("Spell Type: %d", type);
 
                                     if (type == spell_targeting::target)
                                     {
