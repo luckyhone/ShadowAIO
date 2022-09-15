@@ -8,9 +8,8 @@ namespace utils
 	// Declaration of menu objects
 	TreeTab* main_tab = nullptr;
 
-	// Delay map
+	// Delays map
 	std::map<spellslot, float> delays;
-
 
 	namespace developer
 	{
@@ -28,7 +27,7 @@ namespace utils
 		{
 			auto developer = main_tab->add_tab(myhero->get_model() + ".developer", "Developer Settings");
 			{
-				developer->add_separator(myhero->get_model() + ".aio", "ShadowAIO : Test Build #8");
+				developer->add_separator(myhero->get_model() + ".aio", "ShadowAIO : Test Build #9");
 				developer::debug_mode = developer->add_checkbox(myhero->get_model() + ".developer.debug_mode", "Debug Mode", false);
 			}
 		}
@@ -222,6 +221,15 @@ namespace utils
 		}
 
 		return false;
+	}
+
+	bool enabled_in_map(std::map<std::uint32_t, TreeEntry*> map, game_object_script target)
+	{
+		auto it = map.find(target->get_network_id());
+		if (it == map.end())
+			return false;
+
+		return it->second->get_bool();
 	}
 };
 

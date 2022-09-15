@@ -131,6 +131,7 @@ namespace teemo
     void on_update();
     void on_draw();
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args);
+    void on_before_attack_orbwalker(game_object_script target, bool* process);
     void on_after_attack(game_object_script target);
 
     // Declaring functions responsible for spell-logic
@@ -149,6 +150,10 @@ namespace teemo
     hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
     bool is_trap_placed_in_loc(vector loc);
+
+    // Other
+    //
+    game_object_script last_lasthit_target;
 
     void load()
     {
@@ -305,6 +310,7 @@ namespace teemo
         //
         event_handler<events::on_update>::add_callback(on_update);
         event_handler<events::on_draw>::add_callback(on_draw);
+        event_handler<events::on_before_attack_orbwalker>::add_callback(on_before_attack_orbwalker);
         event_handler<events::on_after_attack_orbwalker>::add_callback(on_after_attack);
 
         // Chat message after load
@@ -336,6 +342,7 @@ namespace teemo
         //
         event_handler<events::on_update>::remove_handler(on_update);
         event_handler<events::on_draw>::remove_handler(on_draw);
+        event_handler<events::on_before_attack_orbwalker>::remove_handler(on_before_attack_orbwalker);
         event_handler<events::on_after_attack_orbwalker>::remove_handler(on_after_attack);
     }
 
@@ -347,7 +354,47 @@ namespace teemo
             return;
         }
 
-        //console->print("X: %f, Y: %f", myhero->get_position().x, myhero->get_position().y);
+        if (orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode())
+        {
+            if (lasthit::lasthit->get_bool())
+            {
+                // Gets enemy minions from the entitylist
+                auto lane_minions = entitylist->get_enemy_minions();
+
+                // You can use this function to delete minions that aren't in the specified range
+                lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                    {
+                        return !x->is_valid_target(q->range());
+                    }), lane_minions.end());
+
+                //std::sort -> sort lane minions by distance
+                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                    {
+                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                    });
+
+                if (!lane_minions.empty())
+                {
+                    if (q->is_ready() && lasthit::use_q->get_bool())
+                    {
+                        for (auto&& minion : lane_minions)
+                        {
+                            if (minion->get_health() > myhero->get_auto_attack_damage(minion) || !orbwalker->can_attack())
+                            {
+                                if (q->get_damage(minion) > minion->get_health())
+                                {
+                                    if (q->cast(minion))
+                                    {
+                                        last_lasthit_target = minion;
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
@@ -381,47 +428,6 @@ namespace teemo
                 if (r->is_ready() && combo::use_r->get_bool())
                 {
                     r_logic();
-                }
-            }
-
-            if (orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode())
-            {
-                if (lasthit::lasthit->get_bool())
-                {
-                    // Gets enemy minions from the entitylist
-                    auto lane_minions = entitylist->get_enemy_minions();
-
-                    // You can use this function to delete minions that aren't in the specified range
-                    lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                        {
-                            return !x->is_valid_target(q->range());
-                        }), lane_minions.end());
-
-                    //std::sort -> sort lane minions by distance
-                    std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-                        {
-                            return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-                        });
-
-                    if (!lane_minions.empty())
-                    {
-                        if (q->is_ready() && lasthit::use_q->get_bool())
-                        {
-                            for (auto&& minion : lane_minions)
-                            {
-                                if (minion->get_health() > myhero->get_auto_attack_damage(minion) || !orbwalker->can_attack())
-                                {
-                                    if (q->get_damage(minion) > minion->get_health())
-                                    {
-                                        if (q->cast(minion))
-                                        {
-                                            return;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
 
@@ -759,6 +765,29 @@ namespace teemo
                 if (sender->is_valid_target(r->range() + sender->get_bounding_radius()))
                 {
                     r->cast(sender, get_hitchance(hitchance::r_hitchance));
+                }
+            }
+        }
+    }
+
+    void on_before_attack_orbwalker(game_object_script target, bool* process)
+    {
+        if (last_lasthit_target == target)
+        {
+            *process = false;
+            return;
+        }
+
+        if (q->is_ready())
+        {
+            // Use q before autoattack on lane minions (lasthit)
+            if (target->is_minion() && q->get_damage(target) >= target->get_health() && (orbwalker->lane_clear_mode() || orbwalker->harass() || orbwalker->last_hit_mode()) && lasthit::lasthit->get_bool() && lasthit::use_q->get_bool())
+            {
+                *process = false;
+                if (q->cast(target))
+                {
+                    last_lasthit_target = target;
+                    return;
                 }
             }
         }

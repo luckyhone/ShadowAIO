@@ -1116,6 +1116,7 @@ namespace missfortune
                 *process = false;
                 if (q->cast(target))
                 {
+                    last_lasthit_target = target;
                     return;
                 }
             }
