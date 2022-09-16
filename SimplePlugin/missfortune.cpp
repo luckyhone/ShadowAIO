@@ -153,7 +153,7 @@ namespace missfortune
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         r = plugin_sdk->register_spell(spellslot::r, 1450);
-        r->set_skillshot(0.0f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_cone);
+        r->set_skillshot(0.0f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
 
         // Disabling spell lock
         //
