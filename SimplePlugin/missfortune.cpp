@@ -135,7 +135,6 @@ namespace missfortune
 
     // Utils
     //
-    bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
@@ -154,7 +153,14 @@ namespace missfortune
         e = plugin_sdk->register_spell(spellslot::e, 1000);
         e->set_skillshot(0.25f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_circle);
         r = plugin_sdk->register_spell(spellslot::r, 1450);
-        r->set_skillshot(0.0f, 200.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
+        r->set_skillshot(0.0f, 100.0f, FLT_MAX, { }, skillshot_type::skillshot_cone);
+
+        // Disabling spell lock
+        //
+        q->set_spell_lock(false);
+        w->set_spell_lock(false);
+        e->set_spell_lock(false);
+        r->set_spell_lock(false);
 
         // Create a menu according to the description in the "Menu Section"
         //
@@ -218,7 +224,7 @@ namespace missfortune
 
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "Usage Settings");
                     combo::r_dont_waste_if_target_hp_below = r_config->add_slider(myhero->get_model() + ".combo.r.dont_waste_if_target_hp_below", "Don't waste R if target hp is below (in %)", 15, 1, 100);
-                    combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use R if target killable by x waves", 6, 1, 14);
+                    combo::r_use_if_killable_by_x_waves = r_config->add_slider(myhero->get_model() + ".combo.r.use_if_killable_by_x_waves", "Use R if target killable by x waves", 8, 1, 14);
                     combo::r_auto_if_enemies_more_than = r_config->add_slider(myhero->get_model() + ".combo.r.auto_if_enemies_more_than", "Use R if will hit enemies more than", 3, 1, 5);
                     combo::r_try_to_use_e_before_r = r_config->add_checkbox(myhero->get_model() + ".combo.r.r_try_to_use_e_before_r", "Try to use E before R", true);
                     combo::r_try_to_use_e_before_r->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
@@ -421,7 +427,14 @@ namespace missfortune
 
             bool should_cancel_r = false;
 
-            if (!hit_by_r.empty())
+            if (hit_by_r.empty())
+            {
+                if (combo::r_cancel_if_nobody_inside->get_bool())
+                {
+                    should_cancel_r = true;
+                }
+            }
+            else
             {
                 if (!combo::previous_orbwalker_state)
                 {
@@ -438,12 +451,28 @@ namespace missfortune
 
                 return;
             }
-            else if (combo::r_cancel_if_nobody_inside->get_bool())
-            {
-                should_cancel_r = true;
-            }
 
-            if (!should_cancel_r)
+            if (should_cancel_r)
+            {
+                if (last_r_time != 0.0f)
+                {
+                    last_r_time = 0.0f;
+                }
+
+                if (combo::previous_orbwalker_state)
+                {
+                    orbwalker->set_attack(true);
+                    orbwalker->set_movement(true);
+                    combo::previous_orbwalker_state = false;
+                }
+                if (combo::previous_evade_state)
+                {
+                    evade->enable_evade();
+                    combo::previous_evade_state = false;
+                }
+                myhero->issue_order(myhero->get_position());
+            }
+            else
             {
                 return;
             }
@@ -853,13 +882,13 @@ namespace missfortune
         auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && !target->is_zombie() && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
+        if (target != nullptr && !target->is_zombie() && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && utils::enabled_in_map(combo::r_use_on, target) && myhero->count_enemies_in_range(combo::r_min_range->get_int()) == 0)
         {
             if (target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
-                if (dmg_lib::get_damage(r, target) * combo::r_use_if_killable_by_x_waves->get_int() > target->get_health())
+                if (r->get_damage(target) * combo::r_use_if_killable_by_x_waves->get_int() > target->get_health())
                 {
-                    auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
+                    auto pred = r->get_prediction(target);
                     if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
                     {
                         orbwalker->set_attack(false);
@@ -942,28 +971,31 @@ namespace missfortune
             auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
             // Always check an object is not a nullptr!
-            if (target != nullptr && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
+            if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target) && myhero->count_enemies_in_range(combo::r_min_range->get_int()) == 0)
             {
-                auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
-                if (pred.hitchance >= hit_chance::immobile)
+                if (utils::has_crowd_control_buff(target))
                 {
-                    orbwalker->set_attack(false);
-                    orbwalker->set_movement(false);
-                    combo::previous_orbwalker_state = true;
+                    auto pred = r->get_prediction(target);
+                    if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
+                    {
+                        orbwalker->set_attack(false);
+                        orbwalker->set_movement(false);
+                        combo::previous_orbwalker_state = true;
 
-                    if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
-                    {
-                        evade->disable_evade();
-                        combo::previous_evade_state = true;
-                    }
-                    if (combo::r_try_to_use_e_before_r->get_bool() && e->is_ready() && target->is_valid_target(e->range()))
-                    {
-                        e->cast(pred.get_unit_position());
-                    }
-                    if (r->cast(pred.get_unit_position()))
-                    {
-                        last_r_time = gametime->get_time();
-                        return true;
+                        if (combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
+                        {
+                            evade->disable_evade();
+                            combo::previous_evade_state = true;
+                        }
+                        if (combo::r_try_to_use_e_before_r->get_bool() && e->is_ready() && target->is_valid_target(e->range()))
+                        {
+                            e->cast(pred.get_unit_position());
+                        }
+                        if (r->cast(pred.get_unit_position()))
+                        {
+                            last_r_time = gametime->get_time();
+                            return true;
+                        }
                     }
                 }
             }
@@ -979,12 +1011,12 @@ namespace missfortune
         if (combo::r_semi_manual_cast->get_bool())
         {
             // Get a target from a given range
-            auto target = target_selector->get_target(r->range(), damage_type::physical);
+            auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
             // Always check an object is not a nullptr!
-            if (target != nullptr && can_use_r_on(target) && myhero->get_distance(target) > combo::r_min_range->get_int())
+            if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target) && myhero->count_enemies_in_range(combo::r_min_range->get_int()) == 0)
             {
-                auto pred = prediction->get_prediction(target, r->get_delay(), r->get_radius(), r->get_speed());
+                auto pred = r->get_prediction(target);
                 if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
                 {
                     orbwalker->set_attack(false);
@@ -1010,17 +1042,6 @@ namespace missfortune
         }
 
         return false;
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 #pragma endregion
 
@@ -1094,7 +1115,7 @@ namespace missfortune
             {
                 if (enemy->is_valid() && !enemy->is_dead() && enemy->is_hpbar_recently_rendered())
                 {
-                    draw_dmg_rl(enemy, dmg_lib::get_damage(r, enemy) * combo::r_use_if_killable_by_x_waves->get_int(), 0x8000ff00);
+                    draw_dmg_rl(enemy, r->get_damage(enemy) * combo::r_use_if_killable_by_x_waves->get_int(), 0x8000ff00);
                 }
             }
         }

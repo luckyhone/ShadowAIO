@@ -219,7 +219,7 @@ namespace kayle
 					r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "R on Incoming Damage Options");
 					combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Use R on Incoming Damage", true);
 					combo::r_calculate_incoming_damage->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
-					combo::r_incoming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 750, 0, 1000);
+					combo::r_incoming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Incoming damage time (in ms)", 750, 0, 1000);
 					combo::r_incoming_damage_over_my_hp_in_percent = r_config->add_slider(myhero->get_model() + ".combo.r.incoming_damage_over_my_hp_in_percent", "Incoming damage is over my HP (in %)", 90, 0, 100);
 					combo::r_incoming_damage_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.incoming_damage_only_when_enemies_nearby", "Use R only when enemies are nearby", false);
 					combo::r_incoming_damage_only_when_enemies_nearby->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
