@@ -403,7 +403,7 @@ namespace kayle
 			// You can use this function to delete minions that aren't in the specified range
 			lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
 				{
-					return !x->is_valid_target(e->range());
+					return !x->is_valid_target(e->range() + 50);
 				}), lane_minions.end());
 
 			//std::sort -> sort lane minions by distance
@@ -829,7 +829,7 @@ namespace kayle
 
 	void on_unkillable_minion(game_object_script minion)
 	{
-		if (e->is_ready() && lasthit::lasthit->get_bool() && lasthit::use_e->get_bool() && dmg_lib::get_damage(e, minion) >= minion->get_health())
+		if (e->is_ready() && lasthit::lasthit->get_bool() && lasthit::use_e->get_bool() && minion->is_valid_target(e->range() + 50) && dmg_lib::get_damage(e, minion) >= minion->get_health())
 		{
 			if (e->cast())
 			{
