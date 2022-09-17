@@ -664,7 +664,7 @@ namespace kayle
 			if (ally->is_valid() && !ally->is_dead() && utils::enabled_in_map(combo::r_use_on, ally) && ally->get_distance(myhero->get_position()) <= r->range() && !utils::has_unkillable_buff(ally))
 			{
 				if (combo::r_on_low_hp->get_bool() && (!combo::r_low_hp_only_when_enemies_nearby->get_bool() || 
-					ally->count_enemies_in_range(combo::r_low_hp_enemies_search_radius->get_int() != 0)))
+					ally->count_enemies_in_range(combo::r_low_hp_enemies_search_radius->get_int()) != 0))
 				{
 					if (ally->get_health_percent() < (ally->is_me() ? combo::r_myhero_hp_under->get_int() : combo::r_ally_hp_under->get_int()))
 					{
