@@ -100,7 +100,7 @@ namespace tryndamere
         q = plugin_sdk->register_spell(spellslot::q, 0);
         w = plugin_sdk->register_spell(spellslot::w, 850);
         e = plugin_sdk->register_spell(spellslot::e, 660);
-        e->set_skillshot(0.0f, 112.0f, FLT_MAX, { }, skillshot_type::skillshot_line);
+        e->set_skillshot(0.0f, 112.5f, FLT_MAX, { }, skillshot_type::skillshot_line);
         r = plugin_sdk->register_spell(spellslot::r, 0);
 
 
@@ -151,7 +151,7 @@ namespace tryndamere
                     combo::r_only_when_enemies_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_when_enemies_nearby", "Only when enemies are nearby", true);
                     combo::r_enemies_search_radius = r_config->add_slider(myhero->get_model() + ".combo.r.enemies_search_radius", "Enemies nearby search radius", 900, 300, 1600);
                     combo::r_calculate_incoming_damage = r_config->add_checkbox(myhero->get_model() + ".combo.r.calculate_incoming_damage", "Calculate incoming damage", true);
-                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Set coming damage time (in ms)", 1000, 0, 1000);
+                    combo::r_coming_damage_time = r_config->add_slider(myhero->get_model() + ".combo.r.coming_damage_time", "Incoming damage time (in ms)", 750, 0, 1000);
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable evade on R", false);
                 }
             }
