@@ -323,6 +323,11 @@ namespace gwen
             return;
         }
 
+        if (w->is_ready() && combo::use_w->get_bool())
+        {
+            w_logic();
+        }
+
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
         // Too small time can interrupt the attack
@@ -337,14 +342,9 @@ namespace gwen
             //    }
             //}
 
-            if (q->is_ready() && combo::q_auto_harass->get_bool() && !myhero->is_under_enemy_turret())
+            if (q->is_ready() && combo::q_auto_harass->get_bool() && !myhero->is_under_enemy_turret() && !myhero->is_recalling())
             {
                 q_logic();
-            }
-
-            if (w->is_ready() && combo::use_w->get_bool())
-            {
-                w_logic();
             }
 
             if (r->is_ready() && combo::use_r->get_bool() && combo::r_semi_manual_cast->get_bool())
