@@ -548,7 +548,7 @@ namespace missfortune
                 }
             }
 
-            if (q->is_ready() && combo::q_auto_harass->get_bool() && !myhero->is_under_enemy_turret())
+            if (q->is_ready() && combo::q_auto_harass->get_bool() && !myhero->is_under_enemy_turret() && !myhero->is_recalling())
             {
                 q_logic_auto();
             }

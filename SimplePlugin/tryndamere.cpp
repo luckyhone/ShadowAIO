@@ -25,6 +25,7 @@ namespace tryndamere
 
     namespace combo
     {
+        TreeEntry* allow_tower_dive = nullptr;
         TreeEntry* use_q = nullptr;
         TreeEntry* q_myhero_hp_under = nullptr;
         TreeEntry* q_only_when_no_enemies_nearby = nullptr;
@@ -37,7 +38,7 @@ namespace tryndamere
         TreeEntry* w_dont_use_target_under_turret = nullptr;
         TreeEntry* w_check_if_target_is_not_facing = nullptr;
         TreeEntry* use_e = nullptr;
-        TreeEntry* e_dont_use_under_enemy_turret = nullptr;
+        TreeEntry* e_only_above_aa_range = nullptr;
         TreeEntry* e_use_prediction = nullptr;
         TreeEntry* use_r = nullptr;
         TreeEntry* r_myhero_hp_under = nullptr;
@@ -114,6 +115,7 @@ namespace tryndamere
 
             auto combo = main_tab->add_tab(myhero->get_model() + ".combo", "Combo Settings");
             {
+                combo::allow_tower_dive = combo->add_hotkey(myhero->get_model() + ".combo.allow_tower_dive", "Allow Tower Dive", TreeHotkeyMode::Toggle, 'A', true);
                 combo::use_q = combo->add_checkbox(myhero->get_model() + ".combo.q", "Use Q", true);
                 combo::use_q->set_texture(myhero->get_spell(spellslot::q)->get_icon_texture());
                 auto q_config = combo->add_tab(myhero->get_model() + ".combo.q.config", "Q Config");
@@ -137,8 +139,9 @@ namespace tryndamere
                 combo::use_e->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 auto e_config = combo->add_tab(myhero->get_model() + ".combo.e.config", "E Config");
                 {
-                    combo::e_dont_use_under_enemy_turret = e_config->add_checkbox(myhero->get_model() + ".combo.e.dont_use_under_enemy_turret", "Dont use if target is under turret", true);
-                    combo::e_use_prediction = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_prediction", "Use prediction", false);
+                    combo::e_only_above_aa_range = e_config->add_hotkey(myhero->get_model() + ".combo.e.only_above_aa_range", "Use E only above AA range", TreeHotkeyMode::Toggle, 'G', false);
+                    combo::e_use_prediction = e_config->add_checkbox(myhero->get_model() + ".combo.e.use_prediction", "Use prediction in E", false);
+                    combo::e_use_prediction->set_texture(myhero->get_spell(spellslot::e)->get_icon_texture());
                 }
                 combo::use_r = combo->add_checkbox(myhero->get_model() + ".combo.r", "Use R", true);
                 combo::use_r->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
@@ -205,6 +208,8 @@ namespace tryndamere
         {
             Permashow::Instance.Init(main_tab);
             Permashow::Instance.AddElement("Spell Farm", laneclear::spell_farm);
+            Permashow::Instance.AddElement("Allow Tower Dive", combo::allow_tower_dive);
+            Permashow::Instance.AddElement("Use E only above AA range", combo::e_only_above_aa_range);
         }
 
         // To add a new event you need to define a function and call add_calback
@@ -277,30 +282,7 @@ namespace tryndamere
             {
                 if (e->is_ready() && harass::use_e->get_bool())
                 {
-                    // Get a target from a given range
-                    auto target = target_selector->get_target(e->range(), damage_type::physical);
-
-                    // Always check an object is not a nullptr!
-                    if (target != nullptr)
-                    {
-                        if (!target->is_under_ally_turret())
-                        {
-                            if (combo::e_use_prediction->get_bool())
-                            {
-                                if (e->cast(target, get_hitchance(hitchance::e_hitchance)))
-                                {
-                                    return;
-                                }
-                            }
-                            else
-                            {
-                                if (e->cast(target))
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                    }
+                    e_logic();
                 }
             }
 
@@ -452,11 +434,24 @@ namespace tryndamere
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (!combo::e_dont_use_under_enemy_turret->get_bool() || !target->is_under_ally_turret())
+            if (combo::allow_tower_dive->get_bool() || !target->is_under_ally_turret())
             {
-                if (e->cast(target))
+                if (!combo::e_only_above_aa_range->get_bool() || myhero->get_distance(target) > myhero->get_attack_range() + 100)
                 {
-                    return;
+                    if (combo::e_use_prediction->get_bool())
+                    {
+                        if (e->cast(target, get_hitchance(hitchance::e_hitchance)))
+                        {
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        if (e->cast(target))
+                        {
+                            return;
+                        }
+                    }
                 }
             }
         }

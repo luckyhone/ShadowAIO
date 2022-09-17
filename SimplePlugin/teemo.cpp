@@ -401,7 +401,7 @@ namespace teemo
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
-            if (q->is_ready() && combo::q_auto_harass->get_bool() && !myhero->is_under_enemy_turret())
+            if (q->is_ready() && combo::q_auto_harass->get_bool() && !myhero->is_recalling())
             {
                 q_logic_auto();
             }
