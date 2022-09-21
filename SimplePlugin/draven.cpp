@@ -131,7 +131,6 @@ namespace draven
 
     // Utils
     //
-    bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     int get_draven_q_stacks();
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
@@ -744,7 +743,7 @@ namespace draven
         }
         for (auto& enemy : entitylist->get_enemy_heroes())
         {
-            if (can_use_r_on(enemy) && !utils::has_unkillable_buff(enemy) && !enemy->is_valid_target(combo::r_min_distance->get_int()) && enemy->is_valid_target(combo::r_max_range->get_int()))
+            if (utils::enabled_in_map(combo::r_use_on, enemy) && !utils::has_unkillable_buff(enemy) && !enemy->is_valid_target(combo::r_min_distance->get_int()) && enemy->is_valid_target(combo::r_max_range->get_int()))
             {
                 if (r->get_damage(enemy) * 2.0f > enemy->get_real_health())
                 {
@@ -765,21 +764,10 @@ namespace draven
         auto target = target_selector->get_target(combo::r_max_range->get_int(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_r_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target))
         {
             r->cast(target, get_hitchance(hitchance::r_hitchance));
         }
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 #pragma endregion
 

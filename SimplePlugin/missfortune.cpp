@@ -542,7 +542,7 @@ namespace missfortune
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
-            if (r->is_ready() && combo::use_r->get_bool())
+            if (r->is_ready() && combo::use_r->get_bool() && !orbwalker->flee_mode())
             {
                 if (r_logic_auto())
                 {

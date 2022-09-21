@@ -102,7 +102,6 @@ namespace malzahar
 
     // Utils
     //
-    bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     int get_active_voidlings();
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
@@ -497,7 +496,7 @@ namespace malzahar
         auto target = target_selector->get_target(r->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_r_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target))
         {
             if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
@@ -533,7 +532,7 @@ namespace malzahar
         auto target = target_selector->get_target(r->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_r_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target))
         {
             if (target->get_health_percent() < combo::r_target_hp_under->get_int() && target->get_health_percent() > combo::r_dont_waste_if_target_hp_below->get_int())
             {
@@ -543,17 +542,6 @@ namespace malzahar
                 }
             }
         }
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 #pragma endregion
 
@@ -665,7 +653,7 @@ namespace malzahar
                     if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
                         damage += e->get_damage(enemy);
 
-                    if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
+                    if (r->is_ready() && utils::enabled_in_map(combo::r_use_on, enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
                         damage += r->get_damage(enemy);
 
                     if (damage != 0.0f)

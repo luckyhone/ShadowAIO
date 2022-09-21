@@ -110,8 +110,6 @@ namespace chogath
 
     // Utils
     //
-    bool can_use_q_on(game_object_script target);
-    bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
@@ -515,7 +513,7 @@ namespace chogath
         auto target = target_selector->get_target(combo::q_max_range->get_int(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_q_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::q_use_on, target))
         {
             if (!combo::q_only_if_enemy_is_not_moving->get_bool() || (!target->is_moving() || target->is_winding_up() || target->is_casting_interruptible_spell() || utils::has_crowd_control_buff(target)))
             {
@@ -532,7 +530,7 @@ namespace chogath
         auto target = target_selector->get_target(combo::q_max_range->get_int(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_q_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::q_use_on, target))
         {
             if (combo::q_auto_on_cc->get_bool())
             {
@@ -601,7 +599,7 @@ namespace chogath
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            if (r->get_damage(target) > target->get_health() && can_use_r_on(target))
+            if (r->get_damage(target) > target->get_health() && utils::enabled_in_map(combo::r_use_on, target))
             {
                 if (r->cast(target))
                 {
@@ -612,7 +610,7 @@ namespace chogath
         else if (flash && flash->is_ready() && combo::r_use_flash_r->get_bool())
         {
             auto target = target_selector->get_target(r->range() + flash->range(), damage_type::magical);
-            if (target != nullptr && can_use_r_on(target) && myhero->get_distance(target) > r->range() + 50 && r->get_damage(target) > target->get_health())
+            if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target) && myhero->get_distance(target) > r->range() + 50 && r->get_damage(target) > target->get_health())
             {
                 if (flash->cast(target) && r->cast(target))
                 {
@@ -659,28 +657,6 @@ namespace chogath
                 }
             }
         }
-    }
-#pragma endregion
-
-#pragma region can_use_q_on
-    bool can_use_q_on(game_object_script target)
-    {
-        auto it = combo::q_use_on.find(target->get_network_id());
-        if (it == combo::q_use_on.end())
-            return false;
-
-        return it->second->get_bool();
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 #pragma endregion
 
@@ -813,7 +789,7 @@ namespace chogath
                 {
                     int damage = 0;
 
-                    if (q->is_ready() && can_use_q_on(enemy) && draw_settings::draw_damage_settings::q_damage->get_bool())
+                    if (q->is_ready() && utils::enabled_in_map(combo::q_use_on, enemy) && draw_settings::draw_damage_settings::q_damage->get_bool())
                         damage += q->get_damage(enemy);
 
                     if (w->is_ready() && draw_settings::draw_damage_settings::w_damage->get_bool())
@@ -822,7 +798,7 @@ namespace chogath
                     if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
                         damage += e->get_damage(enemy);
 
-                    if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
+                    if (r->is_ready() && utils::enabled_in_map(combo::q_use_on, enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
                         damage += r->get_damage(enemy);
 
                     if (damage != 0)

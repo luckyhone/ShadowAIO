@@ -107,7 +107,6 @@ namespace vex
 
     // Utils
     //
-    bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     float get_damage(game_object_script target);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
@@ -495,7 +494,7 @@ namespace vex
         {
             for (auto& enemy : entitylist->get_enemy_heroes())
             {
-                if (enemy->is_valid() && !enemy->is_dead() && can_use_r_on(enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
+                if (enemy->is_valid() && !enemy->is_dead() && utils::enabled_in_map(combo::r_use_on, enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
                 {
                     int max_enemies = combo::r2_maxiumum_enemies_nearby->get_int();
                     if (max_enemies >= enemy->count_allies_in_range(800) && enemy->has_buff(buff_hash("VexRTarget")))
@@ -513,7 +512,7 @@ namespace vex
         auto target = target_selector->get_target(r->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_r_on(target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
+        if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
         {
             if (target->get_distance(myhero) > combo::r_target_above_range->get_int() && !target->has_buff(buff_hash("vexr2timer")))
             {
@@ -538,7 +537,7 @@ namespace vex
             {
                 for (auto& enemy : entitylist->get_enemy_heroes())
                 {
-                    if (enemy->is_valid() && !enemy->is_dead() && can_use_r_on(enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
+                    if (enemy->is_valid() && !enemy->is_dead() && utils::enabled_in_map(combo::r_use_on, enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
                     {
                         int max_enemies = combo::r2_maxiumum_enemies_nearby->get_int();
                         if (max_enemies >= enemy->count_allies_in_range(800) && enemy->has_buff(buff_hash("VexRTarget")))
@@ -556,7 +555,7 @@ namespace vex
             auto target = target_selector->get_target(r->range(), damage_type::magical);
 
             // Always check an object is not a nullptr!
-            if (target != nullptr && can_use_r_on(target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
+            if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool()))
             {
                 if (target->get_distance(myhero) > combo::r_target_above_range->get_int() && !target->has_buff(buff_hash("vexr2timer")))
                 {
@@ -567,17 +566,6 @@ namespace vex
                 }
             }
         }
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 #pragma endregion
 
@@ -635,7 +623,7 @@ namespace vex
         if (e->is_ready())
             damage += e->get_damage(target);
 
-        if (r->is_ready() && can_use_r_on(target))
+        if (r->is_ready() && utils::enabled_in_map(combo::r_use_on, target))
             damage += r->get_damage(target);
 
         damage += myhero->get_auto_attack_damage(target);
@@ -718,7 +706,7 @@ namespace vex
                     if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
                         damage += e->get_damage(enemy);
 
-                    if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
+                    if (r->is_ready() && utils::enabled_in_map(combo::r_use_on, enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
                         damage += r->get_damage(enemy);
 
                     if (damage != 0.0f)

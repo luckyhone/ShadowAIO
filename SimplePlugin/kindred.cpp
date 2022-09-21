@@ -86,7 +86,6 @@ namespace kindred
 
     // Utils
     //
-    bool can_use_r_on(game_object_script target);
     int get_kindred_passive_stacks();
     void update_range();
 
@@ -487,7 +486,7 @@ namespace kindred
     {
         for (auto&& ally : entitylist->get_ally_heroes())
         {
-            if (ally->is_valid() && !ally->is_dead() && can_use_r_on(ally) && ally->get_distance(myhero->get_position()) <= r->range())
+            if (ally->is_valid() && !ally->is_dead() && utils::enabled_in_map(combo::r_use_on, ally) && ally->get_distance(myhero->get_position()) <= r->range())
             {
                 if (!utils::has_unkillable_buff(ally) && (!combo::r_only_when_enemies_nearby->get_bool() || ally->count_enemies_in_range(combo::r_enemies_search_radius->get_int()) != 0))
                 {
@@ -501,17 +500,6 @@ namespace kindred
                 }
             }
         }
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 #pragma endregion
 

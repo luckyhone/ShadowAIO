@@ -70,7 +70,6 @@ namespace ivern
     // Utils
     //
     game_object_script get_best_target_prority(const std::vector<game_object_script>& possible_targets, TreeEntry* priority);
-    bool can_use_e_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
 
     vector last_w_position = vector(0, 0);
@@ -233,7 +232,7 @@ namespace ivern
         {
             for (auto& ally : entitylist->get_ally_heroes())
             {
-                if (can_use_e_on(ally) && myhero->get_distance(ally) < e->range())
+                if (utils::enabled_in_map(combo::e_use_on, ally) && myhero->get_distance(ally) < e->range())
                 {
                     if ((health_prediction->get_incoming_damage(ally, combo::e_incoming_damage_time->get_int() / 1000.f, true) * 100.f) /
                         ally->get_max_health() > ally->get_health_percent() * (combo::e_over_hp_in_percent->get_int() / 100.f))
@@ -385,15 +384,6 @@ namespace ivern
         //   If list is empty return nullptr
         //
         return valid_targets.empty() ? nullptr : valid_targets.front().first;
-    }
-
-    bool can_use_e_on(game_object_script target)
-    {
-        auto it = combo::e_use_on.find(target->get_network_id());
-        if (it == combo::e_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 
 #pragma region get_hitchance

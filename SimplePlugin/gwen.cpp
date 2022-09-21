@@ -107,7 +107,6 @@ namespace gwen
 
     // Utils
     //
-    bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
     int get_gwen_q_stacks();
@@ -588,7 +587,7 @@ namespace gwen
         auto target = target_selector->get_target(is_recast ? r->range() : combo::r_max_range->get_int(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_r_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target))
         {
             if (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool() || is_recast)
             {
@@ -623,7 +622,7 @@ namespace gwen
         auto target = target_selector->get_target(is_recast ? r->range() : combo::r_max_range->get_int(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_r_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target))
         {
             if (myhero->get_distance(target) > 30)
             {
@@ -640,17 +639,6 @@ namespace gwen
                 }
             }
         }
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 #pragma endregion
 
@@ -781,7 +769,7 @@ namespace gwen
                     if (q->is_ready() && draw_settings::draw_damage_settings::q_damage->get_bool())
                         damage += q->get_damage(enemy);
 
-                    if (r->is_ready() && can_use_r_on(enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
+                    if (r->is_ready() && utils::enabled_in_map(combo::r_use_on, enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
                         damage += r->get_damage(enemy);
                     
                     for (int i = 0; i < draw_settings::draw_damage_settings::aa_damage->get_int(); i++)

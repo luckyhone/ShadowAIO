@@ -96,7 +96,6 @@ namespace viego
 
     // Utils
     //
-    bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
     int get_viego_r_damage(game_object_script target);
@@ -634,7 +633,7 @@ namespace viego
         auto target = target_selector->get_target(r->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && !combo::r_save->get_bool() && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && can_use_r_on(target) && get_viego_r_damage(target) > target->get_real_health())
+        if (target != nullptr && !combo::r_save->get_bool() && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && utils::enabled_in_map(combo::r_use_on, target) && get_viego_r_damage(target) > target->get_real_health())
         {
             r->cast(target, get_hitchance(hitchance::r_hitchance));
         }
@@ -648,21 +647,10 @@ namespace viego
         auto target = target_selector->get_target(r->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && can_use_r_on(target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool() || get_viego_r_damage(target) > target->get_real_health()))
+        if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && utils::enabled_in_map(combo::r_use_on, target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool() || get_viego_r_damage(target) > target->get_real_health()))
         {
             r->cast(target, get_hitchance(hitchance::r_hitchance));
         }
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 #pragma endregion
 

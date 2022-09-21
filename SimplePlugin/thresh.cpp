@@ -64,7 +64,6 @@ namespace thresh
         std::map<std::uint32_t, TreeEntry*> q_use_on;
         std::map<std::uint32_t, TreeEntry*> w_use_on;
         std::map<std::uint32_t, TreeEntry*> e_use_on;
-        std::map<std::uint32_t, TreeEntry*> r_use_on;
     }
 
     namespace harass
@@ -116,10 +115,6 @@ namespace thresh
 
     // Utils
     //
-    bool can_use_q_on(game_object_script target);
-    bool can_use_w_on(game_object_script target);
-    bool can_use_e_on(game_object_script target);
-    bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     void cast_e_push(game_object_script target);
     void cast_e_pull(game_object_script target);
@@ -247,20 +242,6 @@ namespace thresh
                 {
                     combo::r_if_will_hit_x_targets = r_config->add_slider(myhero->get_model() + ".combo.r.if_will_hit_x_targets", "Use R if will hit x targets", 2, 1, 5);
                     combo::r_only_if_ally_nearby = r_config->add_checkbox(myhero->get_model() + ".combo.r.only_if_ally_nearby", "Use R only if ally is nearby", true);
-
-                    auto use_r_on_tab = r_config->add_tab(myhero->get_model() + ".combo.r.use_on", "Use R On");
-                    {
-                        for (auto&& enemy : entitylist->get_enemy_heroes())
-                        {
-                            // In this case you HAVE to set should save to false since key contains network id which is unique per game
-                            //
-                            combo::r_use_on[enemy->get_network_id()] = use_r_on_tab->add_checkbox(std::to_string(enemy->get_network_id()), enemy->get_model(), true, false);
-
-                            // Set texture to enemy square icon
-                            //
-                            combo::r_use_on[enemy->get_network_id()]->set_texture(enemy->get_square_icon_portrait());
-                        }
-                    }
                 }
             }
 
@@ -401,7 +382,7 @@ namespace thresh
         {
             for (auto& ally : entitylist->get_ally_heroes())
             {
-                if (can_use_w_on(ally) && myhero->get_distance(ally) < w->range() && 
+                if (utils::enabled_in_map(combo::w_use_on, ally) && myhero->get_distance(ally) < w->range() && 
                     (health_prediction->get_incoming_damage(ally, combo::w_incoming_damage_time->get_int() / 1000.f, true) * 100.f) /
                     ally->get_max_health() > ally->get_health_percent() * (combo::w_over_hp_in_percent->get_int() / 100.f))
                 {
@@ -566,7 +547,7 @@ namespace thresh
         {
             for (auto& enemy : entitylist->get_enemy_heroes())
             {
-                if (enemy->is_valid() && !enemy->is_dead() && can_use_q_on(enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_int()) && enemy->has_buff(buff_hash("ThreshQ")))
+                if (enemy->is_valid() && !enemy->is_dead() && utils::enabled_in_map(combo::q_use_on, enemy) && (!enemy->is_under_ally_turret() || combo::allow_tower_dive->get_int()) && enemy->has_buff(buff_hash("ThreshQ")))
                 {
                     if (q->cast())
                     {
@@ -585,7 +566,7 @@ namespace thresh
         float min_distance = combo::thresh_mode->get_int() == 0 ? combo::q_min_range->get_int() : myhero->get_attack_range();
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_q_on(target) && myhero->get_distance(target) > min_distance && !target->has_buff(buff_hash("ThreshQ")))
+        if (target != nullptr && utils::enabled_in_map(combo::q_use_on, target) && myhero->get_distance(target) > min_distance && !target->has_buff(buff_hash("ThreshQ")))
         {
             q->cast(target, get_hitchance(hitchance::q_hitchance));
         }
@@ -603,7 +584,7 @@ namespace thresh
                 {
                     for (auto& ally : entitylist->get_ally_heroes())
                     {
-                        if (ally->is_valid() && !ally->is_me() && !ally->is_dead() && can_use_w_on(ally) && ally->get_distance(target) > combo::w_to_ally_on_q_hit_ally_is_above_range->get_int() && myhero->get_distance(ally) < w->range())
+                        if (ally->is_valid() && !ally->is_me() && !ally->is_dead() && utils::enabled_in_map(combo::w_use_on, ally) && ally->get_distance(target) > combo::w_to_ally_on_q_hit_ally_is_above_range->get_int() && myhero->get_distance(ally) < w->range())
                         {
                             if (w->cast(ally->get_position()))
                             {
@@ -617,7 +598,7 @@ namespace thresh
                 {
                     for (auto& ally : entitylist->get_ally_heroes())
                     {
-                        if (ally->is_valid() && !ally->is_me() && !ally->is_dead() && can_use_w_on(ally) && ally->get_distance(target) > combo::w_to_ally_stunned_ally_is_above_range->get_int() && myhero->get_distance(ally) < w->range())
+                        if (ally->is_valid() && !ally->is_me() && !ally->is_dead() && utils::enabled_in_map(combo::w_use_on, ally) && ally->get_distance(target) > combo::w_to_ally_stunned_ally_is_above_range->get_int() && myhero->get_distance(ally) < w->range())
                         {
                             if (w->cast(ally->get_position()))
                             {
@@ -636,7 +617,7 @@ namespace thresh
     {
         for (auto& ally : entitylist->get_ally_heroes())
         {
-            if (ally->is_valid() && !ally->is_me() && !ally->is_dead() && can_use_w_on(ally) && myhero->get_distance(ally) < w->range())
+            if (ally->is_valid() && !ally->is_me() && !ally->is_dead() && utils::enabled_in_map(combo::w_use_on, ally) && myhero->get_distance(ally) < w->range())
             {
                 if (w->cast(ally->get_position()))
                 {
@@ -654,7 +635,7 @@ namespace thresh
         auto target = target_selector->get_target(e->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_e_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::e_use_on, target))
         {
             if (!orbwalker->flee_mode() && myhero->get_distance(target) >= combo::e_pull_if_distance_more_than->get_int())
             {
@@ -677,51 +658,6 @@ namespace thresh
         }
     }
 #pragma endregion
-
-#pragma region can_use_q_on
-    bool can_use_q_on(game_object_script target)
-    {
-        auto it = combo::q_use_on.find(target->get_network_id());
-        if (it == combo::q_use_on.end())
-            return false;
-
-        return it->second->get_bool();
-    }
-#pragma endregion
-
-#pragma region can_use_w_on
-    bool can_use_w_on(game_object_script target)
-    {
-        auto it = combo::w_use_on.find(target->get_network_id());
-        if (it == combo::w_use_on.end())
-            return false;
-
-        return it->second->get_bool();
-    }
-#pragma endregion
-
-#pragma region can_use_e_on
-    bool can_use_e_on(game_object_script target)
-    {
-        auto it = combo::e_use_on.find(target->get_network_id());
-        if (it == combo::e_use_on.end())
-            return false;
-
-        return it->second->get_bool();
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
-    }
-#pragma endregion
-
 
 #pragma region get_hitchance
     hit_chance get_hitchance(TreeEntry* entry)
@@ -779,7 +715,7 @@ namespace thresh
 
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
     {
-        if (antigapclose::use_e->get_bool() && e->is_ready() && can_use_e_on(sender))
+        if (antigapclose::use_e->get_bool() && e->is_ready() && utils::enabled_in_map(combo::e_use_on, sender))
         {
             if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
             {

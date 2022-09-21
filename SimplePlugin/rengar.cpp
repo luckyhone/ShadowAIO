@@ -99,7 +99,6 @@ namespace rengar
 
     // Utils
     //
-    bool can_use_r_leap_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     bool is_empowered();
     bool is_on_r();
@@ -537,17 +536,6 @@ namespace rengar
     }
 #pragma endregion
 
-#pragma region can_use_r_leap_on
-    bool can_use_r_leap_on(game_object_script target)
-    {
-        auto it = combo::r_leap_use_on.find(target->get_network_id());
-        if (it == combo::r_leap_use_on.end())
-            return false;
-
-        return it->second->get_bool();
-    }
-#pragma endregion
-
 #pragma region get_hitchance
     hit_chance get_hitchance(TreeEntry* entry)
     {
@@ -593,7 +581,7 @@ namespace rengar
 
     void on_before_attack(game_object_script target, bool* process)
     {
-        if (target->is_ai_hero() && is_on_r() && !can_use_r_leap_on(target))
+        if (target->is_ai_hero() && is_on_r() && !utils::enabled_in_map(combo::r_leap_use_on, target))
         {
             *process = false;
             return;
