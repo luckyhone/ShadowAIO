@@ -798,7 +798,7 @@ namespace chogath
                     if (e->is_ready() && draw_settings::draw_damage_settings::e_damage->get_bool())
                         damage += e->get_damage(enemy);
 
-                    if (r->is_ready() && utils::enabled_in_map(combo::q_use_on, enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
+                    if (r->is_ready() && utils::enabled_in_map(combo::r_use_on, enemy) && draw_settings::draw_damage_settings::r_damage->get_bool())
                         damage += r->get_damage(enemy);
 
                     if (damage != 0)
