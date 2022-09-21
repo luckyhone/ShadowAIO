@@ -47,6 +47,7 @@ namespace missfortune
         TreeEntry* use_r = nullptr;
         TreeEntry* r_semi_manual_cast = nullptr;
         TreeEntry* r_save = nullptr;
+        TreeEntry* r_cancel = nullptr;
         TreeEntry* r_min_range = nullptr;
         TreeEntry* r_max_range = nullptr;
         TreeEntry* r_use_if_killable_by_x_waves = nullptr;
@@ -237,6 +238,7 @@ namespace missfortune
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator3", "Other Settings");
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_save = r_config->add_hotkey(myhero->get_model() + ".combo.r.save", "Save R", TreeHotkeyMode::Toggle, 'G', false);
+                    combo::r_cancel = r_config->add_hotkey(myhero->get_model() + ".combo.r.cancel", "Cancel R", TreeHotkeyMode::Hold, 'H', false);
                     combo::r_block_mouse_move = r_config->add_checkbox(myhero->get_model() + ".combo.r.block_mouse_move", "Block Mouse Move on R", false);
                     combo::r_block_mouse_move->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
@@ -349,6 +351,7 @@ namespace missfortune
             Permashow::Instance.AddElement("Auto Q Harass", combo::q_auto_harass);
 	        Permashow::Instance.AddElement("Semi Auto R", combo::r_semi_manual_cast);
             Permashow::Instance.AddElement("Save R", combo::r_save);
+            Permashow::Instance.AddElement("Cancel R", combo::r_cancel);
         }
 
         // Add anti gapcloser handler
@@ -410,13 +413,13 @@ namespace missfortune
 
         if (myhero->is_casting_interruptible_spell() || myhero->has_buff(buff_hash("missfortunebulletsound")) || gametime->get_time() - last_r_time < 0.3f)
         {
+            bool should_cancel_r = combo::r_cancel->get_bool();
+
             std::vector<game_object_script> hit_by_r;
-            
-            bool should_cancel_r = false;
 
             if (combo::r_cancel_if_nobody_inside->get_bool() && last_r_pos.is_valid())
             {
-                geometry::rectangle r_sector = geometry::rectangle(myhero->get_position(), last_r_pos, 350.0f);
+                geometry::rectangle r_sector = geometry::rectangle(myhero->get_position(), last_r_pos, 335.0f);
                 auto poly = r_sector.to_polygon();
                 for (auto& enemy : entitylist->get_enemy_heroes())
                 {
@@ -435,29 +438,9 @@ namespace missfortune
                 }
             }
 
-            if (hit_by_r.empty())
+            if (hit_by_r.empty() && combo::r_cancel_if_nobody_inside->get_bool())
             {
-                if (combo::r_cancel_if_nobody_inside->get_bool())
-                {
-                    should_cancel_r = true;
-                }
-            }
-            else
-            {
-                if (!combo::previous_orbwalker_state)
-                {
-                    orbwalker->set_attack(false);
-                    orbwalker->set_movement(false);
-                    combo::previous_orbwalker_state = true;
-                }
-
-                if (!combo::previous_evade_state && combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
-                {
-                    evade->disable_evade();
-                    combo::previous_evade_state = true;
-                }
-
-                return;
+                should_cancel_r = true;
             }
 
             if (should_cancel_r)
@@ -483,13 +466,27 @@ namespace missfortune
             }
             else
             {
+                if (!combo::previous_orbwalker_state)
+                {
+                    orbwalker->set_attack(false);
+                    orbwalker->set_movement(false);
+                    combo::previous_orbwalker_state = true;
+                }
+
+                if (!combo::previous_evade_state && combo::r_disable_evade->get_bool() && evade->is_evade_registered() && !evade->is_evade_disabled())
+                {
+                    evade->disable_evade();
+                    combo::previous_evade_state = true;
+                }
+
                 return;
             }
         }
 
-        if (last_r_time != 0.0f)
+        if (last_r_time != 0.0f || last_r_pos.is_valid())
         {
             last_r_time = 0.0f;
+            last_r_pos = vector::zero;
         }
 
         if (combo::previous_orbwalker_state)
@@ -1133,7 +1130,7 @@ namespace missfortune
         //if (last_r_pos.is_valid())
         //{
         //    draw_manager->add_circle(last_r_pos, 175.0f, draw_settings::r_color->get_color());
-        //    geometry::rectangle r_sector = geometry::rectangle(myhero->get_position(), last_r_pos, 350.0f);
+        //    geometry::rectangle r_sector = geometry::rectangle(myhero->get_position(), last_r_pos, 335.0f);
         //    auto poly = r_sector.to_polygon();
 
         //    int poly_id = 0;
