@@ -105,10 +105,6 @@ namespace jax
     void r_logic();
     void ward_jump_logic();
 
-    // Utils
-    //
-    bool can_use_q_on(game_object_script target);
-
     void load()
     {
         // Registering a spells
@@ -342,7 +338,7 @@ namespace jax
         if (e->is_ready() && combo::use_e2->get_bool() && e_active)
         {
             // Get a target from a given range
-            auto target = target_selector->get_target(e->range() + 25, damage_type::physical);
+            auto target = target_selector->get_target(e->range() + 50, damage_type::physical);
 
             // Always check an object is not a nullptr!
             if (target != nullptr && target->is_attack_allowed_on_target())
@@ -372,230 +368,225 @@ namespace jax
             }
         }
 
-        // Very important if can_move ( extra_windup ) 
-        // Extra windup is the additional time you have to wait after the aa
-        // Too small time can interrupt the attack
-        if (orbwalker->can_move(0.05f))
+        if (q->is_ready() && misc::ward_jump->get_bool() && misc::ward_jump_key->get_bool())
         {
-            if (q->is_ready() && misc::ward_jump->get_bool() && misc::ward_jump_key->get_bool())
-            {
-                ward_jump_logic();
-            }
+            ward_jump_logic();
+        }
 
-            //Checking if the user has combo_mode() (Default SPACE)
-            if (orbwalker->combo_mode())
-            {
-                if (q->is_ready() && combo::use_q->get_bool())
+        if ((orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
+        {
+            // Gets enemy minions from the entitylist
+            auto lane_minions = entitylist->get_enemy_minions();
+
+            // You can use this function to delete minions that aren't in the specified range
+            lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                 {
-                    q_logic();
-                }
+                    return !x->is_valid_target(myhero->get_attack_range() + 100);
+                }), lane_minions.end());
 
-                if (w->is_ready() && combo::use_w->get_bool())
+            //std::sort -> sort lane minions by distance
+            std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
                 {
-                    w_logic();
-                }
+                    return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                });
 
-                if (e->is_ready() && combo::use_e->get_bool())
-                {
-                    e_logic();
-                }
-            }
-
-            if ((orbwalker->last_hit_mode() || orbwalker->harass() || orbwalker->lane_clear_mode()) && lasthit::lasthit->get_bool())
+            if (!lane_minions.empty())
             {
-                // Gets enemy minions from the entitylist
-                auto lane_minions = entitylist->get_enemy_minions();
-
-                // You can use this function to delete minions that aren't in the specified range
-                lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                for (auto&& minion : lane_minions)
+                {
+                    if (minion->get_health() > myhero->get_auto_attack_damage(minion) || !orbwalker->can_attack())
                     {
-                        return !x->is_valid_target(myhero->get_attack_range() + 100);
-                    }), lane_minions.end());
+                        if (w->is_ready() && lasthit::use_w->get_bool() && w->get_damage(minion) + myhero->get_auto_attack_damage(minion) > minion->get_health())
+                        {
+                            if (w->cast())
+                            {
+                                myhero->issue_order(minion);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //Checking if the user has combo_mode() (Default SPACE)
+        if (orbwalker->combo_mode())
+        {
+            if (q->is_ready() && combo::use_q->get_bool())
+            {
+                q_logic();
+            }
+
+            if (w->is_ready() && combo::use_w->get_bool())
+            {
+                w_logic();
+            }
+
+            if (e->is_ready() && combo::use_e->get_bool())
+            {
+                e_logic();
+            }
+        }
+
+        //Checking if the user has selected harass() (Default C)
+        if (orbwalker->harass())
+        {
+            // Get a target from a given range
+            auto target = target_selector->get_target(e->range(), damage_type::physical);
+
+            // Always check an object is not a nullptr!
+            if (target != nullptr)
+            {
+                if (!target->is_under_ally_turret())
+                {
+                    if (q->is_ready() && harass::use_q->get_bool())
+                    {
+                        q_logic();
+                    }
+                }
+
+                if (!myhero->is_under_enemy_turret())
+                {
+                    if (w->is_ready() && harass::use_w->get_bool())
+                    {
+                        w_logic();
+                    }
+
+                    if (e->is_ready() && harass::use_e->get_bool())
+                    {
+                        e_logic();
+                    }
+                }
+            }
+        }
+
+        // Checking if the user has selected flee_mode() (Default Z)
+        if (orbwalker->flee_mode())
+        {
+            if (q->is_ready() && fleemode::use_q->get_bool())
+            {
+                std::vector<game_object_script> allies;
+
+                if (fleemode::q_jump_on_ally_champions->get_bool())
+                {
+                    auto champions = entitylist->get_ally_heroes();
+                    allies.insert(allies.end(), champions.begin(), champions.end());
+                }
+
+                if (fleemode::q_jump_on_ally_minions->get_bool())
+                {
+                    auto minions = entitylist->get_ally_minions();
+                    allies.insert(allies.end(), minions.begin(), minions.end());
+                }
 
                 //std::sort -> sort lane minions by distance
-                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                std::sort(allies.begin(), allies.end(), [](game_object_script a, game_object_script b)
                     {
-                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                        return a->get_distance(hud->get_hud_input_logic()->get_game_cursor_position()) < b->get_distance(hud->get_hud_input_logic()->get_game_cursor_position());
                     });
 
-                if (!lane_minions.empty())
-                {
-                    for (auto&& minion : lane_minions)
+                // You can use this function to delete allies that aren't in the specified range
+                allies.erase(std::remove_if(allies.begin(), allies.end(), [](game_object_script x)
                     {
-                        if (minion->get_health() > myhero->get_auto_attack_damage(minion) || !orbwalker->can_attack())
+                        return x == myhero || x->get_distance(myhero->get_position()) > q->range();
+                    }), allies.end());
+
+                if (!allies.empty())
+                {
+                    if (q->cast(allies.front()))
+                    {
+                        return;
+                    }
+                }
+
+                if (fleemode::q_ward_jump->get_bool())
+                {
+                    ward_jump_logic();
+                }
+            }
+        }
+
+        // Checking if the user has selected lane_clear_mode() (Default V)
+        if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
+        {
+            // Gets enemy minions from the entitylist
+            auto lane_minions = entitylist->get_enemy_minions();
+
+            // Gets jugnle mobs from the entitylist
+            auto monsters = entitylist->get_jugnle_mobs_minions();
+
+            // You can use this function to delete minions that aren't in the specified range
+            lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
+                {
+                    return !x->is_valid_target(q->range());
+                }), lane_minions.end());
+
+            // You can use this function to delete monsters that aren't in the specified range
+            monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
+                {
+                    return !x->is_valid_target(q->range());
+                }), monsters.end());
+
+            //std::sort -> sort lane minions by distance
+            std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                {
+                    return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                });
+
+            //std::sort -> sort monsters by max health
+            std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
+                {
+                    return a->get_max_health() > b->get_max_health();
+                });
+
+            if (!lane_minions.empty())
+            {
+                if (q->is_ready() && laneclear::use_q->get_bool())
+                {
+                    if (lane_minions.front()->is_under_ally_turret())
+                    {
+                        if (myhero->count_enemies_in_range(900) == 0)
                         {
-                            if (w->is_ready() && lasthit::use_w->get_bool() && w->get_damage(minion) + myhero->get_auto_attack_damage(minion) > minion->get_health())
+                            if (q->cast(lane_minions.front()))
                             {
-                                if (w->cast())
-                                {
-                                    return;
-                                }
+                                return;
                             }
                         }
                     }
+                    if (q->cast(lane_minions.front()))
+                        return;
                 }
-            }
 
-            //Checking if the user has selected harass() (Default C)
-            if (orbwalker->harass())
-            {
-                // Get a target from a given range
-                auto target = target_selector->get_target(e->range(), damage_type::physical);
-
-                // Always check an object is not a nullptr!
-                if (target != nullptr)
+                if (e->is_ready() && laneclear::use_e->get_bool())
                 {
-                    if (!target->is_under_ally_turret())
+                    if (lane_minions.front()->is_under_ally_turret())
                     {
-                        if (q->is_ready() && harass::use_q->get_bool())
+                        if (myhero->count_enemies_in_range(900) == 0)
                         {
-                            q_logic();
-                        }
-                    }
-
-                    if (!myhero->is_under_enemy_turret())
-                    {
-                        if (w->is_ready() && harass::use_w->get_bool())
-                        {
-                            w_logic();
-                        }
-
-                        if (e->is_ready() && harass::use_e->get_bool())
-                        {
-                            e_logic();
-                        }
-                    }
-                }
-            }
-
-            // Checking if the user has selected flee_mode() (Default Z)
-            if (orbwalker->flee_mode())
-            {
-                if (q->is_ready() && fleemode::use_q->get_bool())
-                {
-                    std::vector<game_object_script> allies;
-
-                    if (fleemode::q_jump_on_ally_champions->get_bool())
-                    {
-                        auto champions = entitylist->get_ally_heroes();
-                        allies.insert(allies.end(), champions.begin(), champions.end());
-                    }
-
-                    if (fleemode::q_jump_on_ally_minions->get_bool())
-                    {
-                        auto minions = entitylist->get_ally_minions();
-                        allies.insert(allies.end(), minions.begin(), minions.end());
-                    }
-
-                    //std::sort -> sort lane minions by distance
-                    std::sort(allies.begin(), allies.end(), [](game_object_script a, game_object_script b)
-                        {
-                            return a->get_distance(hud->get_hud_input_logic()->get_game_cursor_position()) < b->get_distance(hud->get_hud_input_logic()->get_game_cursor_position());
-                        });
-
-                    // You can use this function to delete allies that aren't in the specified range
-                    allies.erase(std::remove_if(allies.begin(), allies.end(), [](game_object_script x)
-                        {
-                            return x == myhero || x->get_distance(myhero->get_position()) > q->range();
-                        }), allies.end());
-
-                    if (!allies.empty())
-                    {
-                        if (q->cast(allies.front()))
-                        {
-                            return;
-                        }
-                    }
-
-                    if (fleemode::q_ward_jump->get_bool())
-                    {
-                        ward_jump_logic();
-                    }
-                }
-            }
-
-            // Checking if the user has selected lane_clear_mode() (Default V)
-            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
-            {
-                // Gets enemy minions from the entitylist
-                auto lane_minions = entitylist->get_enemy_minions();
-
-                // Gets jugnle mobs from the entitylist
-                auto monsters = entitylist->get_jugnle_mobs_minions();
-
-                // You can use this function to delete minions that aren't in the specified range
-                lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(q->range());
-                    }), lane_minions.end());
-
-                // You can use this function to delete monsters that aren't in the specified range
-                monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(q->range());
-                    }), monsters.end());
-
-                //std::sort -> sort lane minions by distance
-                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-                    });
-
-                //std::sort -> sort monsters by max health
-                std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_max_health() > b->get_max_health();
-                    });
-
-                if (!lane_minions.empty())
-                {
-                    if (q->is_ready() && laneclear::use_q->get_bool())
-                    {
-                        if (lane_minions.front()->is_under_ally_turret())
-                        {
-                            if (myhero->count_enemies_in_range(900) == 0)
+                            if (e->cast())
                             {
-                                if (q->cast(lane_minions.front()))
-                                {
-                                    return;
-                                }
+                                return;
                             }
                         }
-                        if (q->cast(lane_minions.front()))
-                            return;
                     }
+                    if (e->cast())
+                        return;
+                }
+            }
 
-                    if (e->is_ready() && laneclear::use_e->get_bool())
-                    {
-                        if (lane_minions.front()->is_under_ally_turret())
-                        {
-                            if (myhero->count_enemies_in_range(900) == 0)
-                            {
-                                if (e->cast())
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                        if (e->cast())
-                            return;
-                    }
+            // Logic responsible for monsters
+            if (!monsters.empty())
+            {
+                if (q->is_ready() && jungleclear::use_q->get_bool())
+                {
+                    if (q->cast(monsters.front()))
+                        return;
                 }
 
-                // Logic responsible for monsters
-                if (!monsters.empty())
+                if (e->is_ready() && jungleclear::use_e->get_bool())
                 {
-                    if (q->is_ready() && jungleclear::use_q->get_bool())
-                    {
-                        if (q->cast(monsters.front()))
-                            return;
-                    }
-
-                    if (e->is_ready() && jungleclear::use_e->get_bool())
-                    {
-                        if (e->cast())
-                            return;
-                    }
+                    if (e->cast())
+                        return;
                 }
             }
         }
@@ -608,7 +599,7 @@ namespace jax
         auto target = target_selector->get_target(q->range(), damage_type::physical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_q_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::q_use_on, target))
         {
             if (combo::allow_tower_dive->get_bool() || !target->is_under_ally_turret())
             {
@@ -640,7 +631,7 @@ namespace jax
     void w_logic()
     {
         // Get a target from a given range
-        auto target = target_selector->get_target(myhero->get_attack_range() + 50, damage_type::magical);
+        auto target = target_selector->get_target(myhero->get_attack_range() + 100, damage_type::magical);
 
         // Always check an object is not a nullptr!
         if (target != nullptr)
@@ -830,15 +821,4 @@ namespace jax
         if (ward->is_ready() && draw_settings::draw_range_ward->get_bool())
             draw_manager->add_circle(myhero->get_position(), ward->range(), draw_settings::ward_color->get_color());
     }
-
-#pragma region can_use_q_on
-    bool can_use_q_on(game_object_script target)
-    {
-        auto it = combo::q_use_on.find(target->get_network_id());
-        if (it == combo::q_use_on.end())
-            return false;
-
-        return it->second->get_bool();
-    }
-#pragma endregion
 };

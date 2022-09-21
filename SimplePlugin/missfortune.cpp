@@ -111,7 +111,6 @@ namespace missfortune
         TreeEntry* r_hitchance = nullptr;
     }
 
-    float last_r_time = 0.0f;
 
     // Event handler functions
     void on_update();
@@ -141,6 +140,8 @@ namespace missfortune
     // Other
     //
     game_object_script last_lasthit_target;
+    float last_r_time = 0.0f;
+    vector last_r_pos;
 
     void load()
     {
@@ -410,22 +411,29 @@ namespace missfortune
         if (myhero->is_casting_interruptible_spell() || myhero->has_buff(buff_hash("missfortunebulletsound")) || gametime->get_time() - last_r_time < 0.3f)
         {
             std::vector<game_object_script> hit_by_r;
+            
+            bool should_cancel_r = false;
 
-            if (combo::r_cancel_if_nobody_inside->get_bool())
+            if (combo::r_cancel_if_nobody_inside->get_bool() && last_r_pos.is_valid())
             {
+                geometry::rectangle r_sector = geometry::rectangle(myhero->get_position(), last_r_pos, 350.0f);
+                auto poly = r_sector.to_polygon();
                 for (auto& enemy : entitylist->get_enemy_heroes())
                 {
                     if (enemy->is_valid() && !enemy->is_dead() && enemy->is_valid_target(r->range()))
                     {
-                        if (r->get_prediction(enemy).hitchance >= hit_chance::low)
+                        if (poly.is_inside(enemy->get_position()))
                         {
+                            //myhero->print_chat(1, "The champ %s is INSIDE the R", enemy->get_model_cstr());
                             hit_by_r.push_back(enemy);
                         }
+                        //else
+                        //{
+                        //    myhero->print_chat(1, "The champ %s is OUTSIDE the R", enemy->get_model_cstr());
+                        //}
                     }
                 }
             }
-
-            bool should_cancel_r = false;
 
             if (hit_by_r.empty())
             {
@@ -454,9 +462,10 @@ namespace missfortune
 
             if (should_cancel_r)
             {
-                if (last_r_time != 0.0f)
+                if (last_r_time != 0.0f || last_r_pos.is_valid())
                 {
                     last_r_time = 0.0f;
+                    last_r_pos = vector::zero;
                 }
 
                 if (combo::previous_orbwalker_state)
@@ -679,7 +688,6 @@ namespace missfortune
                         }
                     }
                 }
-
 
                 if (!monsters.empty())
                 {
@@ -1109,6 +1117,7 @@ namespace missfortune
         if (r->is_ready() && draw_settings::draw_range_r->get_bool())
             draw_manager->add_circle(myhero->get_position(), combo::r_max_range->get_int(), draw_settings::r_color->get_color());
 
+        // Draw R damage
         if (r->is_ready() && draw_settings::draw_damage_r->get_bool())
         {
             for (auto& enemy : entitylist->get_enemy_heroes())
@@ -1119,6 +1128,34 @@ namespace missfortune
                 }
             }
         }
+       
+        // Debug
+        //if (last_r_pos.is_valid())
+        //{
+        //    draw_manager->add_circle(last_r_pos, 175.0f, draw_settings::r_color->get_color());
+        //    geometry::rectangle r_sector = geometry::rectangle(myhero->get_position(), last_r_pos, 350.0f);
+        //    auto poly = r_sector.to_polygon();
+
+        //    int poly_id = 0;
+
+        //    for (auto& point : poly.points)
+        //    {
+        //        poly_id++;
+        //        draw_manager->add_circle(point, 10.0f, MAKE_COLOR(255, 0, 0, 255));
+        //        renderer->world_to_screen(point, point);
+        //        draw_manager->add_text_on_screen(point, draw_settings::r_color->get_color(), 18, "Point: [%d]", poly_id);
+        //    }
+
+        //    auto point_1 = poly.points.at(0);
+        //    auto point_2 = poly.points.at(1);
+        //    auto point_3 = poly.points.at(2);
+        //    auto point_4 = poly.points.at(3);
+
+        //    draw_manager->add_line_on_screen(point_1, point_2, draw_settings::r_color->get_color(), 2.0f);
+        //    draw_manager->add_line_on_screen(point_3, point_4, draw_settings::r_color->get_color(), 2.0f);
+        //    draw_manager->add_line_on_screen(point_1, point_4, draw_settings::r_color->get_color(), 2.0f);
+        //    draw_manager->add_line_on_screen(point_2, point_3, draw_settings::r_color->get_color(), 2.0f);
+        //}
     }
 
     void on_before_attack_orbwalker(game_object_script target, bool* process)
@@ -1240,6 +1277,8 @@ namespace missfortune
         if (sender->is_me() && spell->get_spellslot() == r->get_slot())
         {
             last_r_time = gametime->get_time();
+            //last_r_pos = utils::to_2d(spell->get_end_position());
+            last_r_pos = utils::to_2d(spell->get_end_position().extend(myhero->get_position(), -(r->range() - myhero->get_distance(spell->get_end_position()))));
             orbwalker->set_attack(false);
             orbwalker->set_movement(false);
             combo::previous_orbwalker_state = true;

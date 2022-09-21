@@ -223,6 +223,21 @@ namespace utils
 		return false;
 	}
 
+	vector to_2d(vector vec)
+	{
+		return vector(vec.x, vec.y);
+	}
+
+	vector to_3d(vector vec)
+	{
+		return vector(vec.x, vec.y, myhero->get_position().z);
+	}
+
+	vector add(vector source, float add)
+	{
+		return vector(source.x + add, source.y + add);
+	}
+
 	bool enabled_in_map(std::map<std::uint32_t, TreeEntry*> map, game_object_script target)
 	{
 		auto it = map.find(target->get_network_id());

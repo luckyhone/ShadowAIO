@@ -435,130 +435,124 @@ namespace thresh
             }
         }
 
-        // Very important if can_move ( extra_windup ) 
-        // Extra windup is the additional time you have to wait after the aa
-        // Too small time can interrupt the attack
-        if (orbwalker->can_move(0.05f))
+        if (q->is_ready() && combo::q_semi_manual_cast->get_bool())
         {
-            if (q->is_ready() && combo::q_semi_manual_cast->get_bool())
+            q_logic();
+        }
+
+        if (w->is_ready() && combo::w_semi_manual_cast->get_bool())
+        {
+            w_logic_semi();
+        }
+
+        //Checking if the user has combo_mode() (Default SPACE)
+        if (orbwalker->combo_mode())
+        {
+            if (q->is_ready() && combo::use_q->get_bool())
             {
                 q_logic();
             }
 
-            if (w->is_ready() && combo::w_semi_manual_cast->get_bool())
+            if (w->is_ready() && combo::use_w->get_bool())
             {
-                w_logic_semi();
+                w_logic();
             }
 
-            //Checking if the user has combo_mode() (Default SPACE)
-            if (orbwalker->combo_mode())
+            if (e->is_ready() && combo::use_e->get_bool())
             {
-                if (q->is_ready() && combo::use_q->get_bool())
+                e_logic();
+            }
+
+            if (r->is_ready() && combo::use_r->get_bool())
+            {
+                r_logic();
+            }
+        }
+
+        //Checking if the user has selected harass() (Default C)
+        if (orbwalker->harass())
+        {
+            if (!myhero->is_under_enemy_turret())
+            {
+                if (q->is_ready() && harass::use_q->get_bool())
                 {
                     q_logic();
                 }
 
-                if (w->is_ready() && combo::use_w->get_bool())
-                {
-                    w_logic();
-                }
-
-                if (e->is_ready() && combo::use_e->get_bool())
-                {
-                    e_logic();
-                }
-
-                if (r->is_ready() && combo::use_r->get_bool())
-                {
-                    r_logic();
-                }
-            }
-
-            //Checking if the user has selected harass() (Default C)
-            if (orbwalker->harass())
-            {
-                if (!myhero->is_under_enemy_turret())
-                {
-                    if (q->is_ready() && harass::use_q->get_bool())
-                    {
-                        q_logic();
-                    }
-
-                    if (e->is_ready() && harass::use_e->get_bool())
-                    {
-                        e_logic();
-                    }
-                }
-            }
-
-            // Checking if the user has selected flee_mode() (Default Z)
-            if (orbwalker->flee_mode())
-            {
-                if (e->is_ready() && fleemode::use_e->get_bool())
+                if (e->is_ready() && harass::use_e->get_bool())
                 {
                     e_logic();
                 }
             }
+        }
 
-            // Checking if the user has selected lane_clear_mode() (Default V)
-            if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
+        // Checking if the user has selected flee_mode() (Default Z)
+        if (orbwalker->flee_mode())
+        {
+            if (e->is_ready() && fleemode::use_e->get_bool())
             {
-                // Gets enemy minions from the entitylist
-                auto lane_minions = entitylist->get_enemy_minions();
+                e_logic();
+            }
+        }
 
-                // Gets jugnle mobs from the entitylist
-                auto monsters = entitylist->get_jugnle_mobs_minions();
+        // Checking if the user has selected lane_clear_mode() (Default V)
+        if (orbwalker->lane_clear_mode() && laneclear::spell_farm->get_bool())
+        {
+            // Gets enemy minions from the entitylist
+            auto lane_minions = entitylist->get_enemy_minions();
 
-                // You can use this function to delete minions that aren't in the specified range
-                lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(e->range());
-                    }), lane_minions.end());
+            // Gets jugnle mobs from the entitylist
+            auto monsters = entitylist->get_jugnle_mobs_minions();
 
-                // You can use this function to delete monsters that aren't in the specified range
-                monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
-                    {
-                        return !x->is_valid_target(e->range());
-                    }), monsters.end());
-
-                //std::sort -> sort lane minions by distance
-                std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
-                    });
-
-                //std::sort -> sort monsters by max health
-                std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
-                    {
-                        return a->get_max_health() > b->get_max_health();
-                    });
-
-                if (!lane_minions.empty())
+            // You can use this function to delete minions that aren't in the specified range
+            lane_minions.erase(std::remove_if(lane_minions.begin(), lane_minions.end(), [](game_object_script x)
                 {
-                    if (e->is_ready() && laneclear::use_e->get_bool())
+                    return !x->is_valid_target(e->range());
+                }), lane_minions.end());
+
+            // You can use this function to delete monsters that aren't in the specified range
+            monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](game_object_script x)
+                {
+                    return !x->is_valid_target(e->range());
+                }), monsters.end());
+
+            //std::sort -> sort lane minions by distance
+            std::sort(lane_minions.begin(), lane_minions.end(), [](game_object_script a, game_object_script b)
+                {
+                    return a->get_position().distance(myhero->get_position()) < b->get_position().distance(myhero->get_position());
+                });
+
+            //std::sort -> sort monsters by max health
+            std::sort(monsters.begin(), monsters.end(), [](game_object_script a, game_object_script b)
+                {
+                    return a->get_max_health() > b->get_max_health();
+                });
+
+            if (!lane_minions.empty())
+            {
+                if (e->is_ready() && laneclear::use_e->get_bool())
+                {
+                    if (e->cast_on_best_farm_position(laneclear::e_minimum_minions->get_int()))
                     {
-                        if (e->cast_on_best_farm_position(laneclear::e_minimum_minions->get_int()))
-                        {
-                            return;
-                        }
+                        return;
                     }
                 }
+            }
 
-                if (!monsters.empty())
+            if (!monsters.empty())
+            {
+                if (q->is_ready() && jungleclear::use_q->get_bool())
                 {
-                    if (q->is_ready() && jungleclear::use_q->get_bool())
+                    if (q->cast(monsters.front(), get_hitchance(hitchance::q_hitchance)))
                     {
-                        if (q->cast(monsters.front(), get_hitchance(hitchance::q_hitchance)))
-                        {
-                            return;
-                        }
+                        return;
                     }
-                    if (e->is_ready() && jungleclear::use_e->get_bool())
+                }
+                if (e->is_ready() && jungleclear::use_e->get_bool())
+                {
+                    if (e->cast_on_best_farm_position(1, true))
                     {
-                        if (e->cast_on_best_farm_position(1, true))
-                        {
-                            return;
-                        }
+                        return;
                     }
                 }
             }

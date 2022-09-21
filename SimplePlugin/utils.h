@@ -28,6 +28,12 @@ namespace utils
 	//
 	bool is_ready(spellslot slot);
 	
+	// Vector utils
+	//
+	vector to_2d(vector vec);
+	vector to_3d(vector vec);
+	vector add(vector source, float add);
+
 	// Other
 	//
 	bool enabled_in_map(std::map<std::uint32_t, TreeEntry*> map, game_object_script target);

@@ -145,8 +145,6 @@ namespace teemo
 
     // Utils
     //
-    bool can_use_q_on(game_object_script target);
-    bool can_use_r_on(game_object_script target);
     hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
     bool is_trap_placed_in_loc(vector loc);
@@ -521,7 +519,7 @@ namespace teemo
         auto target = target_selector->get_target(q->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_q_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::q_use_on, target))
         {
             auto q_mode = combo::q_mode->get_int();
             if ((q_mode == 0 && myhero->get_distance(target) > myhero->get_attack_range()) || q_mode == 1 || q->get_damage(target) > target->get_real_health())
@@ -539,7 +537,7 @@ namespace teemo
         auto target = target_selector->get_target(q->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_q_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::q_use_on, target))
         {
             q->cast(target);
         }
@@ -570,7 +568,7 @@ namespace teemo
         auto target = target_selector->get_target(r->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_r_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target))
         {
             if (target->get_health_percent() < combo::r_target_hp_under->get_int() && gametime->get_time() > last_r_time)
             {
@@ -590,7 +588,7 @@ namespace teemo
         auto target = target_selector->get_target(r->range(), damage_type::magical);
 
         // Always check an object is not a nullptr!
-        if (target != nullptr && can_use_r_on(target))
+        if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target))
         {
             r->cast(target, hit_chance::immobile);
         }
@@ -618,28 +616,6 @@ namespace teemo
         {
             r->set_range(r_ranges[r->level() - 1]);
         }
-    }
-#pragma endregion
-
-#pragma region can_use_q_on
-    bool can_use_q_on(game_object_script target)
-    {
-        auto it = combo::q_use_on.find(target->get_network_id());
-        if (it == combo::q_use_on.end())
-            return false;
-
-        return it->second->get_bool();
-    }
-#pragma endregion
-
-#pragma region can_use_r_on
-    bool can_use_r_on(game_object_script target)
-    {
-        auto it = combo::r_use_on.find(target->get_network_id());
-        if (it == combo::r_use_on.end())
-            return false;
-
-        return it->second->get_bool();
     }
 #pragma endregion
 
@@ -749,7 +725,7 @@ namespace teemo
         {
             if (q->is_ready() && antigapclose::use_q->get_bool())
             {
-                if (can_use_q_on(sender) && sender->is_valid_target(q->range() + sender->get_bounding_radius()))
+                if (utils::enabled_in_map(combo::q_use_on, sender) && sender->is_valid_target(q->range() + sender->get_bounding_radius()))
                 {
                     q->cast(sender);
                 }
@@ -762,7 +738,7 @@ namespace teemo
 
             if (r->is_ready() && antigapclose::use_r->get_bool())
             {
-                if (sender->is_valid_target(r->range() + sender->get_bounding_radius()))
+                if (utils::enabled_in_map(combo::r_use_on, sender) && sender->is_valid_target(r->range() + sender->get_bounding_radius()))
                 {
                     r->cast(sender, get_hitchance(hitchance::r_hitchance));
                 }
@@ -798,7 +774,7 @@ namespace teemo
         if (q->is_ready() && combo::q_mode->get_int() != 1)
         {
             // Use Q after AA
-            if (target->is_ai_hero() && can_use_q_on(target) && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
+            if (utils::enabled_in_map(combo::q_use_on, target) && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
             {
                 q->cast(target);
             }
