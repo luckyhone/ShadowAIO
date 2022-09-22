@@ -426,13 +426,13 @@ namespace missfortune
                     {
                         if (poly.is_inside(enemy->get_position()))
                         {
-                            myhero->print_chat(1, "The champ %s is INSIDE the R", enemy->get_model_cstr());
+                            //myhero->print_chat(1, "The champ %s is INSIDE the R", enemy->get_model_cstr());
                             hit_by_r.push_back(enemy);
                         }
-                        else
-                        {
-                            myhero->print_chat(1, "The champ %s is OUTSIDE the R", enemy->get_model_cstr());
-                        }
+                        //else
+                        //{
+                        //    myhero->print_chat(1, "The champ %s is OUTSIDE the R", enemy->get_model_cstr());
+                        //}
                     }
                 }
             }
@@ -1108,32 +1108,32 @@ namespace missfortune
         }
        
         // Debug
-        if (last_r_pos.is_valid())
-        {
-            draw_manager->add_circle(last_r_pos, 175.0f, draw_settings::r_color->get_color());
-            geometry::rectangle r_sector = geometry::rectangle(myhero->get_position(), last_r_pos, 335.0f);
-            auto poly = r_sector.to_polygon();
+        //if (last_r_pos.is_valid())
+        //{
+        //    draw_manager->add_circle(last_r_pos, 175.0f, draw_settings::r_color->get_color());
+        //    geometry::rectangle r_sector = geometry::rectangle(myhero->get_position(), last_r_pos, 335.0f);
+        //    auto poly = r_sector.to_polygon();
 
-            int poly_id = 0;
+        //    int poly_id = 0;
 
-            for (auto& point : poly.points)
-            {
-                poly_id++;
-                draw_manager->add_circle(point, 10.0f, MAKE_COLOR(255, 0, 0, 255));
-                renderer->world_to_screen(point, point);
-                draw_manager->add_text_on_screen(point, draw_settings::r_color->get_color(), 18, "Point: [%d]", poly_id);
-            }
+        //    for (auto& point : poly.points)
+        //    {
+        //        poly_id++;
+        //        draw_manager->add_circle(point, 10.0f, MAKE_COLOR(255, 0, 0, 255));
+        //        renderer->world_to_screen(point, point);
+        //        draw_manager->add_text_on_screen(point, draw_settings::r_color->get_color(), 18, "Point: [%d]", poly_id);
+        //    }
 
-            auto point_1 = poly.points.at(0);
-            auto point_2 = poly.points.at(1);
-            auto point_3 = poly.points.at(2);
-            auto point_4 = poly.points.at(3);
+        //    auto point_1 = poly.points.at(0);
+        //    auto point_2 = poly.points.at(1);
+        //    auto point_3 = poly.points.at(2);
+        //    auto point_4 = poly.points.at(3);
 
-            draw_manager->add_line_on_screen(point_1, point_2, draw_settings::r_color->get_color(), 2.0f);
-            draw_manager->add_line_on_screen(point_3, point_4, draw_settings::r_color->get_color(), 2.0f);
-            draw_manager->add_line_on_screen(point_1, point_4, draw_settings::r_color->get_color(), 2.0f);
-            draw_manager->add_line_on_screen(point_2, point_3, draw_settings::r_color->get_color(), 2.0f);
-        }
+        //    draw_manager->add_line_on_screen(point_1, point_2, draw_settings::r_color->get_color(), 2.0f);
+        //    draw_manager->add_line_on_screen(point_3, point_4, draw_settings::r_color->get_color(), 2.0f);
+        //    draw_manager->add_line_on_screen(point_1, point_4, draw_settings::r_color->get_color(), 2.0f);
+        //    draw_manager->add_line_on_screen(point_2, point_3, draw_settings::r_color->get_color(), 2.0f);
+        //}
     }
 
     void on_before_attack_orbwalker(game_object_script target, bool* process)
