@@ -70,7 +70,6 @@ namespace ivern
     // Utils
     //
     game_object_script get_best_target_prority(const std::vector<game_object_script>& possible_targets, TreeEntry* priority);
-    hit_chance get_hitchance(TreeEntry* entry);
 
     vector last_w_position = vector(0, 0);
 
@@ -303,7 +302,7 @@ namespace ivern
                 {
                     if (q->is_ready() && laneclear::use_q->get_bool())
                     {
-                        q->cast(lane_minions.front(), get_hitchance(hitchance::q_hitchance));
+                        q->cast(lane_minions.front(), utils::get_hitchance(hitchance::q_hitchance));
                     }
                 }
             }
@@ -319,7 +318,7 @@ namespace ivern
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            q->cast(target, get_hitchance(hitchance::q_hitchance));
+            q->cast(target, utils::get_hitchance(hitchance::q_hitchance));
         }
     }
 #pragma endregion
@@ -386,31 +385,13 @@ namespace ivern
         return valid_targets.empty() ? nullptr : valid_targets.front().first;
     }
 
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
-        }
-        return hit_chance::medium;
-    }
-#pragma endregion
-
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
     {
         if (antigapclose::use_q->get_bool() && q->is_ready())
         {
             if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
             {
-                q->cast(sender, get_hitchance(hitchance::q_hitchance));
+                q->cast(sender, utils::get_hitchance(hitchance::q_hitchance));
             }
         }
     }

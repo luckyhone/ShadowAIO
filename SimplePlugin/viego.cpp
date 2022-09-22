@@ -96,7 +96,6 @@ namespace viego
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
     int get_viego_r_damage(game_object_script target);
 
@@ -595,7 +594,7 @@ namespace viego
             {
                 auto pred = w->get_prediction(target);
                 
-                if (pred.hitchance >= get_hitchance(hitchance::w_hitchance))
+                if (pred.hitchance >= utils::get_hitchance(hitchance::w_hitchance))
                 {
                     auto pos = w->get_prediction(target).get_cast_position();
                     if (!evade->is_dangerous(pos))
@@ -635,7 +634,7 @@ namespace viego
         // Always check an object is not a nullptr!
         if (target != nullptr && !combo::r_save->get_bool() && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && utils::enabled_in_map(combo::r_use_on, target) && get_viego_r_damage(target) > target->get_real_health())
         {
-            r->cast(target, get_hitchance(hitchance::r_hitchance));
+            r->cast(target, utils::get_hitchance(hitchance::r_hitchance));
         }
     }
 #pragma endregion
@@ -649,26 +648,8 @@ namespace viego
         // Always check an object is not a nullptr!
         if (target != nullptr && target->is_attack_allowed_on_target() && !utils::has_unkillable_buff(target) && !utils::has_untargetable_buff(target) && utils::enabled_in_map(combo::r_use_on, target) && (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool() || get_viego_r_damage(target) > target->get_real_health()))
         {
-            r->cast(target, get_hitchance(hitchance::r_hitchance));
+            r->cast(target, utils::get_hitchance(hitchance::r_hitchance));
         }
-    }
-#pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-            case 0:
-                return hit_chance::low;
-            case 1:
-                return hit_chance::medium;
-            case 2:
-                return hit_chance::high;
-            case 3:
-                return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 

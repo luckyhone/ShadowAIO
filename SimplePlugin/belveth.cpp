@@ -89,10 +89,6 @@ namespace belveth
 	void e_logic();
 	void r_logic();
 
-	// Utils
-	//
-	hit_chance get_hitchance(TreeEntry* entry);
-
 	// Champion data
 	//
 	float q_speeds[] = { 800.0f, 850.0f, 900.0f, 950.0f, 1000.0f };
@@ -510,7 +506,7 @@ namespace belveth
 				if (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool())
 				{
 					auto pred = q->get_prediction(target);
-					if (pred.hitchance >= get_hitchance(hitchance::q_hitchance))
+					if (pred.hitchance >= utils::get_hitchance(hitchance::q_hitchance))
 					{
 						auto pos = pred.get_cast_position();
 						if (!evade->is_dangerous(pos))
@@ -533,7 +529,7 @@ namespace belveth
 		// Always check an object is not a nullptr!
 		if (target != nullptr)
 		{
-			w->cast(target, get_hitchance(hitchance::w_hitchance));
+			w->cast(target, utils::get_hitchance(hitchance::w_hitchance));
 		}
 	}
 #pragma endregion
@@ -575,25 +571,6 @@ namespace belveth
 	}
 #pragma endregion
 
-
-#pragma region get_hitchance
-	hit_chance get_hitchance(TreeEntry* entry)
-	{
-		switch (entry->get_int())
-		{
-			case 0:
-				return hit_chance::low;
-			case 1:
-				return hit_chance::medium;
-			case 2:
-				return hit_chance::high;
-			case 3:
-				return hit_chance::very_high;
-		}
-		return hit_chance::medium;
-	}
-#pragma endregion
-
 	void on_after_attack_orbwalker(game_object_script target)
 	{
 		if (q->is_ready() && combo::q_mode->get_int() == 1)
@@ -606,7 +583,7 @@ namespace belveth
 					if (!target->is_under_ally_turret() || combo::allow_tower_dive->get_bool())
 					{
 						auto pred = q->get_prediction(target);
-						if (pred.hitchance >= get_hitchance(hitchance::q_hitchance))
+						if (pred.hitchance >= utils::get_hitchance(hitchance::q_hitchance))
 						{
 							auto pos = pred.get_cast_position();
 							if (!evade->is_dangerous(pos))

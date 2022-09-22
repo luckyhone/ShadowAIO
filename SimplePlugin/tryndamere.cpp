@@ -88,11 +88,6 @@ namespace tryndamere
     void e_logic();
     bool r_logic();
 
-
-    // Utils
-    //
-    hit_chance get_hitchance(TreeEntry* entry);
-
     void load()
     {
         // Registering a spells
@@ -440,7 +435,7 @@ namespace tryndamere
                 {
                     if (combo::e_use_prediction->get_bool())
                     {
-                        if (e->cast(target, get_hitchance(hitchance::e_hitchance)))
+                        if (e->cast(target, utils::get_hitchance(hitchance::e_hitchance)))
                         {
                             return;
                         }
@@ -492,24 +487,6 @@ namespace tryndamere
             }
         }
         return false;
-    }
-#pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 

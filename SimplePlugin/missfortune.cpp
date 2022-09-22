@@ -134,8 +134,7 @@ namespace missfortune
     bool r_logic_semi();
 
     // Utils
-    //
-    hit_chance get_hitchance(TreeEntry* entry);
+    // 
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
     // Other
@@ -221,7 +220,7 @@ namespace missfortune
                 auto r_config = combo->add_tab(myhero->get_model() + "combo.r.config", "R Config");
                 {
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator1", "Range Settings");
-                    combo::r_min_range = r_config->add_slider(myhero->get_model() + ".combo.r.min_range", "Minimum R range", 400, 1, r->range());
+                    combo::r_min_range = r_config->add_slider(myhero->get_model() + ".combo.r.min_range", "Minimum R range", 525, 1, r->range());
                     combo::r_max_range = r_config->add_slider(myhero->get_model() + ".combo.r.max_range", "Maximum R range", 1150, 550, r->range());
 
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator2", "Usage Settings");
@@ -238,7 +237,7 @@ namespace missfortune
                     r_config->add_separator(myhero->get_model() + ".combo.r.separator3", "Other Settings");
                     combo::r_semi_manual_cast = r_config->add_hotkey(myhero->get_model() + ".combo.r.semi_manual_cast", "Semi manual cast", TreeHotkeyMode::Hold, 'T', true);
                     combo::r_save = r_config->add_hotkey(myhero->get_model() + ".combo.r.save", "Save R", TreeHotkeyMode::Toggle, 'G', false);
-                    combo::r_cancel = r_config->add_hotkey(myhero->get_model() + ".combo.r.cancel", "Cancel R", TreeHotkeyMode::Hold, 'H', false);
+                    combo::r_cancel = r_config->add_hotkey(myhero->get_model() + ".combo.r.cancel", "Cancel R", TreeHotkeyMode::Hold, 'Z', false);
                     combo::r_block_mouse_move = r_config->add_checkbox(myhero->get_model() + ".combo.r.block_mouse_move", "Block Mouse Move on R", false);
                     combo::r_block_mouse_move->set_texture(myhero->get_spell(spellslot::r)->get_icon_texture());
                     combo::r_disable_evade = r_config->add_checkbox(myhero->get_model() + ".combo.r.disable_evade", "Disable Evade on R", true);
@@ -427,13 +426,13 @@ namespace missfortune
                     {
                         if (poly.is_inside(enemy->get_position()))
                         {
-                            //myhero->print_chat(1, "The champ %s is INSIDE the R", enemy->get_model_cstr());
+                            myhero->print_chat(1, "The champ %s is INSIDE the R", enemy->get_model_cstr());
                             hit_by_r.push_back(enemy);
                         }
-                        //else
-                        //{
-                        //    myhero->print_chat(1, "The champ %s is OUTSIDE the R", enemy->get_model_cstr());
-                        //}
+                        else
+                        {
+                            myhero->print_chat(1, "The champ %s is OUTSIDE the R", enemy->get_model_cstr());
+                        }
                     }
                 }
             }
@@ -626,7 +625,7 @@ namespace missfortune
                     // Always check an object is not a nullptr!
                     if (target != nullptr)
                     {
-                        if (e->cast(target, get_hitchance(hitchance::e_hitchance)))
+                        if (e->cast(target, utils::get_hitchance(hitchance::e_hitchance)))
                         {
                             return;
                         }
@@ -823,7 +822,7 @@ namespace missfortune
 
                         auto pred = prediction->get_prediction(&x);
 
-                        if (pred.hitchance >= get_hitchance(hitchance::q_hitchance))
+                        if (pred.hitchance >= utils::get_hitchance(hitchance::q_hitchance))
                         {
                             if (q->cast(minion))
                             {
@@ -872,7 +871,7 @@ namespace missfortune
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast(target, get_hitchance(hitchance::e_hitchance));
+            e->cast(target, utils::get_hitchance(hitchance::e_hitchance));
         }
     }
 #pragma endregion
@@ -894,7 +893,7 @@ namespace missfortune
                 if (r->get_damage(target) * combo::r_use_if_killable_by_x_waves->get_int() > target->get_health())
                 {
                     auto pred = r->get_prediction(target);
-                    if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
+                    if (pred.hitchance >= utils::get_hitchance(hitchance::r_hitchance))
                     {
                         orbwalker->set_attack(false);
                         orbwalker->set_movement(false);
@@ -937,7 +936,7 @@ namespace missfortune
             if (enemy->is_valid() && !enemy->is_dead() && !enemy->is_zombie() && !utils::has_unkillable_buff(enemy) && enemy->is_valid_target(combo::r_max_range->get_int()))
             {
                 auto pred = prediction->get_prediction(enemy, r->get_delay(), r->get_radius(), r->get_speed());
-                if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
+                if (pred.hitchance >= utils::get_hitchance(hitchance::r_hitchance))
                 {
                     hit_by_r.push_back(enemy);
                 }
@@ -947,7 +946,7 @@ namespace missfortune
         if (hit_by_r.size() >= combo::r_auto_if_enemies_more_than->get_int())
         {
             auto pred = prediction->get_prediction(hit_by_r.front(), r->get_delay(), r->get_radius(), r->get_speed());
-            if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
+            if (pred.hitchance >= utils::get_hitchance(hitchance::r_hitchance))
             {
                 orbwalker->set_attack(false);
                 orbwalker->set_movement(false);
@@ -981,7 +980,7 @@ namespace missfortune
                 if (utils::has_crowd_control_buff(target))
                 {
                     auto pred = r->get_prediction(target);
-                    if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
+                    if (pred.hitchance >= utils::get_hitchance(hitchance::r_hitchance))
                     {
                         orbwalker->set_attack(false);
                         orbwalker->set_movement(false);
@@ -1022,7 +1021,7 @@ namespace missfortune
             if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target) && myhero->count_enemies_in_range(combo::r_min_range->get_int()) == 0)
             {
                 auto pred = r->get_prediction(target);
-                if (pred.hitchance >= get_hitchance(hitchance::r_hitchance))
+                if (pred.hitchance >= utils::get_hitchance(hitchance::r_hitchance))
                 {
                     orbwalker->set_attack(false);
                     orbwalker->set_movement(false);
@@ -1047,24 +1046,6 @@ namespace missfortune
         }
 
         return false;
-    }
-#pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 
@@ -1127,32 +1108,32 @@ namespace missfortune
         }
        
         // Debug
-        //if (last_r_pos.is_valid())
-        //{
-        //    draw_manager->add_circle(last_r_pos, 175.0f, draw_settings::r_color->get_color());
-        //    geometry::rectangle r_sector = geometry::rectangle(myhero->get_position(), last_r_pos, 335.0f);
-        //    auto poly = r_sector.to_polygon();
+        if (last_r_pos.is_valid())
+        {
+            draw_manager->add_circle(last_r_pos, 175.0f, draw_settings::r_color->get_color());
+            geometry::rectangle r_sector = geometry::rectangle(myhero->get_position(), last_r_pos, 335.0f);
+            auto poly = r_sector.to_polygon();
 
-        //    int poly_id = 0;
+            int poly_id = 0;
 
-        //    for (auto& point : poly.points)
-        //    {
-        //        poly_id++;
-        //        draw_manager->add_circle(point, 10.0f, MAKE_COLOR(255, 0, 0, 255));
-        //        renderer->world_to_screen(point, point);
-        //        draw_manager->add_text_on_screen(point, draw_settings::r_color->get_color(), 18, "Point: [%d]", poly_id);
-        //    }
+            for (auto& point : poly.points)
+            {
+                poly_id++;
+                draw_manager->add_circle(point, 10.0f, MAKE_COLOR(255, 0, 0, 255));
+                renderer->world_to_screen(point, point);
+                draw_manager->add_text_on_screen(point, draw_settings::r_color->get_color(), 18, "Point: [%d]", poly_id);
+            }
 
-        //    auto point_1 = poly.points.at(0);
-        //    auto point_2 = poly.points.at(1);
-        //    auto point_3 = poly.points.at(2);
-        //    auto point_4 = poly.points.at(3);
+            auto point_1 = poly.points.at(0);
+            auto point_2 = poly.points.at(1);
+            auto point_3 = poly.points.at(2);
+            auto point_4 = poly.points.at(3);
 
-        //    draw_manager->add_line_on_screen(point_1, point_2, draw_settings::r_color->get_color(), 2.0f);
-        //    draw_manager->add_line_on_screen(point_3, point_4, draw_settings::r_color->get_color(), 2.0f);
-        //    draw_manager->add_line_on_screen(point_1, point_4, draw_settings::r_color->get_color(), 2.0f);
-        //    draw_manager->add_line_on_screen(point_2, point_3, draw_settings::r_color->get_color(), 2.0f);
-        //}
+            draw_manager->add_line_on_screen(point_1, point_2, draw_settings::r_color->get_color(), 2.0f);
+            draw_manager->add_line_on_screen(point_3, point_4, draw_settings::r_color->get_color(), 2.0f);
+            draw_manager->add_line_on_screen(point_1, point_4, draw_settings::r_color->get_color(), 2.0f);
+            draw_manager->add_line_on_screen(point_2, point_3, draw_settings::r_color->get_color(), 2.0f);
+        }
     }
 
     void on_before_attack_orbwalker(game_object_script target, bool* process)
@@ -1299,7 +1280,7 @@ namespace missfortune
         {
             if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
             {
-                e->cast(sender, get_hitchance(hitchance::e_hitchance));
+                e->cast(sender, utils::get_hitchance(hitchance::e_hitchance));
             }
         }
     }

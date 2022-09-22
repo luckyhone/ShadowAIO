@@ -107,7 +107,6 @@ namespace vex
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     float get_damage(game_object_script target);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
@@ -454,7 +453,7 @@ namespace vex
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            q->cast(target, get_hitchance(hitchance::q_hitchance));
+            q->cast(target, utils::get_hitchance(hitchance::q_hitchance));
         }
     }
 #pragma endregion
@@ -482,7 +481,7 @@ namespace vex
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast(target, get_hitchance(hitchance::e_hitchance));
+            e->cast(target, utils::get_hitchance(hitchance::e_hitchance));
         }
     }
 #pragma endregion
@@ -520,7 +519,7 @@ namespace vex
                 {
                     if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
                     {
-                        r->cast(target, get_hitchance(hitchance::r_hitchance));
+                        r->cast(target, utils::get_hitchance(hitchance::r_hitchance));
                     }
                 }
             }
@@ -561,32 +560,13 @@ namespace vex
                 {
                     if (!combo::r_use_only_passive_ready->get_bool() || myhero->has_buff(buff_hash("vexpdoom")))
                     {
-                        r->cast(target, get_hitchance(hitchance::r_hitchance));
+                        r->cast(target, utils::get_hitchance(hitchance::r_hitchance));
                     }
                 }
             }
         }
     }
 #pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
-        }
-        return hit_chance::medium;
-    }
-#pragma endregion
-
 
 #pragma region update_range
     void update_range()

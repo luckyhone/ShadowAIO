@@ -121,7 +121,6 @@ namespace twitch
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
     int get_twitch_e_stacks(game_object_script target);
 
@@ -534,7 +533,7 @@ namespace twitch
                     int value = combo::w_dont_use_if_killable_by_x_aa->get_int();
                     if (value == 0 || myhero->get_auto_attack_damage(target) * value < target->get_real_health())
                     {
-                        w->cast(target, get_hitchance(hitchance::w_hitchance));
+                        w->cast(target, utils::get_hitchance(hitchance::w_hitchance));
                     }
                 }
             }
@@ -619,24 +618,6 @@ namespace twitch
         {
             r->cast();
         }
-    }
-#pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-            case 0:
-                return hit_chance::low;
-            case 1:
-                return hit_chance::medium;
-            case 2:
-                return hit_chance::high;
-            case 3:
-                return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 
@@ -777,7 +758,7 @@ namespace twitch
                     int value = combo::w_dont_use_if_killable_by_x_aa->get_int();
                     if (value == 0 || myhero->get_auto_attack_damage(target) * value < target->get_real_health())
                     {
-                        if (w->cast(target, get_hitchance(hitchance::w_hitchance)))
+                        if (w->cast(target, utils::get_hitchance(hitchance::w_hitchance)))
                         {
                             return;
                         }
@@ -818,7 +799,7 @@ namespace twitch
         {
             if (sender->is_valid_target(w->range() + sender->get_bounding_radius()))
             {
-                w->cast(sender, get_hitchance(hitchance::w_hitchance));
+                w->cast(sender, utils::get_hitchance(hitchance::w_hitchance));
             }
         }
     }

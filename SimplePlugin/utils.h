@@ -28,7 +28,7 @@ namespace utils
 	//
 	bool is_ready(spellslot slot);
 	
-	// Vector utils
+	// Vector utilities
 	//
 	vector to_2d(vector vec);
 	vector to_3d(vector vec);
@@ -37,5 +37,6 @@ namespace utils
 	// Other
 	//
 	bool enabled_in_map(std::map<std::uint32_t, TreeEntry*> map, game_object_script target);
+	hit_chance get_hitchance(TreeEntry* entry);
 };
 

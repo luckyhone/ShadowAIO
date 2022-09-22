@@ -102,7 +102,6 @@ namespace malzahar
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     int get_active_voidlings();
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
@@ -456,7 +455,7 @@ namespace malzahar
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            q->cast(target, get_hitchance(hitchance::q_hitchance));
+            q->cast(target, utils::get_hitchance(hitchance::q_hitchance));
         }
     }
 #pragma endregion
@@ -545,24 +544,6 @@ namespace malzahar
     }
 #pragma endregion
 
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
-        }
-        return hit_chance::medium;
-    }
-#pragma endregion
-
 #pragma region get_active_voidlings
     int get_active_voidlings()
     {
@@ -584,7 +565,7 @@ namespace malzahar
         {
             if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
             {
-                q->cast(sender, get_hitchance(hitchance::q_hitchance));
+                q->cast(sender, utils::get_hitchance(hitchance::q_hitchance));
             }
         }
     }

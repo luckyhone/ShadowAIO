@@ -110,7 +110,6 @@ namespace chogath
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
     void load()
@@ -517,7 +516,7 @@ namespace chogath
         {
             if (!combo::q_only_if_enemy_is_not_moving->get_bool() || (!target->is_moving() || target->is_winding_up() || target->is_casting_interruptible_spell() || utils::has_crowd_control_buff(target)))
             {
-                q->cast(target, get_hitchance(hitchance::q_hitchance));
+                q->cast(target, utils::get_hitchance(hitchance::q_hitchance));
             }
         }
     }
@@ -562,7 +561,7 @@ namespace chogath
         {
             if (combo::w_use_prediction->get_bool())
             {
-                w->cast(target, get_hitchance(hitchance::w_hitchance));
+                w->cast(target, utils::get_hitchance(hitchance::w_hitchance));
             }
             else
             {
@@ -660,24 +659,6 @@ namespace chogath
     }
 #pragma endregion
 
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
-        }
-        return hit_chance::medium;
-    }
-#pragma endregion
-
     void on_before_attack(game_object_script target, bool* process)
     {
         if (e->is_ready())
@@ -726,7 +707,7 @@ namespace chogath
         {
             if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
             {
-                q->cast(sender, get_hitchance(hitchance::q_hitchance));
+                q->cast(sender, utils::get_hitchance(hitchance::q_hitchance));
             }
         }
     }

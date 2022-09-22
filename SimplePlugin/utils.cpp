@@ -246,5 +246,21 @@ namespace utils
 
 		return it->second->get_bool();
 	}
+
+	hit_chance get_hitchance(TreeEntry* entry)
+	{
+		switch (entry->get_int())
+		{
+			case 0:
+				return hit_chance::low;
+			case 1:
+				return hit_chance::medium;
+			case 2:
+				return hit_chance::high;
+			case 3:
+				return hit_chance::very_high;
+		}
+		return hit_chance::medium;
+	}
 };
 

@@ -131,7 +131,6 @@ namespace draven
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     int get_draven_q_stacks();
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
@@ -408,21 +407,21 @@ namespace draven
         //    }
         //}
 
+        if (e->is_ready() && combo::e_semi_manual_cast->get_bool())
+        {
+            e_logic_semi();
+        }
+
+        if (r->is_ready() && combo::r_semi_manual_cast->get_bool())
+        {
+            r_logic_semi();
+        }
+
         // Very important if can_move ( extra_windup ) 
         // Extra windup is the additional time you have to wait after the aa
         // Too small time can interrupt the attack
         if (orbwalker->can_move(0.05f))
         {
-            if (e->is_ready() && combo::e_semi_manual_cast->get_bool())
-            {
-                e_logic_semi();
-            }
-
-            if (r->is_ready() && combo::r_semi_manual_cast->get_bool())
-            {
-                r_logic_semi();
-            }
-
             if (catch_axes_settings::catch_axes->get_bool() && !catch_axes_settings::dont_catch_axes->get_bool() && ((!orbwalker->none_mode() && !orbwalker->flee_mode()) || !catch_axes_settings::catch_only_if_orbwalker_active->get_bool()))
             {
                 int value = catch_axes_settings::dont_catch_axes_if_killable_by_x_aa->get_int();
@@ -713,7 +712,7 @@ namespace draven
             // Always check an object is not a nullptr!
             if (target != nullptr)
             {
-                e->cast(target, get_hitchance(hitchance::e_hitchance));
+                e->cast(target, utils::get_hitchance(hitchance::e_hitchance));
             }
         }
     }
@@ -728,7 +727,7 @@ namespace draven
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast(target, get_hitchance(hitchance::e_hitchance));
+            e->cast(target, utils::get_hitchance(hitchance::e_hitchance));
         }
     }
 #pragma endregion
@@ -747,7 +746,7 @@ namespace draven
             {
                 if (r->get_damage(enemy) * 2.0f > enemy->get_real_health())
                 {
-                    if (r->cast(enemy, get_hitchance(hitchance::r_hitchance)))
+                    if (r->cast(enemy, utils::get_hitchance(hitchance::r_hitchance)))
                     {
                         return;
                     }
@@ -766,26 +765,8 @@ namespace draven
         // Always check an object is not a nullptr!
         if (target != nullptr && utils::enabled_in_map(combo::r_use_on, target))
         {
-            r->cast(target, get_hitchance(hitchance::r_hitchance));
+            r->cast(target, utils::get_hitchance(hitchance::r_hitchance));
         }
-    }
-#pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-            case 0:
-                return hit_chance::low;
-            case 1:
-                return hit_chance::medium;
-            case 2:
-                return hit_chance::high;
-            case 3:
-                return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 
@@ -883,7 +864,7 @@ namespace draven
                     {
                         auto pos = axe.object->get_position() + vector(-80, -80);
                         renderer->world_to_screen(pos, pos);
-                        draw_manager->add_text_on_screen(pos, draw_settings::axe_expire_time_color->get_color(), 18, "Expire Time: [%.1fs]", axe.expire_time - gametime->get_time());
+                        draw_manager->add_text_on_screen(pos, draw_settings::axe_expire_time_color->get_color(), 18, "Expire Time: [%.1fs]", std::max(0.0f, axe.expire_time - gametime->get_time()));
                     }
                     if (draw_settings::draw_line_to_axe->get_bool())
                     {
@@ -907,7 +888,7 @@ namespace draven
         {
             if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
             {
-                e->cast(sender, get_hitchance(hitchance::e_hitchance));
+                e->cast(sender, utils::get_hitchance(hitchance::e_hitchance));
             }
         }
     }
@@ -942,7 +923,7 @@ namespace draven
             // Using E after autoattack on enemies
             if (target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_e->get_bool()) || (orbwalker->harass() && harass::use_e->get_bool())))
             {
-                e->cast(target, get_hitchance(hitchance::e_hitchance));
+                e->cast(target, utils::get_hitchance(hitchance::e_hitchance));
             }
         }
     }

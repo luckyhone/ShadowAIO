@@ -145,7 +145,6 @@ namespace teemo
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
     bool is_trap_placed_in_loc(vector loc);
 
@@ -572,7 +571,7 @@ namespace teemo
         {
             if (target->get_health_percent() < combo::r_target_hp_under->get_int() && gametime->get_time() > last_r_time)
             {
-                if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
+                if (r->cast(target, utils::get_hitchance(hitchance::r_hitchance)))
                 {
                     last_r_time = gametime->get_time() + 2.0f;
                 }
@@ -616,24 +615,6 @@ namespace teemo
         {
             r->set_range(r_ranges[r->level() - 1]);
         }
-    }
-#pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-            case 0:
-                return hit_chance::low;
-            case 1:
-                return hit_chance::medium;
-            case 2:
-                return hit_chance::high;
-            case 3:
-                return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 
@@ -740,7 +721,7 @@ namespace teemo
             {
                 if (utils::enabled_in_map(combo::r_use_on, sender) && sender->is_valid_target(r->range() + sender->get_bounding_radius()))
                 {
-                    r->cast(sender, get_hitchance(hitchance::r_hitchance));
+                    r->cast(sender, utils::get_hitchance(hitchance::r_hitchance));
                 }
             }
         }

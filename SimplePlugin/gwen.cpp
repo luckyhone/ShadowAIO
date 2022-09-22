@@ -107,7 +107,6 @@ namespace gwen
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
     int get_gwen_q_stacks();
 
@@ -597,12 +596,12 @@ namespace gwen
                     {
                         if (is_recast)
                         {
-                            if (r2->cast(target, get_hitchance(hitchance::r_hitchance)))
+                            if (r2->cast(target, utils::get_hitchance(hitchance::r_hitchance)))
                             {
                                 return;
                             }
                         }
-                        else if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
+                        else if (r->cast(target, utils::get_hitchance(hitchance::r_hitchance)))
                         {
                             return;
                         }
@@ -628,35 +627,17 @@ namespace gwen
             {
                 if (is_recast)
                 {
-                    if (r2->cast(target, get_hitchance(hitchance::r_hitchance)))
+                    if (r2->cast(target, utils::get_hitchance(hitchance::r_hitchance)))
                     {
                         return;
                     }
                 }
-                else if (r->cast(target, get_hitchance(hitchance::r_hitchance)))
+                else if (r->cast(target, utils::get_hitchance(hitchance::r_hitchance)))
                 {
                     return;
                 }
             }
         }
-    }
-#pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 

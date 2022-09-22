@@ -97,7 +97,6 @@ namespace trundle
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     vector get_pillar_position(game_object_script target);
 
     void load()
@@ -475,7 +474,7 @@ namespace trundle
         {
             if (combo::e_mode->get_int() == 0)
             {
-                e->cast(target, get_hitchance(hitchance::e_hitchance));
+                e->cast(target, utils::get_hitchance(hitchance::e_hitchance));
             }
             else
             {
@@ -524,24 +523,6 @@ namespace trundle
         {
             r->cast(enemies.front());
         }
-    }
-#pragma endregion
-    
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 
@@ -629,7 +610,7 @@ namespace trundle
         {
             if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
             {
-                e->cast(sender, get_hitchance(hitchance::e_hitchance));
+                e->cast(sender, utils::get_hitchance(hitchance::e_hitchance));
             }
         }
     }

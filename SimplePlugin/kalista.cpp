@@ -102,7 +102,6 @@ namespace kalista
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
     int get_kalista_e_stacks(game_object_script target);
 
@@ -456,7 +455,7 @@ namespace kalista
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            q->cast(target, get_hitchance(hitchance::q_hitchance));
+            q->cast(target, utils::get_hitchance(hitchance::q_hitchance));
         }
     }
 #pragma endregion
@@ -629,24 +628,6 @@ namespace kalista
                 }
             }
         }
-    }
-#pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 

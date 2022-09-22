@@ -99,7 +99,6 @@ namespace rengar
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     bool is_empowered();
     bool is_on_r();
 
@@ -381,7 +380,7 @@ namespace rengar
                 // Always check an object is not a nullptr!
                 if (target != nullptr)
                 {
-                    utils::fast_cast(e, target, get_hitchance(hitchance::e_hitchance), false, 0);
+                    utils::fast_cast(e, target, utils::get_hitchance(hitchance::e_hitchance), false, 0);
                 }
             }
         }
@@ -525,7 +524,7 @@ namespace rengar
             {
                 if (combo::e_use_prediction->get_bool())
                 {
-                    return utils::fast_cast(e, target, get_hitchance(hitchance::e_hitchance), false, 0);
+                    return utils::fast_cast(e, target, utils::get_hitchance(hitchance::e_hitchance), false, 0);
                 }
                 
                 return utils::fast_cast(e, target->get_position());
@@ -533,24 +532,6 @@ namespace rengar
         }
 
         return false;
-    }
-#pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-	        case 0:
-	            return hit_chance::low;
-	        case 1:
-	            return hit_chance::medium;
-	        case 2:
-	            return hit_chance::high;
-	        case 3:
-	            return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 
@@ -574,7 +555,7 @@ namespace rengar
         {
             if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
             {
-                utils::fast_cast(e, sender, get_hitchance(hitchance::e_hitchance), false, 0);
+                utils::fast_cast(e, sender, utils::get_hitchance(hitchance::e_hitchance), false, 0);
             }
         }
     }
@@ -594,7 +575,7 @@ namespace rengar
             {
                 if (myhero->get_attack_range() >= r->range() && (!is_empowered() || combo::empowered_spell_priority->get_int() == 2))
                 {
-                    utils::fast_cast(e, target, get_hitchance(hitchance::e_hitchance), false, 0);
+                    utils::fast_cast(e, target, utils::get_hitchance(hitchance::e_hitchance), false, 0);
                 }
             }
         }

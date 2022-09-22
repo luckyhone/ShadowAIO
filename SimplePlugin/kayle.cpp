@@ -130,7 +130,6 @@ namespace kayle
 
 	// Utils
 	//
-	hit_chance get_hitchance(TreeEntry* entry);
 	inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
 	void load()
@@ -422,7 +421,7 @@ namespace kayle
 						{
 							if (q->is_ready() && lasthit::use_q->get_bool() && dmg_lib::get_damage(q, minion) > minion->get_health())
 							{
-								if (q->cast(minion, get_hitchance(hitchance::q_hitchance)))
+								if (q->cast(minion, utils::get_hitchance(hitchance::q_hitchance)))
 								{
 									return;
 								}
@@ -500,7 +499,7 @@ namespace kayle
 				{
 					if (q->is_ready() && fleemode::use_q->get_bool())
 					{
-						if (q->cast(target, get_hitchance(hitchance::q_hitchance))) {
+						if (q->cast(target, utils::get_hitchance(hitchance::q_hitchance))) {
 							return;
 						}
 					}
@@ -583,7 +582,7 @@ namespace kayle
 			auto q_mode = combo::q_mode->get_int();
 			if ((q_mode == 0 && myhero->get_distance(target) > myhero->get_attack_range()) || q_mode == 1 || q->get_damage(target) > target->get_real_health())
 			{
-				q->cast(target, get_hitchance(hitchance::q_hitchance));
+				q->cast(target, utils::get_hitchance(hitchance::q_hitchance));
 			}
 		}
 	}
@@ -693,24 +692,6 @@ namespace kayle
 		}
 	}
 #pragma endregion
-	
-#pragma region get_hitchance
-	hit_chance get_hitchance(TreeEntry* entry)
-	{
-		switch (entry->get_int())
-		{
-			case 0:
-				return hit_chance::low;
-			case 1:
-				return hit_chance::medium;
-			case 2:
-				return hit_chance::high;
-			case 3:
-				return hit_chance::very_high;
-		}
-		return hit_chance::medium;
-	}
-#pragma endregion
 
 	inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color)
 	{
@@ -781,7 +762,7 @@ namespace kayle
 		// Use q after autoattack on enemies
 		if (q->is_ready() && combo::q_mode->get_int() != 1 && target->is_ai_hero() && ((orbwalker->combo_mode() && combo::use_q->get_bool()) || (orbwalker->harass() && harass::use_q->get_bool())))
 		{
-			q->cast(target, get_hitchance(hitchance::q_hitchance));
+			q->cast(target, utils::get_hitchance(hitchance::q_hitchance));
 		}
 
 		if (e->is_ready())
@@ -844,7 +825,7 @@ namespace kayle
 		{
 			if (sender->is_valid_target(q->range() + sender->get_bounding_radius()))
 			{
-				q->cast(sender, get_hitchance(hitchance::q_hitchance));
+				q->cast(sender, utils::get_hitchance(hitchance::q_hitchance));
 			}
 		}
 	}

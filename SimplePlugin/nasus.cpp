@@ -107,7 +107,6 @@ namespace nasus
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     inline void draw_dmg_rl(game_object_script target, float damage, unsigned long color);
 
     void load()
@@ -514,7 +513,7 @@ namespace nasus
         // Always check an object is not a nullptr!
         if (target != nullptr)
         {
-            e->cast(target, get_hitchance(hitchance::e_hitchance));
+            e->cast(target, utils::get_hitchance(hitchance::e_hitchance));
         }
     }
 #pragma endregion
@@ -549,24 +548,6 @@ namespace nasus
     }
 #pragma endregion
 
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-            case 0:
-                return hit_chance::low;
-            case 1:
-                return hit_chance::medium;
-            case 2:
-                return hit_chance::high;
-            case 3:
-                return hit_chance::very_high;
-        }
-        return hit_chance::medium;
-    }
-#pragma endregion
-
     void on_gapcloser(game_object_script sender, antigapcloser::antigapcloser_args* args)
     {
         if (antigapclose::use_w->get_bool() && w->is_ready())
@@ -580,7 +561,7 @@ namespace nasus
         {
             if (sender->is_valid_target(e->range() + sender->get_bounding_radius()))
             {
-                e->cast(sender, get_hitchance(hitchance::e_hitchance));
+                e->cast(sender, utils::get_hitchance(hitchance::e_hitchance));
             }
         }
     }

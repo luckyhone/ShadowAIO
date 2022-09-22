@@ -115,7 +115,6 @@ namespace thresh
 
     // Utils
     //
-    hit_chance get_hitchance(TreeEntry* entry);
     void cast_e_push(game_object_script target);
     void cast_e_pull(game_object_script target);
 
@@ -524,7 +523,7 @@ namespace thresh
             {
                 if (q->is_ready() && jungleclear::use_q->get_bool())
                 {
-                    if (q->cast(monsters.front(), get_hitchance(hitchance::q_hitchance)))
+                    if (q->cast(monsters.front(), utils::get_hitchance(hitchance::q_hitchance)))
                     {
                         return;
                     }
@@ -568,7 +567,7 @@ namespace thresh
         // Always check an object is not a nullptr!
         if (target != nullptr && utils::enabled_in_map(combo::q_use_on, target) && myhero->get_distance(target) > min_distance && !target->has_buff(buff_hash("ThreshQ")))
         {
-            q->cast(target, get_hitchance(hitchance::q_hitchance));
+            q->cast(target, utils::get_hitchance(hitchance::q_hitchance));
         }
     }
 #pragma endregion
@@ -656,24 +655,6 @@ namespace thresh
         {
             r->cast();
         }
-    }
-#pragma endregion
-
-#pragma region get_hitchance
-    hit_chance get_hitchance(TreeEntry* entry)
-    {
-        switch (entry->get_int())
-        {
-            case 0:
-                return hit_chance::low;
-            case 1:
-                return hit_chance::medium;
-            case 2:
-                return hit_chance::high;
-            case 3:
-                return hit_chance::very_high;
-        }
-        return hit_chance::medium;
     }
 #pragma endregion
 
