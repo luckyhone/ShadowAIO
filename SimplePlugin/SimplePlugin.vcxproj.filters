@@ -94,6 +94,12 @@
     <ClCompile Include="dmg_lib.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="yasuo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="spell_db.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
@@ -178,6 +184,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="dmg_lib.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="yasuo.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
