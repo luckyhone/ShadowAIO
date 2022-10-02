@@ -233,9 +233,87 @@ namespace utils
 		return vector(vec.x, vec.y, myhero->get_position().z);
 	}
 
+	vector to_3d2(vector vec)
+	{
+		return vector(vec.x, vec.y, navmesh->get_height_for_position(vec.x, vec.y));
+	}
+
 	vector add(vector source, float add)
 	{
 		return vector(source.x + add, source.y + add);
+	}
+
+	float get_damage(game_object_script target, std::vector<script_spell*> spells, int include_aa)
+	{
+		float damage = 0.0f;
+
+		for (auto& spell : spells)
+		{
+			if (spell->is_ready())
+			{
+				damage += spell->get_damage(target);
+			}
+		}
+
+		if (include_aa != 0)
+		{
+			damage += myhero->get_auto_attack_damage(target);
+		}
+
+		return damage;
+	}
+	
+	int32_t count_minions_in_range(game_object_script target, float range)
+	{
+		auto count = 0;
+
+		for (auto& minion : (target->is_ally() ? entitylist->get_ally_minions() : entitylist->get_enemy_minions()))
+		{
+			if (target->get_handle() != minion->get_handle() && !minion->is_dead() && minion->is_visible() && minion->is_targetable() && target->get_distance(minion) < range)
+				count++;
+		}
+
+		return count;
+	}
+
+	int32_t count_minions_in_range(vector vec, float range)
+	{
+		auto count = 0;
+
+		for (auto& minion : entitylist->get_enemy_minions())
+		{
+			if (!minion->is_dead() && minion->is_visible() && minion->is_targetable() && vec.distance(minion) < range)
+				count++;
+		}
+
+		return count;
+	}
+
+
+	int32_t count_monsters_in_range(game_object_script target, float range)
+	{
+		auto count = 0;
+
+		for (auto& minion : entitylist->get_jugnle_mobs_minions())
+		{
+			if (target->get_handle() != minion->get_handle() && !minion->is_dead() && minion->is_visible() && minion->is_targetable() && target->get_distance(minion) < range)
+				count++;
+		}
+
+		return count;
+	}
+
+	int32_t count_monsters_in_range(vector vec, float range)
+	{
+		auto count = 0;
+
+		for (auto& minion : entitylist->get_jugnle_mobs_minions())
+		{
+			if (!minion->is_dead() && minion->is_visible() && minion->is_targetable() && vec.distance(minion) < range)
+				count++;
+		}
+
+		return count;
 	}
 
 	bool enabled_in_map(std::map<std::uint32_t, TreeEntry*> map, game_object_script target)

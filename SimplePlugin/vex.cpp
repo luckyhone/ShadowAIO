@@ -333,6 +333,11 @@ namespace vex
                 r_logic();
             }
 
+            if (e->is_ready() && combo::use_e->get_bool())
+            {
+                e_logic();
+            }
+
             if (q->is_ready() && combo::use_q->get_bool())
             {
                 q_logic();
@@ -342,33 +347,26 @@ namespace vex
             {
                 w_logic();
             }
-
-            if (e->is_ready() && combo::use_e->get_bool())
-            {
-                e_logic();
-            }
         }
 
         //Checking if the user has selected harass() (Default C)
         if (orbwalker->harass())
         {
-            // Get a target from a given range
-            auto target = target_selector->get_target(q->range(), damage_type::magical);
-
-            // Always check an object is not a nullptr!
-            if (target != nullptr)
+            if (!myhero->is_under_enemy_turret())
             {
-                if (!myhero->is_under_enemy_turret())
+                if (e->is_ready() && harass::use_e->get_bool())
                 {
-                    if (q->is_ready() && harass::use_q->get_bool())
-                    {
-                        q_logic();
-                    }
+                    e_logic();
+                }
 
-                    if (e->is_ready() && harass::use_e->get_bool())
-                    {
-                        e_logic();
-                    }
+                if (q->is_ready() && harass::use_q->get_bool())
+                {
+                    q_logic();
+                }
+
+                if (w->is_ready() && harass::use_w->get_bool())
+                {
+                    w_logic();
                 }
             }
         }

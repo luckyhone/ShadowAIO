@@ -537,9 +537,12 @@ namespace rengar
 
     bool is_empowered()
     {
-        return q->name() == "RengarQEmp"
-            || w->name() == "RengarWEmp"
-            || e->name() == "RengarEEmp"
+        //return q->name() == "RengarQEmp"
+        //    || w->name() == "RengarWEmp"
+        //    || e->name() == "RengarEEmp"
+        return q->name_hash() == spell_hash("RengarQEmp")
+            || w->name_hash() == spell_hash("RengarWEmp")
+            || e->name_hash() == spell_hash("RengarEEmp")
             || myhero->get_mana() >= 4.0f;
     }
 

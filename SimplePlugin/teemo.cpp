@@ -591,7 +591,7 @@ namespace teemo
         {
             r->cast(target, hit_chance::immobile);
         }
-        else if (combo::r_auto_on_best_locations->get_bool() && !orbwalker->flee_mode() && !myhero->is_recalling() && gametime->get_time() > last_r_time)
+        else if (combo::r_auto_on_best_locations->get_bool() && !orbwalker->flee_mode() && !myhero->is_recalling() && missioninfo->get_map_id() == game_map_id::SummonersRift && gametime->get_time() > last_r_time)
         {
             for (auto& loc : r_best_locations)
             {

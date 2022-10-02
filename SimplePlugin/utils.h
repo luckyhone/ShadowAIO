@@ -32,7 +32,19 @@ namespace utils
 	//
 	vector to_2d(vector vec);
 	vector to_3d(vector vec);
+	vector to_3d2(vector vec);
 	vector add(vector source, float add);
+
+	// Damage utilities
+	//
+	float get_damage(game_object_script target, std::vector<script_spell*> spells, int include_aa);
+
+	// Minion utilities
+	//
+	int32_t count_minions_in_range(game_object_script target, float range);
+	int32_t count_minions_in_range(vector vec, float range);
+	int32_t count_monsters_in_range(game_object_script target, float range);
+	int32_t count_monsters_in_range(vector vec, float range);
 
 	// Other
 	//
