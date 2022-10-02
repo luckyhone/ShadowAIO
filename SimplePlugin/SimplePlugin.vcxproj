@@ -176,7 +176,6 @@
     <ClCompile Include="nasus.cpp" />
     <ClCompile Include="permashow.cpp" />
     <ClCompile Include="rengar.cpp" />
-    <ClCompile Include="spell_db.cpp" />
     <ClCompile Include="teemo.cpp" />
     <ClCompile Include="thresh.cpp" />
     <ClCompile Include="trundle.cpp" />

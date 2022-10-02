@@ -4,7 +4,7 @@
 //
 PLUGIN_NAME("ShadowAIO");
 PLUGIN_TYPE(plugin_type::champion);
-SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::Trundle, champion_id::Jax, champion_id::Kayle, champion_id::Vex, champion_id::MasterYi, champion_id::Chogath, champion_id::Twitch, champion_id::Kalista, champion_id::Malzahar, champion_id::MissFortune, champion_id::Teemo, champion_id::Gwen, champion_id::Ivern, champion_id::Rengar, champion_id::Draven, champion_id::Belveth, champion_id::Viego, champion_id::Thresh, champion_id::Nasus, /*champion_id::Yasuo*/);
+SUPPORTED_CHAMPIONS(champion_id::Tryndamere, champion_id::Kindred, champion_id::Trundle, champion_id::Jax, champion_id::Kayle, champion_id::Vex, champion_id::MasterYi, champion_id::Chogath, champion_id::Twitch, champion_id::Kalista, champion_id::Malzahar, champion_id::MissFortune, champion_id::Teemo, champion_id::Gwen, champion_id::Ivern, champion_id::Rengar, champion_id::Draven, champion_id::Belveth, champion_id::Viego, champion_id::Thresh, champion_id::Nasus/*, champion_id::Yasuo*/);
 
 // Include champion file
 //

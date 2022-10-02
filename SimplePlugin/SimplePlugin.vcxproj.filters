@@ -94,9 +94,6 @@
     <ClCompile Include="dmg_lib.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="spell_db.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\plugin_sdk\cpplinq.h">
