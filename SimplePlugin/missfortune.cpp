@@ -426,13 +426,13 @@ namespace missfortune
                     {
                         if (poly.is_inside(enemy->get_position()))
                         {
-                            myhero->print_chat(1, "The champ %s is INSIDE the R", enemy->get_model_cstr());
+                            //myhero->print_chat(1, "The champ %s is INSIDE the R", enemy->get_model_cstr());
                             hit_by_r.push_back(enemy);
                         }
-                        else
-                        {
-                            myhero->print_chat(1, "The champ %s is OUTSIDE the R", enemy->get_model_cstr());
-                        }
+                        //else
+                        //{
+                        //    myhero->print_chat(1, "The champ %s is OUTSIDE the R", enemy->get_model_cstr());
+                        //}
                     }
                 }
             }
